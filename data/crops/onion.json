@@ -1,0 +1,64 @@
+{
+  "name": "onion",
+  "local_names": ["प्याज", "कांदा", "ਪਿਆਜ਼", "कांडा"],
+  "total_duration_days": 130,
+  "sowing_season": "Kharif: June–July | Rabi: October–November | Summer: January–February",
+  "harvest_season": "Kharif: Oct–Nov | Rabi: March–April | Summer: April–May",
+  "soil": "Well-drained sandy loam to clay loam, pH 6.0–7.5. Avoid waterlogged soils.",
+  "stages": [
+    {
+      "name": "Nursery / Seedling",
+      "days_range": [0, 30],
+      "description": "Seeds sown in nursery. Seedlings raised before transplanting.",
+      "irrigation": "Light sprinkler irrigation twice daily. Keep nursery moist but not waterlogged.",
+      "fertilizer": "Apply FYM 2 kg per square metre in nursery bed. Basal dose DAP 2 g/sq metre.",
+      "watch_for": ["Damping off (seedlings collapsing at base)", "Thrips on seedlings"],
+      "tips": ["Seed rate: 8–10 kg per acre", "Transplant when seedlings are 15 cm tall (25–30 days old)"]
+    },
+    {
+      "name": "Transplanting / Establishment",
+      "days_range": [31, 50],
+      "description": "Seedlings transplanted to main field. Roots establishing.",
+      "irrigation": "Irrigate immediately after transplanting. Then every 4–5 days.",
+      "fertilizer": "Basal: 40 kg DAP + 20 kg MOP per acre. Top dress 20 kg Urea at 20 days after transplanting.",
+      "watch_for": ["Transplant shock (wilting)", "Thrips (silvering of leaves)", "Purple blotch disease"],
+      "tips": ["Plant spacing: 15 cm × 10 cm", "Transplant in evening to reduce moisture stress"]
+    },
+    {
+      "name": "Vegetative Growth",
+      "days_range": [51, 80],
+      "description": "Rapid leaf and pseudostem growth. Bulb initiation begins.",
+      "irrigation": "Irrigate every 6–8 days. Critical period for bulb initiation.",
+      "fertilizer": "Second top dress: 20 kg Urea at 45 days after transplanting.",
+      "watch_for": ["Thrips (most damaging at this stage)", "Purple blotch (brown lesions on leaves)", "Stemphylium blight"],
+      "tips": ["Thrips can reduce yield by 50% — monitor regularly", "Spray Spinosad 0.3 ml/litre for thrips control"]
+    },
+    {
+      "name": "Bulb Development",
+      "days_range": [81, 110],
+      "description": "Bulbs swell rapidly. Leaves begin to fall over at neck.",
+      "irrigation": "Regular irrigation every 7–10 days. Avoid excess water — causes bulb rot.",
+      "fertilizer": "No nitrogen after this stage — excess N delays maturity and reduces storability.",
+      "watch_for": ["Basal rot (Fusarium)", "Neck rot", "Black mould", "Over-irrigation causing split bulbs"],
+      "tips": ["Reduce irrigation frequency as bulbs mature", "Do not apply Urea now — causes soft bulbs that rot in storage"]
+    },
+    {
+      "name": "Maturity",
+      "days_range": [111, 130],
+      "description": "50% of tops fall over — harvest signal. Bulbs fully formed.",
+      "irrigation": "Stop irrigation 10 days before harvest to toughen the skin.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Delay in harvesting causes neck rot and sprouting", "Sun scald on exposed bulbs"],
+      "tips": ["Harvest when 50–75% tops fall over", "Cure harvested bulbs in shade for 7–10 days before storage", "Do not harvest in rain"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Thrips", "symptoms": "Silver streaks on leaves, distorted growth", "control": "Spinosad 0.3 ml/litre or Fipronil 1.5 ml/litre"},
+    {"name": "Onion fly (maggot)", "symptoms": "Plants wilt, maggots visible in bulb", "control": "Chlorpyriphos 2 ml/litre soil drench"}
+  ],
+  "common_diseases": [
+    {"name": "Purple Blotch", "symptoms": "Water-soaked lesions turning purple-brown on leaves", "control": "Mancozeb 2.5 g/litre + Carbendazim 1 g/litre"},
+    {"name": "Stemphylium Blight", "symptoms": "Small yellow to tan lesions with purple border", "control": "Iprodione 1.5 ml/litre"},
+    {"name": "Basal Rot (Fusarium)", "symptoms": "Yellowing from base, white fungal growth at roots", "control": "Trichoderma viride soil application, Carbendazim drench"}
+  ]
+}

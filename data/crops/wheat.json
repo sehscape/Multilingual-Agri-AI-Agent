@@ -1,0 +1,92 @@
+{
+  "name": "wheat",
+  "local_names": ["गेहूं", "गेहू", "ਕਣਕ", "गव्हू"],
+  "total_duration_days": 120,
+  "sowing_season": "October–November (Rabi crop)",
+  "harvest_season": "March–April",
+  "soil": "Well-drained loamy soil, pH 6.0–7.5",
+  "stages": [
+    {
+      "name": "Germination",
+      "days_range": [0, 10],
+      "description": "Seed germination and seedling emergence.",
+      "irrigation": "Light irrigation immediately after sowing. Avoid waterlogging.",
+      "fertilizer": "Apply full basal dose: 60 kg DAP + 30 kg MOP per acre before sowing.",
+      "watch_for": ["Poor germination due to dry soil", "Waterlogging after heavy rain"],
+      "tips": ["Ensure seed depth of 5–6 cm", "Soil moisture is critical at this stage"]
+    },
+    {
+      "name": "Crown Root Initiation (CRI)",
+      "days_range": [11, 25],
+      "description": "First critical irrigation stage. Roots establish.",
+      "irrigation": "First irrigation (CRI irrigation) at 20–21 days after sowing. This is the most critical irrigation.",
+      "fertilizer": "Apply first split of Urea: 30 kg per acre with CRI irrigation.",
+      "watch_for": ["Termite attack on roots", "Yellow leaves indicate nitrogen deficiency"],
+      "tips": ["Do not miss CRI irrigation — skipping it reduces yield by 20–30%"]
+    },
+    {
+      "name": "Tillering",
+      "days_range": [26, 50],
+      "description": "Side shoots (tillers) develop. Crop establishes canopy.",
+      "irrigation": "Second irrigation at 40–45 days after sowing.",
+      "fertilizer": "Apply second split of Urea: 25 kg per acre with second irrigation.",
+      "watch_for": ["Aphids on leaves", "Powdery mildew (white powder on leaves)", "Weed competition"],
+      "tips": ["Remove weeds before 35 days", "If aphids are seen, spray Imidacloprid 0.5 ml/litre"]
+    },
+    {
+      "name": "Jointing / Stem Extension",
+      "days_range": [51, 70],
+      "description": "Stem elongates rapidly. Plant height increases.",
+      "irrigation": "Third irrigation at 60–65 days.",
+      "fertilizer": "No fertilizer needed at this stage.",
+      "watch_for": ["Yellow rust (yellow stripes on leaves)", "Brown rust (orange pustules)", "Lodging risk in strong winds"],
+      "tips": ["If rust is seen, spray Propiconazole 1 ml/litre immediately", "Avoid excess nitrogen — increases lodging risk"]
+    },
+    {
+      "name": "Booting / Flag Leaf",
+      "days_range": [71, 85],
+      "description": "Flag leaf fully emerged. Head forming inside the sheath.",
+      "irrigation": "Fourth irrigation at 75–80 days. Critical for grain filling.",
+      "fertilizer": "No fertilizer. Foliar spray of 2% Urea can be beneficial.",
+      "watch_for": ["Loose smut disease (black powder replacing grain)", "Aphids on flag leaf"],
+      "tips": ["Protect the flag leaf — it contributes 40% of photosynthate to grain"]
+    },
+    {
+      "name": "Heading / Flowering",
+      "days_range": [86, 100],
+      "description": "Ear heads emerge and pollination occurs.",
+      "irrigation": "Fifth irrigation at 90–95 days if soil is dry.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Karnal bunt (partial replacement of grain by black powder)", "Scab/Head blight in humid conditions"],
+      "tips": ["Avoid irrigation during flowering — disturbs pollination", "Do not apply pesticides during flowering"]
+    },
+    {
+      "name": "Grain Filling / Dough Stage",
+      "days_range": [101, 115],
+      "description": "Grains filling with starch. Crop turns golden.",
+      "irrigation": "Sixth irrigation at 105–110 days only if conditions are very dry.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Late rust attack can reduce grain weight", "Bird damage to heads"],
+      "tips": ["Stop irrigation 2 weeks before harvest", "Monitor grain moisture — harvest when 12–14% moisture"]
+    },
+    {
+      "name": "Maturity / Harvest",
+      "days_range": [116, 130],
+      "description": "Crop fully mature. Leaves and stems dry out.",
+      "irrigation": "No irrigation.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Shattering losses if harvest is delayed", "Rain damage to harvested grain"],
+      "tips": ["Harvest promptly once crop is ready", "Thresh within 2–3 days of cutting to avoid losses"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Aphids", "symptoms": "Colonies of small insects on leaves and stems, sticky honeydew", "control": "Imidacloprid 0.5 ml/litre water"},
+    {"name": "Termites", "symptoms": "Wilting plants, hollow stems at base", "control": "Chlorpyriphos 2.5 ml/litre soil drench"},
+    {"name": "Army worm", "symptoms": "Skeletonized leaves, caterpillars visible at night", "control": "Chlorpyriphos 2.5 ml/litre spray"}
+  ],
+  "common_diseases": [
+    {"name": "Yellow Rust", "symptoms": "Yellow stripes running along leaves", "control": "Propiconazole 1 ml/litre"},
+    {"name": "Brown Rust", "symptoms": "Orange-brown pustules randomly on leaf surface", "control": "Propiconazole 1 ml/litre"},
+    {"name": "Powdery Mildew", "symptoms": "White powdery coating on leaves", "control": "Sulphur 3 g/litre or Hexaconazole 1 ml/litre"}
+  ]
+}

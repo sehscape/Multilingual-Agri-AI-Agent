@@ -8,7 +8,7 @@ from __future__ import annotations
 import time
 from abc import ABC, abstractmethod
 
-from app.config import LLM_MODEL_ID, MAX_NEW_TOKENS, TEMPERATURE, HF_TOKEN, USE_HF_INFERENCE_API
+from app.config import LLM_MODEL_ID, MAX_NEW_TOKENS, TEMPERATURE, HF_TOKEN, USE_HF_INFERENCE_API, USE_STUB_LLM
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -72,22 +72,33 @@ class HuggingFaceInferenceAPILLM(BaseLLM):
 
 
 class StubLLM(BaseLLM):
-    """Returns a canned English response for unit tests."""
+    """Returns canned responses for local dev without an HF token."""
 
     def generate(self, prompt: str) -> str:
         logger.warning("StubLLM: returning placeholder response.")
+        # Intent extraction prompts contain the JSON schema — return valid JSON
+        if '"intent"' in prompt:
+            return (
+                '{"intent": "crop_advice", "crop": "wheat", "crop_stage_days": 40, '
+                '"location": null, "needs_weather": true, "needs_scheme": false, '
+                '"needs_crop_info": true}'
+            )
+        # Final answer prompt
         return (
-            "Situation:\nYour onion crop is 45 days old and heavy rain is expected.\n\n"
+            "Situation:\n"
+            "Your wheat crop is 40 days old and rain is expected in the next few days.\n\n"
             "What you should do:\n"
             "1. Avoid additional irrigation for the next 3 days.\n"
-            "2. Ensure proper drainage channels are clear.\n"
-            "3. Monitor for fungal disease after the rain.\n\n"
-            "Important:\nThis is general guidance. Consult your local KVK for specific advice."
+            "2. Ensure proper drainage channels are clear to prevent waterlogging.\n"
+            "3. Monitor for fungal diseases (powdery mildew, rust) after the rain.\n"
+            "4. Do not apply fertilizer immediately before heavy rain — it will wash away.\n\n"
+            "Important:\n"
+            "This is general guidance. Consult your local KVK for crop-specific advice."
         )
 
 
 def get_llm(device: str = "cpu", use_stub: bool = False) -> BaseLLM:
-    if use_stub:
+    if use_stub or USE_STUB_LLM:
         return StubLLM()
     if USE_HF_INFERENCE_API:
         return HuggingFaceInferenceAPILLM()

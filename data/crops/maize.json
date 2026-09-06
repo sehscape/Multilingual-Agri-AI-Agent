@@ -1,0 +1,72 @@
+{
+  "name": "maize",
+  "local_names": ["मक्का", "मकई", "ਮੱਕੀ", "मका"],
+  "total_duration_days": 100,
+  "sowing_season": "Kharif: June–July | Rabi: Oct–Nov | Spring: Feb–March",
+  "harvest_season": "Kharif: Sep–Oct | Rabi: Feb–March",
+  "soil": "Well-drained loamy soil, pH 6.0–7.5. Does not tolerate waterlogging.",
+  "stages": [
+    {
+      "name": "Germination / Emergence",
+      "days_range": [0, 10],
+      "description": "Seeds germinate and emerge within 5–7 days.",
+      "irrigation": "One pre-sowing irrigation. Light irrigation after sowing if soil is dry.",
+      "fertilizer": "Basal: 40 kg DAP + 20 kg MOP + 20 kg Urea per acre before sowing.",
+      "watch_for": ["Cutworm cutting seedlings at base at night", "Poor stand due to waterlogging"],
+      "tips": ["Seed rate: 8–10 kg per acre (hybrid)", "Seed depth: 4–5 cm"]
+    },
+    {
+      "name": "Seedling (V3–V6)",
+      "days_range": [11, 30],
+      "description": "3–6 leaves visible. Root system developing.",
+      "irrigation": "Irrigate every 7–10 days. Critical to avoid water stress.",
+      "fertilizer": "Top dress 1: 30 kg Urea at 20–25 days after sowing.",
+      "watch_for": ["Fall Army Worm (FAW) — most destructive pest", "Aphids on whorl", "Zinc deficiency (white stripe on young leaves)"],
+      "tips": ["Check the whorl for FAW — apply sand+Chlorpyriphos mixture into whorl", "Zinc deficiency: spray 0.5% ZnSO4"]
+    },
+    {
+      "name": "Vegetative (V7–V12)",
+      "days_range": [31, 55],
+      "description": "Rapid growth. Tassel initiation inside plant.",
+      "irrigation": "Irrigate every 7–8 days. This is a high water demand period.",
+      "fertilizer": "Top dress 2: 25 kg Urea at 45 days after sowing.",
+      "watch_for": ["Fall Army Worm in whorl", "Stem borer", "Downy mildew (white stripe)"],
+      "tips": ["Most critical period for FAW — weekly scouting essential", "Apply Emamectin benzoate 0.4 g/litre into whorl for FAW"]
+    },
+    {
+      "name": "Tasseling / Silking",
+      "days_range": [56, 75],
+      "description": "Tassel emerges at top. Silks appear on cob. Pollination occurs.",
+      "irrigation": "Most critical irrigation period — do NOT allow moisture stress during silking.",
+      "fertilizer": "No fertilizer. Avoid any spraying during pollination.",
+      "watch_for": ["Heat stress causing poor pollination", "Silk fly", "Earworm entering via silk"],
+      "tips": ["Silk emergence and pollination window is only 7–10 days — protect carefully", "Hot dry winds during silking cause poor grain set"]
+    },
+    {
+      "name": "Grain Filling",
+      "days_range": [76, 95],
+      "description": "Cob and grains fill. Starch accumulates.",
+      "irrigation": "Irrigate every 8–10 days. Avoid water stress during grain filling.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Ear rot (Fusarium or Gibberella)", "Cob borer", "Bird damage"],
+      "tips": ["Ear rot is worse in humid conditions after silking", "Monitor for ear rot — aflatoxin can build up in rotted grain"]
+    },
+    {
+      "name": "Maturity / Harvest",
+      "days_range": [96, 110],
+      "description": "Husk dries. Black layer forms at grain tip. Grain moisture drops to 20–25%.",
+      "irrigation": "No irrigation.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Delayed harvest increases mould and aflatoxin risk", "Grain moisture above 25% causes storage problems"],
+      "tips": ["Harvest when grain moisture is 18–22%", "Dry grain to below 13% before storage to prevent aflatoxin"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Fall Army Worm (FAW)", "symptoms": "Ragged feeding in whorl, frass (sawdust-like excrement), caterpillar with inverted Y on head", "control": "Emamectin benzoate 0.4 g/litre into whorl; Spinetoram 0.5 ml/litre"},
+    {"name": "Stem Borer", "symptoms": "Dead heart, shot holes in leaves, larva inside stem", "control": "Chlorantraniliprole 0.3 ml/litre or Carbofuran granules in whorl"}
+  ],
+  "common_diseases": [
+    {"name": "Downy Mildew", "symptoms": "White striping on young leaves, excessive tillering, stunted growth", "control": "Metalaxyl seed treatment; spray Metalaxyl 1 g/litre"},
+    {"name": "Turcicum Blight (Northern Leaf Blight)", "symptoms": "Long elliptical tan lesions on leaves", "control": "Propiconazole 1 ml/litre"}
+  ]
+}

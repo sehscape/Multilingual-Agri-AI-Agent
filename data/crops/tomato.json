@@ -1,0 +1,74 @@
+{
+  "name": "tomato",
+  "local_names": ["टमाटर", "ਟਮਾਟਰ", "टोमॅटो"],
+  "total_duration_days": 120,
+  "sowing_season": "Kharif: June–July | Rabi: Oct–Nov | Summer: Jan–Feb",
+  "harvest_season": "Continuous picking from 60–120 days after transplanting",
+  "soil": "Well-drained sandy loam to loam, pH 6.0–7.0, rich in organic matter",
+  "stages": [
+    {
+      "name": "Nursery / Seedling",
+      "days_range": [0, 25],
+      "description": "Seeds sown in raised nursery beds. Seedlings raised for 25–30 days.",
+      "irrigation": "Light sprinkler irrigation twice daily. Keep moist.",
+      "fertilizer": "Mix FYM 2 kg per sq metre in nursery. Seed treatment with Trichoderma.",
+      "watch_for": ["Damping off (seedling collapse)", "Whitefly transmitting Tomato Yellow Leaf Curl Virus (TYLCV)"],
+      "tips": ["Cover nursery with insect-proof net to prevent whitefly", "Seed rate: 150–200 g per acre"]
+    },
+    {
+      "name": "Transplanting / Establishment",
+      "days_range": [26, 45],
+      "description": "Seedlings (25–30 days old) transplanted to main field.",
+      "irrigation": "Irrigate immediately after transplanting. Then every 4–5 days by drip or furrow.",
+      "fertilizer": "Basal: 50 kg DAP + 25 kg MOP + 10 tonnes FYM per acre. Top dress 20 kg Urea at 20 days.",
+      "watch_for": ["Wilt diseases (Fusarium, Bacterial wilt)", "Fruit borer eggs on leaves", "Whitefly"],
+      "tips": ["Plant spacing: 60 cm × 45 cm", "Stake plants with bamboo to support fruiting branches"]
+    },
+    {
+      "name": "Vegetative Growth",
+      "days_range": [46, 65],
+      "description": "Rapid stem and leaf growth. Flower buds forming.",
+      "irrigation": "Regular irrigation every 5–7 days. Drip preferred.",
+      "fertilizer": "Second top dress: 20 kg Urea + 10 kg MOP at 45 days after transplanting.",
+      "watch_for": ["Early blight (brown concentric rings on lower leaves)", "Aphids and whitefly", "Spider mites in dry weather"],
+      "tips": ["Remove suckers to direct energy to fruiting", "Spray Mancozeb 2.5 g/litre for early blight prevention"]
+    },
+    {
+      "name": "Flowering",
+      "days_range": [66, 85],
+      "description": "Yellow flowers appear. Pollination occurs.",
+      "irrigation": "Maintain consistent soil moisture. Irregular watering causes blossom drop.",
+      "fertilizer": "Foliar spray: 0.5% Boron + 0.5% Calcium at first flowering.",
+      "watch_for": ["Fruit borer (Helicoverpa) laying eggs on flowers", "Blossom drop due to heat or moisture stress", "Late blight in humid weather"],
+      "tips": ["Blossom drop is common in hot weather — spray Planofix (NAA) 4.5 ml/15 litres", "Do not apply pesticides when flowers are open"]
+    },
+    {
+      "name": "Fruit Set / Development",
+      "days_range": [86, 105],
+      "description": "Fruits setting and growing in size.",
+      "irrigation": "Regular irrigation critical — irregular watering causes blossom end rot and cracking.",
+      "fertilizer": "Third top dress: 15 kg Urea + 10 kg MOP for fruit development.",
+      "watch_for": ["Fruit borer boring into fruits", "Leaf curl virus (yellow curled leaves)", "Blossom end rot (dark sunken spot at fruit tip)"],
+      "tips": ["Handpick and destroy borer-infested fruits", "Spray Spinosad 0.3 ml/litre for fruit borer", "Blossom end rot is caused by calcium deficiency + irregular irrigation"]
+    },
+    {
+      "name": "Harvest",
+      "days_range": [106, 120],
+      "description": "Fruits turning from green to red. Continuous picking over 4–8 weeks.",
+      "irrigation": "Maintain irrigation for continuous harvesting.",
+      "fertilizer": "No major fertilizer. Continue foliar sprays if needed.",
+      "watch_for": ["Post-harvest fruit rot if handling is rough", "Cracking due to heavy rain after dry spell"],
+      "tips": ["Harvest at breaker stage (turning pink) for distant markets", "Harvest fully red for local sale or processing", "Pick every 3–4 days for continuous yield"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Fruit Borer (Helicoverpa)", "symptoms": "Circular holes in fruits, caterpillar visible inside", "control": "Spinosad 0.3 ml/litre or Chlorantraniliprole 0.3 ml/litre"},
+    {"name": "Whitefly", "symptoms": "Tiny white insects under leaves, sticky honeydew, yellowing", "control": "Imidacloprid 0.5 ml/litre (alternate to avoid resistance)"},
+    {"name": "Spider Mites", "symptoms": "Fine webbing under leaves, bronze/rusty discoloration", "control": "Abamectin 0.5 ml/litre or wettable sulphur 3 g/litre"}
+  ],
+  "common_diseases": [
+    {"name": "Early Blight (Alternaria)", "symptoms": "Brown spots with concentric rings (target board) on older leaves", "control": "Mancozeb 2.5 g/litre or Iprodione 1.5 ml/litre"},
+    {"name": "Late Blight (Phytophthora)", "symptoms": "Water-soaked dark brown patches on leaves and stem, white mould in humid conditions", "control": "Metalaxyl + Mancozeb 2.5 g/litre; act fast — spreads rapidly"},
+    {"name": "Bacterial Wilt", "symptoms": "Sudden wilting of entire plant, brown discoloration inside stem, slimy ooze", "control": "No cure — remove and destroy plant; drench surrounding area with Copper oxychloride"}
+  ]
+}

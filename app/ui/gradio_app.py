@@ -2,13 +2,14 @@
 
 Phase 2: voice recording → Whisper STT (auto language detection) → regional text.
 Phase 3: regional text → IndicTrans2 → English text.
-Phases 4-10 will add: Intent → Agent → IndicTrans2 → Indic TTS.
+Phase 4: English text → Intent extraction + LLM answer generation.
+Phases 5-10 will add: tools (crop/weather/scheme), full agent, TTS.
 """
 import time
 import gradio as gr
 
 from app.utils.logging import get_logger
-from app.config import SUPPORTED_LANGUAGES, DEV_MODE, WHISPER_MODEL_ID, USE_STUB_TRANSLATION
+from app.config import DEV_MODE, WHISPER_MODEL_ID, USE_STUB_TRANSLATION, USE_STUB_LLM
 
 logger = get_logger(__name__)
 
@@ -23,6 +24,7 @@ _LANG_DISPLAY: dict[str, str] = {
 # Singletons — loaded once on first call
 _stt = None
 _translator = None
+_llm = None
 
 
 def _get_stt():
@@ -41,41 +43,54 @@ def _get_translator():
     return _translator
 
 
+def _get_llm():
+    global _llm
+    if _llm is None:
+        from app.models.llm import get_llm
+        _llm = get_llm(use_stub=USE_STUB_LLM)
+    return _llm
+
+
 def _run_pipeline(audio, location: str):
     """
-    Phase 3 pipeline:
-        microphone audio
-        → [Phase 2] Whisper STT → regional text + detected language
-        → [Phase 3] IndicTrans2 → English text
-        → [Phase 4-10] stubs
+    Phase 4 pipeline:
+        audio → [Ph2] Whisper STT → regional text + language
+              → [Ph3] IndicTrans2 → English text
+              → [Ph4] Intent extraction → intent, crop, stage, flags
+              → [Ph4] LLM answer → English answer
+              → [Ph5-10] tool calls + TTS (stubs)
     """
+    from app.agents.state import AgentState
+    from app.agents.intent import extract_intent
+    from app.agents.answering import generate_answer
+
     trace_lines = [f"Location : {location or 'not provided'}"]
-    transcription = ""
-    english_text = ""
-    answer = ""
     detected_display = ""
 
     if audio is None:
-        return "", "", "", None, "No audio recorded. Press the microphone button and speak.", ""
+        return "", "", "", "", None, "No audio recorded. Press the microphone button and speak.", ""
 
-    # ── Step 1: Whisper STT + auto language detection (Phase 2) ──────────────
+    # ── Step 1: Whisper STT (Phase 2) ─────────────────────────────────────────
     trace_lines.append(f"\nStep 1 | Whisper STT  [{WHISPER_MODEL_ID}]")
     try:
         t0 = time.time()
-        result = _get_stt().transcribe(audio)
-        transcription = result["text"]
-        iso_lang = result["language"]
-        lang_name = result.get("language_name", iso_lang)
-        elapsed = time.time() - t0
-
+        stt_result = _get_stt().transcribe(audio)
+        transcription = stt_result["text"]
+        iso_lang = stt_result["language"]
+        lang_name = stt_result.get("language_name", iso_lang)
         detected_display = _LANG_DISPLAY.get(iso_lang, lang_name.capitalize())
-        trace_lines.append(f"         Detected language : {detected_display} ({iso_lang})")
-        trace_lines.append(f"         Transcribed in {elapsed:.1f}s")
+        trace_lines.append(f"         Detected : {detected_display} ({iso_lang}) in {time.time()-t0:.1f}s")
         trace_lines.append(f"         '{transcription}'")
     except Exception as e:
         logger.error("STT failed: %s", e)
-        trace_lines.append(f"         ERROR: {e}")
-        return "", "", f"Speech recognition failed: {e}", None, "\n".join(trace_lines), ""
+        return "", "", "", f"Speech recognition failed: {e}", None, "\n".join(trace_lines), ""
+
+    # Build AgentState — single object travels through the whole pipeline
+    state = AgentState(
+        source_language=iso_lang,
+        original_text=transcription,
+        location=location.strip() or None,
+    )
 
     # ── Step 2: IndicTrans2 regional → English (Phase 3) ─────────────────────
     stub_label = " [STUB]" if USE_STUB_TRANSLATION else ""
@@ -83,40 +98,61 @@ def _run_pipeline(audio, location: str):
     try:
         t0 = time.time()
         if iso_lang in ("en", "unknown"):
-            english_text = transcription
+            state.english_text = transcription
             trace_lines.append("         Source is English — no translation needed.")
         else:
-            translator = _get_translator()
-            english_text = translator.translate_to_english(transcription, iso_lang)
-            elapsed = time.time() - t0
-            trace_lines.append(f"         Translated in {elapsed:.1f}s")
-            trace_lines.append(f"         '{english_text}'")
+            state.english_text = _get_translator().translate_to_english(transcription, iso_lang)
+            trace_lines.append(f"         Translated in {time.time()-t0:.1f}s")
+            trace_lines.append(f"         '{state.english_text}'")
     except Exception as e:
         logger.error("Translation failed: %s", e)
-        trace_lines.append(f"         ERROR: {e}")
-        english_text = f"[Translation failed: {e}]"
+        state.english_text = transcription
+        trace_lines.append(f"         ERROR: {e} — using original text")
 
-    # ── Steps 3–7: stubs (later phases) ──────────────────────────────────────
-    detected_display_full = _LANG_DISPLAY.get(iso_lang, lang_name.capitalize())
-    trace_lines.append("\nStep 3 | Intent extraction                     [Phase 4]")
-    trace_lines.append("Step 4 | Agent tool calls                      [Phase 5-8]")
-    trace_lines.append("Step 5 | LLM reasoning → English answer        [Phase 4]")
-    trace_lines.append(f"Step 6 | IndicTrans2 English → {detected_display_full:<8}    [Phase 10]")
-    trace_lines.append(f"Step 7 | Indic TTS → {detected_display_full} audio          [Phase 10]")
+    # ── Step 3: Intent extraction (Phase 4) ──────────────────────────────────
+    stub_label = " [STUB]" if USE_STUB_LLM else ""
+    trace_lines.append(f"\nStep 3 | Intent extraction{stub_label}")
+    t0 = time.time()
+    state = extract_intent(state, _get_llm())
+    trace_lines.append(f"         {state.trace[-1] if state.trace else 'done'} in {time.time()-t0:.1f}s")
 
-    answer = (
-        f"[Phase 3 — STT + Translation]\n\n"
-        f"Detected language: {detected_display_full}\n\n"
-        f"You said ({detected_display_full}):\n{transcription}\n\n"
-        f"English translation:\n{english_text}\n\n"
-        "Agent reasoning and voice response will be added in Phases 4–10."
+    # ── Step 4: Crop knowledge tool (Phase 5) — runs BEFORE LLM answer ───────
+    from app.tools.crop_tool import get_crop_context
+    if state.needs_crop_info and (state.crop or state.crop_stage_days):
+        trace_lines.append(f"\nStep 4 | Crop knowledge tool — {state.crop}, {state.crop_stage_days}d")
+        crop_ctx = get_crop_context(state.crop, state.crop_stage_days)
+        state.crop_data = {"context": crop_ctx}
+        trace_lines.append(f"         Retrieved {len(crop_ctx)} chars of crop knowledge")
+    else:
+        trace_lines.append(f"\nStep 4 | Crop knowledge tool — skipped (not needed for this query)")
+
+    # ── Step 5: LLM answer generation (Phase 4) — uses crop data from step 4 ─
+    trace_lines.append(f"\nStep 5 | LLM answer generation{stub_label}")
+    t0 = time.time()
+    state = generate_answer(state, _get_llm())
+    trace_lines.append(f"         Answer generated in {time.time()-t0:.1f}s ({len(state.english_answer)} chars)")
+
+    trace_lines.append(f"\nStep 6 | Weather tool (Open-Meteo)              [Phase 6]")
+    trace_lines.append(f"Step 7 | Government scheme RAG                  [Phase 7]")
+    trace_lines.append(f"Step 8 | LangChain agent orchestration          [Phase 8]")
+    trace_lines.append(f"Step 9 | IndicTrans2 English → {detected_display:<8}        [Phase 10]")
+    trace_lines.append(f"Step 10| Indic TTS → {detected_display} audio              [Phase 10]")
+
+    intent_summary = (
+        f"Intent   : {state.intent}\n"
+        f"Crop     : {state.crop or '—'}\n"
+        f"Stage    : {f'{state.crop_stage_days} days' if state.crop_stage_days else '—'}\n"
+        f"Needs    : {'weather ' if state.needs_weather else ''}"
+        f"{'crop_info ' if state.needs_crop_info else ''}"
+        f"{'scheme' if state.needs_scheme else ''}"
     )
 
     return (
         transcription,
-        english_text,
-        answer,
-        None,
+        state.english_text,
+        intent_summary,
+        state.english_answer,
+        None,                        # audio output (Phase 10)
         "\n".join(trace_lines),
         detected_display,
     )
@@ -127,7 +163,9 @@ def build_ui() -> gr.Blocks:
         gr.Markdown(
             "# Multilingual Agricultural Assistant\n"
             "### Speak your farming question in Hindi, Marathi, or Punjabi\n"
-            f"*STT model: `{WHISPER_MODEL_ID}` — language is auto-detected from your speech*"
+            f"*STT: `{WHISPER_MODEL_ID}` · "
+            f"Translation: {'stub' if USE_STUB_TRANSLATION else 'IndicTrans2'} · "
+            f"LLM: {'stub' if USE_STUB_LLM else 'HF API'}*"
         )
 
         with gr.Row():
@@ -142,7 +180,7 @@ def build_ui() -> gr.Blocks:
                     label="Your location (e.g. Nashik, Maharashtra)",
                     placeholder="Enter city, state",
                 )
-                submit_btn = gr.Button("Transcribe & Translate", variant="primary")
+                submit_btn = gr.Button("Ask the Assistant", variant="primary")
 
             # ── Right column: outputs ─────────────────────────────────────────
             with gr.Column(scale=2):
@@ -150,34 +188,35 @@ def build_ui() -> gr.Blocks:
                     label="Detected language",
                     lines=1,
                     interactive=False,
-                    placeholder="Language will be auto-detected from your speech...",
                 )
                 transcription_output = gr.Textbox(
                     label="What you said (regional language)",
                     lines=3,
                     interactive=False,
-                    placeholder="Your spoken words will appear here after transcription...",
                 )
                 english_translation_output = gr.Textbox(
                     label="English translation (IndicTrans2)",
                     lines=3,
                     interactive=False,
-                    placeholder="The English translation will appear here...",
                 )
-                text_output = gr.Textbox(
-                    label="Pipeline summary",
-                    lines=8,
+                intent_output = gr.Textbox(
+                    label="Intent extraction (Phase 4)",
+                    lines=4,
                     interactive=False,
-                    placeholder="The assistant's answer will appear here...",
+                )
+                answer_output = gr.Textbox(
+                    label="Answer (English — Phase 4)",
+                    lines=10,
+                    interactive=False,
                 )
                 audio_output = gr.Audio(
-                    label="Voice response",
+                    label="Voice response (Phase 10)",
                     autoplay=True,
                     visible=True,
                 )
                 trace_output = gr.Textbox(
                     label="Pipeline trace (dev mode)",
-                    lines=12,
+                    lines=14,
                     interactive=False,
                     visible=DEV_MODE,
                 )
@@ -188,7 +227,8 @@ def build_ui() -> gr.Blocks:
             outputs=[
                 transcription_output,
                 english_translation_output,
-                text_output,
+                intent_output,
+                answer_output,
                 audio_output,
                 trace_output,
                 detected_language_output,

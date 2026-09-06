@@ -1,0 +1,73 @@
+{
+  "name": "cotton",
+  "local_names": ["कपास", "ਕਪਾਹ", "कापूस"],
+  "total_duration_days": 180,
+  "sowing_season": "May–June (after monsoon onset)",
+  "harvest_season": "October–January (multiple pickings)",
+  "soil": "Deep black cotton soil (Vertisols) or medium loam, pH 7.0–8.0",
+  "stages": [
+    {
+      "name": "Germination / Emergence",
+      "days_range": [0, 15],
+      "description": "Seeds germinate and seedlings emerge.",
+      "irrigation": "One pre-sowing irrigation. Avoid irrigation after sowing until seedlings emerge (7–10 days).",
+      "fertilizer": "Basal: 25 kg DAP + 15 kg MOP per acre. Seed treatment with Imidacloprid 70 WS.",
+      "watch_for": ["Poor germination in waterlogged soil", "Sucking pests from emergence"],
+      "tips": ["Plant spacing: 90 cm × 60 cm for Bt cotton", "Sow Bt cotton with 20% non-Bt refuge crop"]
+    },
+    {
+      "name": "Seedling / Early Vegetative",
+      "days_range": [16, 45],
+      "description": "Rapid vegetative growth. Branching begins.",
+      "irrigation": "Irrigate every 10–12 days. Avoid waterlogging.",
+      "fertilizer": "Top dress 1: 20 kg Urea at 30 days after sowing.",
+      "watch_for": ["Thrips (silvering of leaves)", "Whitefly", "Aphids under leaves", "Jassids (leaf curl)"],
+      "tips": ["Monitor sucking pests weekly", "Yellow sticky traps help monitor and trap whitefly and thrips"]
+    },
+    {
+      "name": "Squaring / Flower Bud Formation",
+      "days_range": [46, 80],
+      "description": "Square (flower buds) appear. Plant frame developing.",
+      "irrigation": "Irrigate every 10 days. Moisture stress at squaring reduces boll number.",
+      "fertilizer": "Top dress 2: 20 kg Urea + 10 kg MOP at 50–55 days.",
+      "watch_for": ["Pink bollworm attacking squares (entry hole visible)", "American bollworm on squares", "Whitefly transmitting Cotton Leaf Curl Virus"],
+      "tips": ["Install pheromone traps for bollworm monitoring", "If Cotton Leaf Curl Virus seen, no cure — remove plants, control whitefly"]
+    },
+    {
+      "name": "Flowering / Boll Formation",
+      "days_range": [81, 120],
+      "description": "White flowers appear, turning pink then falling. Bolls (cotton balls) form and grow.",
+      "irrigation": "Irrigate every 10–12 days. Critical period — moisture stress reduces boll size.",
+      "fertilizer": "Top dress 3: 15 kg Urea at 90 days. Foliar: 2% DAP spray at boll formation.",
+      "watch_for": ["Pink bollworm (rosette flowers, wormy lint)", "American bollworm boring into bolls", "Boll rot in humid conditions", "Mirid bug damaging bolls"],
+      "tips": ["This is the highest-value stage — protect bolls carefully", "Spray Chlorantraniliprole 0.3 ml/litre for bollworm"]
+    },
+    {
+      "name": "Boll Maturation",
+      "days_range": [121, 160],
+      "description": "Bolls maturing and beginning to open (dehisce).",
+      "irrigation": "Reduce irrigation. Stop 3–4 weeks before final harvest.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Sucking pests on open bolls", "Boll rot after rain", "Staining of lint by pests"],
+      "tips": ["Ethephon spray (600 ml in 200 litres water) can hasten boll opening if needed"]
+    },
+    {
+      "name": "Harvest",
+      "days_range": [161, 180],
+      "description": "Multiple pickings as bolls open over 4–8 weeks.",
+      "irrigation": "No irrigation.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Contamination of cotton with leaves or trash reduces price", "Delay causes fibre degradation"],
+      "tips": ["Pick only fully opened white bolls", "Pick every 15–20 days for 3–4 rounds", "Avoid picking in rain or wet conditions"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Pink Bollworm", "symptoms": "Rosette flowers, pink larvae inside bolls, holes in seeds", "control": "Chlorantraniliprole 0.3 ml/litre; pheromone traps for monitoring"},
+    {"name": "Whitefly", "symptoms": "Yellowing, honeydew, sooty mould, transmits Cotton Leaf Curl Virus", "control": "Flonicamid 0.3 g/litre or Spiromesifen 1 ml/litre"},
+    {"name": "Thrips", "symptoms": "Silvery leaf surface, curling of leaves upward", "control": "Spinosad 0.3 ml/litre"}
+  ],
+  "common_diseases": [
+    {"name": "Cotton Leaf Curl Virus (CLCuV)", "symptoms": "Severe upward curling of leaves, dark vein thickening, stunted growth", "control": "No cure — control whitefly vector; remove infected plants"},
+    {"name": "Fusarium Wilt", "symptoms": "Sudden wilting, yellowing, brown discoloration inside stem", "control": "Seed treatment with Trichoderma; soil application of Carbendazim 1 g/litre"}
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "name": "rice",
+  "local_names": ["धान", "चावल", "ਝੋਨਾ", "भात", "ਧਾਨ"],
+  "total_duration_days": 135,
+  "sowing_season": "Kharif: May–June (nursery), June–July (transplanting)",
+  "harvest_season": "October–November",
+  "soil": "Heavy clay or clay loam with good water retention, pH 5.5–7.0",
+  "stages": [
+    {
+      "name": "Nursery",
+      "days_range": [0, 25],
+      "description": "Seeds germinated and seedlings raised in nursery beds.",
+      "irrigation": "Maintain 2–3 cm standing water in nursery after germination.",
+      "fertilizer": "Apply 1 kg Urea per 100 sq metre nursery area at 10 days.",
+      "watch_for": ["Brown plant hopper in nursery", "Blast disease (grey lesions)"],
+      "tips": ["Seed rate: 20–25 kg per acre", "Transplant at 20–25 days when seedlings are 20–25 cm tall"]
+    },
+    {
+      "name": "Transplanting / Early Vegetative",
+      "days_range": [26, 45],
+      "description": "Seedlings transplanted to puddled field. Roots establishing.",
+      "irrigation": "Maintain 3–5 cm standing water continuously.",
+      "fertilizer": "Basal: 30 kg DAP + 20 kg MOP + 30 kg Urea per acre at transplanting.",
+      "watch_for": ["Transplant shock", "Dead heart caused by stem borer", "Leaf folder"],
+      "tips": ["Plant 2–3 seedlings per hill, spacing 20 cm × 15 cm", "Check for stem borer — cut affected tillers show dead heart"]
+    },
+    {
+      "name": "Active Tillering",
+      "days_range": [46, 70],
+      "description": "Maximum tiller production. Green cover established.",
+      "irrigation": "Maintain 3–5 cm standing water. Drain field for 5–7 days mid-tillering to control unproductive tillers.",
+      "fertilizer": "Top dress 1: 25 kg Urea per acre at 30 days after transplanting.",
+      "watch_for": ["Brown plant hopper (BPH) causing 'hopper burn'", "Stem borer", "Sheath blight"],
+      "tips": ["Monitor BPH weekly — colonies build fast", "Do not apply excess Urea — promotes BPH and sheath blight"]
+    },
+    {
+      "name": "Panicle Initiation / Booting",
+      "days_range": [71, 95],
+      "description": "Panicle forming inside flag leaf sheath. Most critical growth stage.",
+      "irrigation": "Maintain 5 cm standing water continuously — do not allow field to dry.",
+      "fertilizer": "Top dress 2: 20 kg Urea per acre at panicle initiation (PI stage).",
+      "watch_for": ["Blast disease on neck (neck blast — most damaging)", "False smut", "Sheath rot"],
+      "tips": ["Spray Tricyclazole 0.6 g/litre at PI stage for blast prevention", "This stage determines final grain number — protect carefully"]
+    },
+    {
+      "name": "Heading / Flowering",
+      "days_range": [96, 110],
+      "description": "Panicles emerge and flowering (anthesis) occurs.",
+      "irrigation": "Maintain 3–5 cm water during heading and flowering.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Gall midge galls on tillers", "Rice bug piercing developing grains", "Whitebackd plant hopper"],
+      "tips": ["Avoid pesticides during flowering — kills pollinators", "High temperature during flowering causes sterility"]
+    },
+    {
+      "name": "Grain Filling / Ripening",
+      "days_range": [111, 135],
+      "description": "Grains fill with starch and ripen. Panicles turn golden.",
+      "irrigation": "Reduce water to 2–3 cm. Drain field 10–15 days before harvest.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Rice bug (stink bug) sucking developing grains causing chalky spots", "Rat damage"],
+      "tips": ["Harvest when 80–85% grains are straw-coloured", "Avoid delayed harvest — shattering losses increase"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Stem Borer", "symptoms": "Dead heart in vegetative stage, white ear in reproductive stage", "control": "Cartap hydrochloride 1.5 g/litre or Chlorantraniliprole 0.3 ml/litre"},
+    {"name": "Brown Plant Hopper (BPH)", "symptoms": "Circular patches of burnt plants (hopper burn), insects at base", "control": "Buprofezin 1 ml/litre — do NOT use pyrethroids (causes resurgence)"},
+    {"name": "Leaf Folder", "symptoms": "Leaves rolled into tubes, white streaks", "control": "Chlorpyriphos 2 ml/litre"}
+  ],
+  "common_diseases": [
+    {"name": "Blast", "symptoms": "Diamond-shaped grey lesions with brown border on leaves; brown neck at panicle base", "control": "Tricyclazole 0.6 g/litre or Isoprothiolane 1.5 ml/litre"},
+    {"name": "Sheath Blight", "symptoms": "Oval water-soaked lesions on sheath, white with brown border", "control": "Hexaconazole 1 ml/litre or Validamycin 2 ml/litre"},
+    {"name": "Bacterial Leaf Blight (BLB)", "symptoms": "Water-soaked stripe on leaf margins turning yellow then white", "control": "Spray copper oxychloride 3 g/litre; no curative chemical — use resistant varieties"}
+  ]
+}
