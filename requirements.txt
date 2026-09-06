@@ -1,0 +1,39 @@
+# ─── Core ─────────────────────────────────────────────────────────────────────
+python-dotenv==1.0.1
+requests==2.32.3
+pydantic==2.7.4
+
+# ─── UI ───────────────────────────────────────────────────────────────────────
+gradio==4.44.0
+
+# ─── LangChain ────────────────────────────────────────────────────────────────
+langchain==0.2.16
+langchain-community==0.2.16
+langchain-huggingface==0.0.3
+
+# ─── ML / Models ──────────────────────────────────────────────────────────────
+torch==2.4.0
+torchaudio==2.4.0
+transformers==4.44.2
+accelerate==0.34.2
+sentence-transformers==3.0.1
+openai-whisper==20231117
+
+# ─── Translation (IndicTrans2) ─────────────────────────────────────────────────
+# indictranstoolkit requires MSVC on Windows — use our pure-Python shim instead.
+# The shim (app/models/indic_processor.py) uses indic-nlp-library + sacremoses.
+sentencepiece==0.2.0
+indic-nlp-library==0.92
+sacremoses==0.2.0
+
+# ─── RAG ──────────────────────────────────────────────────────────────────────
+faiss-cpu==1.8.0
+pymupdf==1.24.10
+
+# ─── TTS (Indic) ──────────────────────────────────────────────────────────────
+# Install separately after verifying GPU availability (Phase 10):
+#   pip install git+https://github.com/ai4bharat/indic-parler-tts
+soundfile==0.12.1
+
+# ─── Utilities ────────────────────────────────────────────────────────────────
+numpy==1.26.4

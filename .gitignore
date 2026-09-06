@@ -1,0 +1,48 @@
+# Environment & secrets
+.env
+*.env.local
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Data – raw PDFs and built vector index (large binaries)
+data/schemes/raw/
+data/vectorstore/
+
+# Model cache
+.cache/
+models_cache/
+*.bin
+*.safetensors
+*.gguf
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+gradio_out.txt
+gradio_err.txt
