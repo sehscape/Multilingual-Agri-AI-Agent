@@ -72,29 +72,104 @@ class HuggingFaceInferenceAPILLM(BaseLLM):
 
 
 class StubLLM(BaseLLM):
-    """Returns canned responses for local dev without an HF token."""
+    """Returns context-aware responses for local dev without an HF token."""
 
     def generate(self, prompt: str) -> str:
-        logger.warning("StubLLM: returning placeholder response.")
-        # Intent extraction prompts contain the JSON schema — return valid JSON
+        import re
+
+        logger.warning("StubLLM: building response from injected context.")
+
+        # ── Intent extraction ────────────────────────────────────────────────
         if '"intent"' in prompt:
+            # Try to detect crop from the query
+            query = ""
+            m = re.search(r"Query:\s*(.+)", prompt)
+            if m:
+                query = m.group(1).lower()
+
+            crop = "wheat"
+            for c in ["onion", "rice", "tomato", "cotton", "maize", "corn", "paddy"]:
+                if c in query:
+                    crop = c
+                    break
+
+            days_match = re.search(r"(\d+)\s*day", query)
+            days = int(days_match.group(1)) if days_match else 40
+
+            needs_weather = any(w in query for w in ["rain", "weather", "temperature", "forecast", "flood", "drought"])
+            needs_scheme = any(w in query for w in ["scheme", "subsidy", "government", "loan", "insurance"])
+
             return (
-                '{"intent": "crop_advice", "crop": "wheat", "crop_stage_days": 40, '
-                '"location": null, "needs_weather": true, "needs_scheme": false, '
-                '"needs_crop_info": true}'
+                f'{{"intent": "crop_advice", "crop": "{crop}", "crop_stage_days": {days}, '
+                f'"location": null, "needs_weather": {str(needs_weather).lower()}, '
+                f'"needs_scheme": {str(needs_scheme).lower()}, "needs_crop_info": true}}'
             )
-        # Final answer prompt
-        return (
-            "Situation:\n"
-            "Your wheat crop is 40 days old and rain is expected in the next few days.\n\n"
-            "What you should do:\n"
-            "1. Avoid additional irrigation for the next 3 days.\n"
-            "2. Ensure proper drainage channels are clear to prevent waterlogging.\n"
-            "3. Monitor for fungal diseases (powdery mildew, rust) after the rain.\n"
-            "4. Do not apply fertilizer immediately before heavy rain — it will wash away.\n\n"
-            "Important:\n"
-            "This is general guidance. Consult your local KVK for crop-specific advice."
-        )
+
+        # ── Final answer — extract key facts from injected crop context ──────
+        # Pull crop name and current stage from the crop knowledge section
+        crop_name = "your crop"
+        stage_name = ""
+        irrigation = ""
+        fertilizer = ""
+        watch_for = ""
+        tips = ""
+
+        m = re.search(r"Crop\s+:\s+(.+)", prompt)
+        if m:
+            crop_name = m.group(1).strip()
+
+        m = re.search(r"=== Current Stage:\s*(.+?)\s*===", prompt)
+        if m:
+            stage_name = m.group(1).strip()
+
+        m = re.search(r"Irrigation\s+:\s+(.+)", prompt)
+        if m:
+            irrigation = m.group(1).strip()
+
+        m = re.search(r"Fertilizer\s+:\s+(.+)", prompt)
+        if m:
+            fertilizer = m.group(1).strip()
+
+        m = re.search(r"Watch for\s+:\s+(.+)", prompt)
+        if m:
+            watch_for = m.group(1).strip()
+
+        m = re.search(r"Tips\s+:\s+(.+)", prompt)
+        if m:
+            tips = m.group(1).strip()
+
+        # Also pull the farmer's question
+        farmer_q = ""
+        m = re.search(r"Farmer's Question \(English\):\s*(.+)", prompt)
+        if m:
+            farmer_q = m.group(1).strip()
+
+        stage_line = f" — currently in **{stage_name}** stage" if stage_name else ""
+        answer_lines = [
+            f"Situation:",
+            f"Your {crop_name} crop{stage_line}. Based on crop knowledge for this stage:\n",
+            "What you should do:",
+        ]
+        step = 1
+        if irrigation:
+            answer_lines.append(f"{step}. Irrigation: {irrigation}")
+            step += 1
+        if fertilizer:
+            answer_lines.append(f"{step}. Fertilizer: {fertilizer}")
+            step += 1
+        if watch_for:
+            answer_lines.append(f"{step}. Watch for: {watch_for}")
+            step += 1
+        if tips:
+            answer_lines.append(f"{step}. Tips: {tips}")
+
+        answer_lines += [
+            "",
+            "Important:",
+            "This response is generated from the crop knowledge base. "
+            "Consult your local KVK for location-specific advice.",
+        ]
+        return "\n".join(answer_lines)
 
 
 def get_llm(device: str = "cpu", use_stub: bool = False) -> BaseLLM:

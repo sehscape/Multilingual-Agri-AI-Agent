@@ -43,8 +43,9 @@ def _fmt_weather(state: AgentState) -> str:
 
 def _fmt_crop(state: AgentState) -> str:
     if state.crop_data:
-        return str(state.crop_data)
-    # Fall back to live crop tool lookup if crop_data not pre-populated
+        # crop_data is stored as {"context": <string>} by the pipeline
+        return state.crop_data.get("context", str(state.crop_data))
+    # Fall back to live crop tool lookup if not pre-populated
     if state.crop or state.crop_stage_days:
         try:
             from app.tools.crop_tool import get_crop_context
