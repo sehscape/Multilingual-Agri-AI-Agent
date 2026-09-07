@@ -310,6 +310,6 @@ This is an active portfolio/academic project. Contributions, suggestions, and fe
 
 Built with the goal of making agricultural AI accessible to every Indian farmer, regardless of language or literacy.
 
-**Made by [Sehal Chodankar](https://github.com/sehscape)**
+
 
 </div>
