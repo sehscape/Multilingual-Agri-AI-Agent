@@ -47,3 +47,6 @@ Thumbs.db
 logs/
 gradio_out.txt
 gradio_err.txt
+
+# Gradio cache
+.gradio/
