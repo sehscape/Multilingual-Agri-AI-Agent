@@ -37,25 +37,17 @@ def generate_answer(state: AgentState, llm: BaseLLM) -> AgentState:
 
 def _fmt_weather(state: AgentState) -> str:
     if not state.weather_data:
-        return "Not available — Weather tool will be added in Phase 6."
-    return str(state.weather_data)
+        return "No weather data available."
+    return state.weather_data.get("context", str(state.weather_data))
 
 
 def _fmt_crop(state: AgentState) -> str:
     if state.crop_data:
-        # crop_data is stored as {"context": <string>} by the pipeline
         return state.crop_data.get("context", str(state.crop_data))
-    # Fall back to live crop tool lookup if not pre-populated
-    if state.crop or state.crop_stage_days:
-        try:
-            from app.tools.crop_tool import get_crop_context
-            return get_crop_context(state.crop, state.crop_stage_days)
-        except Exception as e:
-            return f"Crop tool error: {e}"
     return "No crop information requested."
 
 
 def _fmt_scheme(state: AgentState) -> str:
     if not state.scheme_docs:
-        return "Not available — Government scheme RAG will be added in Phase 7."
-    return "\n\n".join(str(d) for d in state.scheme_docs)
+        return "No government scheme information requested."
+    return "\n\n".join(d.get("context", str(d)) for d in state.scheme_docs)

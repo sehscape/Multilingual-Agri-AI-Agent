@@ -1,9 +1,10 @@
 """Gradio UI.
 
-Phase 2: voice recording → Whisper STT (auto language detection) → regional text.
-Phase 3: regional text → IndicTrans2 → English text.
-Phase 4: English text → Intent extraction + LLM answer generation.
-Phases 5-10 will add: tools (crop/weather/scheme), full agent, TTS.
+Phase 2:  voice recording → Whisper STT (auto language detection) → regional text.
+Phase 3:  regional text → IndicTrans2 → English text.
+Phase 4:  English text → Intent extraction.
+Phase 8:  Orchestrator → crop / weather / scheme tools → LLM answer generation.
+Phase 10: IndicTrans2 English → regional + Indic TTS (pending).
 """
 import time
 import gradio as gr
@@ -25,6 +26,7 @@ _LANG_DISPLAY: dict[str, str] = {
 _stt = None
 _translator = None
 _llm = None
+_orchestrator = None
 
 
 def _get_stt():
@@ -51,18 +53,29 @@ def _get_llm():
     return _llm
 
 
+def _get_orchestrator():
+    global _orchestrator
+    if _orchestrator is None:
+        from app.agents.orchestrator import get_orchestrator
+        _orchestrator = get_orchestrator(_get_llm())
+    return _orchestrator
+
+
 def _run_pipeline(audio, location: str):
     """
-    Phase 4 pipeline:
+    Phase 8 pipeline:
         audio → [Ph2] Whisper STT → regional text + language
               → [Ph3] IndicTrans2 → English text
               → [Ph4] Intent extraction → intent, crop, stage, flags
-              → [Ph4] LLM answer → English answer
-              → [Ph5-10] tool calls + TTS (stubs)
+              → [Ph8] Orchestrator:
+                        ├─ Crop knowledge tool  (if needs_crop_info)
+                        ├─ Weather tool         (if needs_weather)
+                        ├─ Scheme RAG tool      (if needs_scheme)
+                        └─ LLM answer generation
+              → [Ph10] IndicTrans2 English → regional + Indic TTS (pending)
     """
     from app.agents.state import AgentState
     from app.agents.intent import extract_intent
-    from app.agents.answering import generate_answer
 
     trace_lines = [f"Location : {location or 'not provided'}"]
     detected_display = ""
@@ -116,27 +129,17 @@ def _run_pipeline(audio, location: str):
     state = extract_intent(state, _get_llm())
     trace_lines.append(f"         {state.trace[-1] if state.trace else 'done'} in {time.time()-t0:.1f}s")
 
-    # ── Step 4: Crop knowledge tool (Phase 5) — runs BEFORE LLM answer ───────
-    from app.tools.crop_tool import get_crop_context
-    if state.needs_crop_info and (state.crop or state.crop_stage_days):
-        trace_lines.append(f"\nStep 4 | Crop knowledge tool — {state.crop}, {state.crop_stage_days}d")
-        crop_ctx = get_crop_context(state.crop, state.crop_stage_days)
-        state.crop_data = {"context": crop_ctx}
-        trace_lines.append(f"         Retrieved {len(crop_ctx)} chars of crop knowledge")
-    else:
-        trace_lines.append(f"\nStep 4 | Crop knowledge tool — skipped (not needed for this query)")
-
-    # ── Step 5: LLM answer generation (Phase 4) — uses crop data from step 4 ─
-    trace_lines.append(f"\nStep 5 | LLM answer generation{stub_label}")
+    # ── Steps 4-6: Orchestrator — tools + LLM answer (Phase 8) ───────────────
+    trace_lines.append(f"\nStep 4 | Agent orchestrator (Phase 8){stub_label}")
     t0 = time.time()
-    state = generate_answer(state, _get_llm())
-    trace_lines.append(f"         Answer generated in {time.time()-t0:.1f}s ({len(state.english_answer)} chars)")
+    state = _get_orchestrator().run(state)
+    # Append all orchestrator traces
+    for msg in state.trace[1:]:   # skip the intent trace already logged above
+        trace_lines.append(f"         {msg}")
+    trace_lines.append(f"         Orchestrator done in {time.time()-t0:.1f}s")
 
-    trace_lines.append(f"\nStep 6 | Weather tool (Open-Meteo)              [Phase 6]")
-    trace_lines.append(f"Step 7 | Government scheme RAG                  [Phase 7]")
-    trace_lines.append(f"Step 8 | LangChain agent orchestration          [Phase 8]")
-    trace_lines.append(f"Step 9 | IndicTrans2 English → {detected_display:<8}        [Phase 10]")
-    trace_lines.append(f"Step 10| Indic TTS → {detected_display} audio              [Phase 10]")
+    trace_lines.append(f"\nStep 5 | IndicTrans2 English → {detected_display:<8}        [Phase 10]")
+    trace_lines.append(f"Step 6 | Indic TTS → {detected_display} audio              [Phase 10]")
 
     intent_summary = (
         f"Intent   : {state.intent}\n"
