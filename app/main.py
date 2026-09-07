@@ -7,9 +7,16 @@ logger = get_logger(__name__)
 
 def main() -> None:
     logger.info("Starting Multilingual Agri Assistant")
-    demo = build_ui()
+    from app.ui.gradio_app import _CSS
     import gradio as gr
-    demo.launch(server_name="0.0.0.0", server_port=7860, share=False, theme=gr.themes.Soft())
+    demo = build_ui()
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=7860,
+        share=False,
+        theme=gr.themes.Soft(),
+        css=_CSS,
+    )
 
 
 if __name__ == "__main__":
