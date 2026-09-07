@@ -50,6 +50,8 @@ USE_HF_INFERENCE_API: bool = os.getenv("USE_HF_INFERENCE_API", "true").lower() =
 USE_STUB_TRANSLATION: bool = os.getenv("USE_STUB_TRANSLATION", "false").lower() == "true"
 # Set true to skip HF API calls and use StubLLM (for dev without HF token)
 USE_STUB_LLM: bool = os.getenv("USE_STUB_LLM", "false").lower() == "true"
+# Set true to skip FAISS index load and return stub scheme responses (for fast local dev)
+USE_STUB_RAG: bool = os.getenv("USE_STUB_RAG", "false").lower() == "true"
 
 # ─── Weather API ──────────────────────────────────────────────────────────────
 WEATHER_API_URL: str = os.getenv("WEATHER_API_URL", "https://api.open-meteo.com/v1/forecast")

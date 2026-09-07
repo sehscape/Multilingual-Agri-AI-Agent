@@ -1,0 +1,76 @@
+SCHEME: Soil Health Card Scheme
+SOURCE: Ministry of Agriculture & Farmers Welfare, Government of India
+CATEGORY: Soil Management / Nutrient Management
+
+OVERVIEW
+The Soil Health Card (SHC) scheme was launched in February 2015. The Government of India provides every farmer a Soil Health Card once in every 2 years which carries crop-wise recommendations of nutrients and fertilizers required for each farm. This helps farmers improve soil health and productivity while reducing fertilizer costs.
+
+WHAT IS A SOIL HEALTH CARD
+A Soil Health Card is a printed report that a farmer gets for each of his fields. It contains the status of 12 soil parameters — primary, secondary, and micro nutrients — along with crop-wise fertilizer recommendations.
+
+SOIL PARAMETERS TESTED
+Primary nutrients:
+- Nitrogen (N)
+- Phosphorus (P)
+- Potassium (K)
+
+Secondary nutrients:
+- Sulphur (S)
+
+Micro nutrients:
+- Zinc (Zn)
+- Boron (B)
+- Iron (Fe)
+- Manganese (Mn)
+- Copper (Cu)
+
+Physical properties:
+- pH (soil acidity/alkalinity)
+- Electrical Conductivity (EC)
+- Organic Carbon (OC)
+
+BENEFITS
+- Know the exact nutrient status of your soil
+- Get crop-specific fertilizer recommendations — avoid over-fertilization
+- Reduce fertilizer costs by applying only what is needed
+- Improve crop yield and quality
+- Detect soil problems like salinity, alkalinity, or acidity early
+- Sustainable long-term soil health management
+
+HOW TO GET A SOIL HEALTH CARD
+1. Contact your nearest Krishi Vigyan Kendra (KVK), State Agriculture Department office, or soil testing laboratory.
+2. A government official or agricultural officer will collect a soil sample from your field.
+3. The sample is tested at a government soil testing laboratory.
+4. The card is prepared and delivered to the farmer within 2 months.
+5. Check status online at soilhealth.dac.gov.in.
+
+HOW TO COLLECT SOIL SAMPLES
+- Collect soil from 8–10 spots within the same field.
+- Dig to a depth of 15–20 cm (6–8 inches).
+- Remove surface litter before collecting.
+- Mix all samples from the field into one composite sample.
+- Label the bag with your name, village, district, and crop details.
+- Take samples before sowing or after harvest — avoid sampling immediately after fertilizer application.
+
+INTERPRETING THE CARD
+- Green = Sufficient level (no additional input needed)
+- Orange = Moderate deficiency (apply recommended dose)
+- Red = Severe deficiency (apply higher dose as recommended)
+
+Follow the crop-wise fertilizer recommendations printed on the card for the next two cropping seasons.
+
+LINK WITH OTHER SCHEMES
+- KCC holders and PM-KISAN beneficiaries are priority targets for SHC distribution.
+- The fertilizer recommendations from SHC can reduce your KCC loan requirement.
+- Following SHC recommendations improves eligibility for crop insurance claims.
+
+IMPORTANT NOTES
+- The scheme is free of cost for all farmers.
+- Cards are issued once in 2 years (every two cropping seasons).
+- Each card has a unique 11-digit ID.
+- Farmers can view their card history online at soilhealth.dac.gov.in.
+
+HELPLINE
+Soil Health Card Portal: soilhealth.dac.gov.in
+State Agriculture Department helplines vary by state.
+National Agriculture Helpline: 1551 (Kisan Call Centre)

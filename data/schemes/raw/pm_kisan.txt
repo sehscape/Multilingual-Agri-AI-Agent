@@ -1,0 +1,44 @@
+SCHEME: PM-KISAN (Pradhan Mantri Kisan Samman Nidhi)
+SOURCE: Ministry of Agriculture & Farmers Welfare, Government of India
+CATEGORY: Income Support
+
+OVERVIEW
+PM-KISAN is a Central Government scheme that provides income support of Rs 6,000 per year to all landholding farmer families across the country. The financial benefit is transferred directly to the bank accounts of the beneficiaries in three equal installments of Rs 2,000 every four months.
+
+ELIGIBILITY
+- All landholding farmers' families (husband, wife, and minor children) are eligible.
+- The family must own cultivable agricultural land.
+- Institutional landholders are not eligible.
+- Farmer families holding constitutional posts are excluded.
+- Serving or retired officers of Central/State Government, PSUs, and government autonomous bodies are excluded (except Multi-Tasking Staff/Class IV/Group D employees).
+- Former and current Members of Parliament, State Legislative Assemblies, and Ministers are not eligible.
+- Any person who paid income tax in the last assessment year is excluded.
+- Professionals such as doctors, engineers, lawyers, chartered accountants, and architects who are registered and practising are excluded.
+
+BENEFIT
+- Rs 6,000 per year paid directly to the farmer's bank account.
+- Paid in 3 installments of Rs 2,000 each every four months.
+- No deductions or intermediaries — Direct Benefit Transfer (DBT).
+
+HOW TO APPLY
+1. Visit the nearest Common Service Centre (CSC) or Krishi Vigyan Kendra (KVK).
+2. Alternatively register online at pmkisan.gov.in.
+3. Submit land records, Aadhaar card, bank passbook, and mobile number.
+4. Farmers can self-register on the PM-KISAN portal.
+5. Check beneficiary status at pmkisan.gov.in/beneficiarystatus.aspx.
+
+DOCUMENTS REQUIRED
+- Aadhaar Card (mandatory for DBT)
+- Bank account number and IFSC code
+- Land ownership documents / Khasra-Khatauni
+- Mobile number linked to Aadhaar
+
+IMPORTANT NOTES
+- Aadhaar is mandatory. Farmers must seed their Aadhaar to their bank account.
+- If a farmer has received money but is not eligible, the amount must be returned.
+- The scheme is implemented by State/UT governments who verify land records.
+- Installments are released quarterly: April–July, August–November, December–March.
+
+HELPLINE
+PM-KISAN Helpline: 155261 or 011-24300606
+Email: pmkisan-ict@gov.in

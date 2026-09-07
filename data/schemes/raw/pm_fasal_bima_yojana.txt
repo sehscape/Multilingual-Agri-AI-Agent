@@ -1,0 +1,62 @@
+SCHEME: PMFBY (Pradhan Mantri Fasal Bima Yojana)
+SOURCE: Ministry of Agriculture & Farmers Welfare, Government of India
+CATEGORY: Crop Insurance
+
+OVERVIEW
+Pradhan Mantri Fasal Bima Yojana (PMFBY) is a crop insurance scheme that provides financial support to farmers suffering crop loss due to natural calamities, pests, and diseases. It aims to stabilize farm income and encourage farmers to adopt innovative practices.
+
+CROPS COVERED
+- Food crops: Cereals (wheat, rice/paddy, maize, bajra, jowar), Pulses (tur/arhar, moong, urad, gram), Oilseeds (groundnut, soybean, sunflower, sesame, mustard)
+- Commercial/Horticultural crops: Cotton, sugarcane, onion, tomato, potato, banana, and other notified crops
+- The exact list of notified crops varies by state and season.
+
+RISKS COVERED
+- Natural fire and lightning
+- Storm, hailstorm, cyclone, typhoon, tempest, hurricane, tornado
+- Flood, inundation, landslide
+- Drought, dry spells
+- Pests and diseases
+- Post-harvest losses (up to 14 days after harvest for crops left in cut-and-spread condition)
+- Prevented sowing/planting due to adverse weather
+
+PREMIUM RATES (Farmer's Share)
+- Kharif crops: Maximum 2% of Sum Insured
+- Rabi crops: Maximum 1.5% of Sum Insured
+- Annual commercial and horticultural crops: Maximum 5% of Sum Insured
+- The balance premium is shared equally by Central and State Governments.
+
+ELIGIBILITY
+- All farmers growing notified crops in notified areas are eligible.
+- Loanee farmers with Kisan Credit Card (KCC)/crop loans are enrolled compulsorily.
+- Non-loanee farmers can enroll voluntarily through banks, CSCs, or the PMFBY portal.
+- Tenant farmers and sharecroppers are also eligible.
+
+HOW TO APPLY
+1. Loanee farmers: Automatically enrolled by the bank at the time of crop loan sanction.
+2. Non-loanee farmers:
+   - Visit nearest bank branch, CSC, or insurance company agent.
+   - Register online at pmfby.gov.in.
+   - Submit crop declaration, land records, bank details, and Aadhaar.
+3. Enrollment deadline: 2 weeks before the start of normal sowing season (varies by state and crop).
+
+DOCUMENTS REQUIRED
+- Aadhaar card
+- Bank passbook (account number and IFSC)
+- Land ownership / tenancy records (Khasra-Khatauni)
+- Crop sowing certificate (from Patwari or village-level officer)
+
+CLAIM PROCESS
+- Crop loss due to localized events: Farmer must notify insurer/bank/agriculture department within 72 hours.
+- Post-harvest losses: Notify within 14 days.
+- Widespread calamity: State government declares calamity; claims are settled based on crop cutting experiments (CCE).
+- Claims are transferred directly to the farmer's bank account via DBT.
+
+IMPORTANT NOTES
+- PMFBY is now voluntary for all farmers including loanee farmers (as of 2020).
+- Some states have opted out of PMFBY and run their own crop insurance schemes.
+- The scheme runs on a seasonal basis — Kharif (June–November) and Rabi (November–March).
+- Technology like remote sensing and drones is used to assess crop losses.
+
+HELPLINE
+PMFBY Helpline: 1800-200-7710
+Portal: pmfby.gov.in

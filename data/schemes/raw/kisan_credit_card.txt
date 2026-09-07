@@ -1,0 +1,63 @@
+SCHEME: Kisan Credit Card (KCC)
+SOURCE: NABARD and Ministry of Agriculture & Farmers Welfare, Government of India
+CATEGORY: Agricultural Credit / Loan
+
+OVERVIEW
+The Kisan Credit Card (KCC) scheme provides short-term credit to farmers for their agricultural operations, post-harvest expenses, maintenance of farm assets, and consumption needs. It was introduced in 1998 and is implemented through commercial banks, regional rural banks (RRBs), and cooperative banks.
+
+PURPOSE
+- Purchase of seeds, fertilizers, pesticides, and other inputs
+- Post-harvest expenses
+- Produce marketing expenses
+- Consumption needs of farm households
+- Maintenance and repair of farm equipment
+- Allied activities like animal husbandry, fisheries
+
+ELIGIBILITY
+- All farmers (individual or joint borrowers who are owner cultivators)
+- Tenant farmers, oral lessees, and sharecroppers
+- Self-help groups (SHGs) or joint liability groups (JLGs) of farmers including tenant farmers
+- Fishermen, fish farmers, and those engaged in allied activities
+
+CREDIT LIMIT
+- Based on the scale of finance for the crop, post-harvest expenses, maintenance charges, and consumption requirements.
+- The limit is revised every year with a 10% increase for crop expenses.
+- A permanent component is also included for allied activities and term credit.
+- Loans up to Rs 3 lakh are available at a concessional interest rate of 7% per annum.
+- With interest subvention from the Government, the effective rate can be as low as 4% per annum for timely repayment.
+
+INTEREST RATE
+- Up to Rs 3 lakh: 7% per annum (with Government interest subvention of 2%)
+- Prompt repayment incentive: Additional 3% subvention — effective rate becomes 4% per annum
+- Above Rs 3 lakh: As per the lending bank's rate
+
+REPAYMENT
+- Short-term crop loans: Repaid after harvest, typically 12 months.
+- The KCC operates as a revolving credit — repay and withdraw again within the sanctioned limit.
+- The credit limit is valid for 5 years and reviewed annually.
+
+HOW TO APPLY
+1. Visit any branch of a commercial bank, RRB, or cooperative bank.
+2. Alternatively apply online via the respective bank's portal or the PM-KISAN portal (farmers registered on PM-KISAN can apply for KCC online).
+3. Submit required documents.
+4. The bank will issue a KCC (ATM-enabled debit card) after verification.
+
+DOCUMENTS REQUIRED
+- Identity proof: Aadhaar card / Voter ID / Passport
+- Address proof
+- Land ownership / tenancy documents (Khasra-Khatauni)
+- Passport-size photographs
+- No-dues certificate from other financial institutions (for new borrowers)
+
+INSURANCE UNDER KCC
+- KCC holders are automatically enrolled under PMFBY (Pradhan Mantri Fasal Bima Yojana) for crop insurance.
+- Personal accident insurance of Rs 50,000 for death/permanent disability and Rs 25,000 for partial disability is provided.
+
+IMPORTANT NOTES
+- There is no processing fee for KCC loans up to Rs 3 lakh.
+- KCC holders get priority for government scheme benefits.
+- PM-KISAN beneficiaries can get KCC with simplified procedures.
+- The RuPay KCC card can be used at ATMs, PoS machines, and for online transactions.
+
+HELPLINE
+Contact your nearest bank branch or call 1800-180-1111 (NABARD helpline)
