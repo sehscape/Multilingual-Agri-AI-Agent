@@ -34,13 +34,23 @@ INDICTRANS2_LANG_CODES: dict[str, str] = {
 }
 
 # ─── LLM ──────────────────────────────────────────────────────────────────────
+# Production model (GPU / HF Inference API) — the full-size open model.
 LLM_MODEL_ID: str = os.getenv("LLM_MODEL_ID", "meta-llama/Llama-3.1-8B-Instruct")
+# Small open-source model that runs locally on CPU (no GPU). Used by
+# HuggingFaceLocalLLM. Qwen2.5-0.5B-Instruct is ungated, ~1GB, Apache-2.0.
+# Bump to Qwen/Qwen2.5-1.5B-Instruct for better quality if the machine allows.
+LOCAL_LLM_MODEL_ID: str = os.getenv("LOCAL_LLM_MODEL_ID", "Qwen/Qwen2.5-0.5B-Instruct")
 
 # ─── Embeddings ───────────────────────────────────────────────────────────────
 EMBEDDING_MODEL_ID: str = os.getenv("EMBEDDING_MODEL_ID", "BAAI/bge-m3")
 
 # ─── TTS (Indic) ──────────────────────────────────────────────────────────────
 TTS_MODEL_ID: str = os.getenv("TTS_MODEL_ID", "ai4bharat/indic-parler-tts")
+# Which TTS engine to use for voice output:
+#   "gtts"   → lightweight, CPU-friendly, needs internet (good for local dev)
+#   "parler" → ai4bharat/indic-parler-tts (production quality, large, GPU)
+#   "stub"   → no audio (text answer only)
+TTS_ENGINE: str = os.getenv("TTS_ENGINE", "gtts")
 
 # ─── Hugging Face ─────────────────────────────────────────────────────────────
 HF_TOKEN: str = os.getenv("HF_TOKEN", "")
@@ -63,6 +73,10 @@ GEOCODING_API_URL: str = os.getenv(
 TOP_K: int = int(os.getenv("TOP_K", "5"))
 CHUNK_SIZE: int = int(os.getenv("CHUNK_SIZE", "1000"))
 CHUNK_OVERLAP: int = int(os.getenv("CHUNK_OVERLAP", "150"))
+# Minimum cosine relevance (0–1) a retrieved chunk must reach to be trusted.
+# Chunks below this are dropped; if none qualify the tool reports "insufficient
+# information" instead of presenting weak matches as fact (see spec §12).
+RAG_MIN_SCORE: float = float(os.getenv("RAG_MIN_SCORE", "0.30"))
 
 # ─── LLM Generation ───────────────────────────────────────────────────────────
 MAX_NEW_TOKENS: int = int(os.getenv("MAX_NEW_TOKENS", "512"))

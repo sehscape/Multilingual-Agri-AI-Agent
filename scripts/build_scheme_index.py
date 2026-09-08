@@ -15,7 +15,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.config import SCHEMES_RAW_DIR, VECTORSTORE_PATH
 from app.rag.scheme_rag import SchemeRAG
-from app.utils.logging import get_logger
+from app.utils.logging import get_logger, enable_utf8_console
+
+enable_utf8_console()
 
 logger = get_logger("build_scheme_index")
 

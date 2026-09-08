@@ -11,6 +11,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from app.utils.logging import enable_utf8_console
+enable_utf8_console()
+
 from app.agents.state import AgentState
 from app.agents.orchestrator import get_orchestrator
 from app.models.llm import get_llm

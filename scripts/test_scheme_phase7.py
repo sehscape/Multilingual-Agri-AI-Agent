@@ -11,6 +11,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from app.utils.logging import enable_utf8_console
+enable_utf8_console()
+
 from app.rag.scheme_rag import SchemeRAG, format_scheme_results
 
 PASS = "PASS"

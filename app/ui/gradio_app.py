@@ -11,7 +11,10 @@ import time
 import gradio as gr
 
 from app.utils.logging import get_logger
-from app.config import DEV_MODE, WHISPER_MODEL_ID, USE_STUB_TRANSLATION, USE_STUB_LLM
+from app.config import (
+    DEV_MODE, WHISPER_MODEL_ID, USE_STUB_TRANSLATION, USE_STUB_LLM,
+    USE_HF_INFERENCE_API, LOCAL_LLM_MODEL_ID, TTS_ENGINE,
+)
 
 logger = get_logger(__name__)
 
@@ -25,14 +28,17 @@ _LANG_FLAG = {"hi": "🇮🇳 Hindi", "mr": "🇮🇳 Marathi", "pa": "🇮🇳 
 _stt = None
 _translator = None
 _llm = None
+_router_llm = None
 _orchestrator = None
+_tts = None
 
 
 def _get_stt():
     global _stt
     if _stt is None:
         from app.models.stt import WhisperSTT
-        _stt = WhisperSTT()
+        from app.utils.device import get_device
+        _stt = WhisperSTT(device=get_device())
     return _stt
 
 
@@ -40,16 +46,30 @@ def _get_translator():
     global _translator
     if _translator is None:
         from app.models.translation import get_translator
-        _translator = get_translator(use_stub=USE_STUB_TRANSLATION)
+        from app.utils.device import get_device
+        _translator = get_translator(device=get_device(), use_stub=USE_STUB_TRANSLATION)
     return _translator
 
 
 def _get_llm():
+    """Answer LLM — real (local/API) when USE_STUB_LLM is off, else the stub."""
     global _llm
     if _llm is None:
         from app.models.llm import get_llm
-        _llm = get_llm(use_stub=USE_STUB_LLM)
+        from app.utils.device import get_device
+        _llm = get_llm(device=get_device(), use_stub=USE_STUB_LLM)
     return _llm
+
+
+def _get_router_llm():
+    """Intent router — always the fast, deterministic rule-based classifier.
+    Kept separate from the answer LLM so routing stays instant and reliable on
+    CPU (no slow model call just to pick which tools to run)."""
+    global _router_llm
+    if _router_llm is None:
+        from app.models.llm import StubLLM
+        _router_llm = StubLLM()
+    return _router_llm
 
 
 def _get_orchestrator():
@@ -60,10 +80,68 @@ def _get_orchestrator():
     return _orchestrator
 
 
+def _get_tts():
+    global _tts
+    if _tts is None:
+        from app.models.tts import get_tts
+        from app.utils.device import get_device
+        _tts = get_tts(device=get_device())
+    return _tts
+
+
+def _run_output_stage(state, trace) -> "str | None":
+    """Output boundary — translate the English answer to the farmer's language
+    and synthesize voice. Returns a path to an audio file, or None."""
+    answer = (state.english_answer or "").strip()
+    if not answer:
+        return None
+
+    # Target voice language: the detected regional language, else English.
+    target = state.source_language if state.source_language in ("hi", "mr", "pa") else "en"
+
+    # Step 5a: English answer → regional text (skip when stubbed or already English)
+    if target != "en" and not USE_STUB_TRANSLATION:
+        try:
+            t0 = time.time()
+            state.regional_answer = _get_translator().translate_from_english(answer, target)
+            trace.append(f"[Translate-out] en→{target} in {time.time()-t0:.1f}s")
+            tts_lang = target
+        except Exception as e:
+            logger.error("Output translation failed: %s", e)
+            trace.append(f"[Translate-out] ERROR: {e} — speaking English")
+            state.regional_answer, tts_lang = answer, "en"
+    else:
+        state.regional_answer = answer
+        tts_lang = "en"
+        note = "stub, " if (target != "en" and USE_STUB_TRANSLATION) else ""
+        trace.append(f"[Translate-out] {note}speaking English answer")
+
+    # Step 5b: text → voice (trim long text to keep the clip reasonable)
+    voice_text = state.regional_answer[:1200]
+    try:
+        t0 = time.time()
+        audio_path = _get_tts().generate(voice_text, tts_lang)
+        if audio_path:
+            trace.append(f"[TTS] {TTS_ENGINE} · {tts_lang} in {time.time()-t0:.1f}s → audio ready")
+        else:
+            trace.append("[TTS] no audio produced — text answer still shown")
+        return audio_path
+    except Exception as e:
+        logger.error("TTS failed: %s", e)
+        trace.append(f"[TTS] ERROR: {e} — text answer still shown")
+        return None
+
+
 # ── Pipeline ──────────────────────────────────────────────────────────────────
 
-def _run_pipeline(audio, location: str):
-    """Full pipeline: STT → translate → intent → orchestrate → answer."""
+def _run_pipeline(audio, text_query, location: str):
+    """Full pipeline: (typed text OR STT→translate) → intent → orchestrate → answer.
+
+    A typed English question takes priority and bypasses STT + translation — the
+    reliable way to exercise the weather and government-scheme tools in dev mode,
+    where Whisper-small + stub translation cannot carry spoken Indic queries
+    through to the English router.
+    """
     from app.agents.state import AgentState
     from app.agents.intent import extract_intent
 
@@ -71,54 +149,68 @@ def _run_pipeline(audio, location: str):
     # detected_lang, transcription, english_text, answer, audio_out,
     # intent_box, tools_html, trace_box
 
-    if audio is None:
-        msg = "⚠️ No audio recorded. Click the microphone and speak your question."
-        return "—", "", "", msg, None, "", _no_tools_html(), ""
-
+    text_query = (text_query or "").strip()
+    pipeline_t0 = time.time()
     trace = []
     detected_display = "—"
 
-    # ── Step 1: Whisper STT ───────────────────────────────────────────────────
-    trace.append(f"[STT] Model: {WHISPER_MODEL_ID}")
-    try:
-        t0 = time.time()
-        result = _get_stt().transcribe(audio)
-        transcription = result["text"]
-        iso_lang = result["language"]
-        detected_display = _LANG_FLAG.get(iso_lang, iso_lang)
-        trace.append(f"[STT] Detected: {detected_display} in {time.time()-t0:.1f}s")
-        trace.append(f"[STT] '{transcription}'")
-    except Exception as e:
-        logger.error("STT failed: %s", e)
-        return "—", "", "", f"❌ Speech recognition failed: {e}", None, "", _no_tools_html(), ""
+    if text_query:
+        # ── Typed input — skip STT + translation ──────────────────────────────
+        detected_display = "⌨️ Typed (English)"
+        transcription = text_query
+        state = AgentState(
+            source_language="en",
+            original_text=text_query,
+            english_text=text_query,
+            location=location.strip() or None,
+        )
+        trace.append(f"[Input] Typed query: '{text_query}'")
+        trace.append("[STT] skipped — typed input")
+        trace.append("[Translate] skipped — already English")
+    elif audio is None:
+        msg = "⚠️ Type a question in the box below, or tap the microphone and speak."
+        return "—", "", "", msg, None, "", _no_tools_html(), ""
+    else:
+        # ── Step 1: Whisper STT ───────────────────────────────────────────────
+        trace.append(f"[STT] Model: {WHISPER_MODEL_ID}")
+        try:
+            t0 = time.time()
+            result = _get_stt().transcribe(audio)
+            transcription = result["text"]
+            iso_lang = result["language"]
+            detected_display = _LANG_FLAG.get(iso_lang, iso_lang)
+            trace.append(f"[STT] Detected: {detected_display} in {time.time()-t0:.1f}s")
+            trace.append(f"[STT] '{transcription}'")
+        except Exception as e:
+            logger.error("STT failed: %s", e)
+            return "—", "", "", f"❌ Speech recognition failed: {e}", None, "", _no_tools_html(), ""
 
-    state = AgentState(
-        source_language=iso_lang,
-        original_text=transcription,
-        location=location.strip() or None,
-    )
+        state = AgentState(
+            source_language=iso_lang,
+            original_text=transcription,
+            location=location.strip() or None,
+        )
 
-    # ── Step 2: Translate regional → English ─────────────────────────────────
-    stub_note = " [stub]" if USE_STUB_TRANSLATION else ""
-    trace.append(f"[Translate{stub_note}] {_LANG_DISPLAY.get(iso_lang, iso_lang)} → English")
-    try:
-        t0 = time.time()
-        if iso_lang in ("en", "unknown"):
+        # ── Step 2: Translate regional → English ─────────────────────────────
+        stub_note = " [stub]" if USE_STUB_TRANSLATION else ""
+        trace.append(f"[Translate{stub_note}] {_LANG_DISPLAY.get(iso_lang, iso_lang)} → English")
+        try:
+            t0 = time.time()
+            if iso_lang in ("en", "unknown"):
+                state.english_text = transcription
+                trace.append("[Translate] Already English — skipped.")
+            else:
+                state.english_text = _get_translator().translate_to_english(transcription, iso_lang)
+                trace.append(f"[Translate] Done in {time.time()-t0:.1f}s: '{state.english_text}'")
+        except Exception as e:
+            logger.error("Translation failed: %s", e)
             state.english_text = transcription
-            trace.append("[Translate] Already English — skipped.")
-        else:
-            state.english_text = _get_translator().translate_to_english(transcription, iso_lang)
-            trace.append(f"[Translate] Done in {time.time()-t0:.1f}s: '{state.english_text}'")
-    except Exception as e:
-        logger.error("Translation failed: %s", e)
-        state.english_text = transcription
-        trace.append(f"[Translate] ERROR: {e} — using original text")
+            trace.append(f"[Translate] ERROR: {e} — using original text")
 
     # ── Step 3: Intent extraction ─────────────────────────────────────────────
-    stub_note = " [stub]" if USE_STUB_LLM else ""
-    trace.append(f"[Intent{stub_note}]")
+    trace.append("[Intent] rule-based router")
     t0 = time.time()
-    state = extract_intent(state, _get_llm())
+    state = extract_intent(state, _get_router_llm())
     trace.append(f"[Intent] {state.trace[-1] if state.trace else 'done'} in {time.time()-t0:.1f}s")
 
     intent_summary = (
@@ -141,7 +233,14 @@ def _run_pipeline(audio, location: str):
         trace.append(f"  {msg}")
     trace.append(f"[Orchestrator] Done in {time.time()-t0:.1f}s")
 
-    trace.append("[TTS] Voice output — Phase 10 (pending)")
+    # ── Step 5: Output boundary — translate answer + synthesize voice ─────────
+    stub_note = " [stub]" if USE_STUB_TRANSLATION else ""
+    trace.append(f"[Output{stub_note}] translate + TTS ({TTS_ENGINE})")
+    audio_path = _run_output_stage(state, trace)
+
+    total = time.time() - pipeline_t0
+    state.latency["total"] = round(total, 2)
+    trace.append(f"[Total] response time: {total:.1f}s")
 
     tools_html = _build_tools_html(state)
     trace_text = "\n".join(trace)
@@ -151,7 +250,7 @@ def _run_pipeline(audio, location: str):
         transcription,
         state.english_text,
         state.english_answer,
-        None,              # audio output — Phase 10
+        audio_path,        # voice output (Phase 10)
         intent_summary,
         tools_html,
         trace_text,
@@ -255,10 +354,17 @@ _EXAMPLES = {
 # ── UI builder ────────────────────────────────────────────────────────────────
 
 def build_ui() -> gr.Blocks:
+    if USE_STUB_LLM:
+        llm_mode = "stub"
+    elif USE_HF_INFERENCE_API:
+        llm_mode = "HF Inference API"
+    else:
+        llm_mode = f"local ({LOCAL_LLM_MODEL_ID})"
     mode_info = (
         f"STT: `{WHISPER_MODEL_ID}` · "
         f"Translation: {'stub' if USE_STUB_TRANSLATION else 'IndicTrans2'} · "
-        f"LLM: {'stub' if USE_STUB_LLM else 'HF Inference API'}"
+        f"LLM: {llm_mode} · "
+        f"TTS: {TTS_ENGINE}"
     )
 
     with gr.Blocks(title="Multilingual Agri Assistant") as demo:
@@ -293,6 +399,14 @@ def build_ui() -> gr.Blocks:
                     type="filepath",
                     label="Press record and speak",
                     show_label=False,
+                )
+
+                gr.Markdown("### ⌨️ …or type your question (English)")
+                text_input = gr.Textbox(
+                    placeholder="e.g. Will it rain in Pune tomorrow? Any scheme for irrigation?",
+                    label="Type a question",
+                    show_label=False,
+                    lines=2,
                 )
 
                 gr.Markdown("### 📍 Your location *(for weather)*")
@@ -344,7 +458,7 @@ def build_ui() -> gr.Blocks:
                         )
 
                         audio_output = gr.Audio(
-                            label="🔊 Voice response (coming in Phase 10)",
+                            label="🔊 Voice response",
                             autoplay=True,
                             visible=True,
                             interactive=False,
@@ -384,7 +498,7 @@ def build_ui() -> gr.Blocks:
         # ── Button click wiring ───────────────────────────────────────────────
         submit_btn.click(
             fn=_run_pipeline,
-            inputs=[audio_input, location_input],
+            inputs=[audio_input, text_input, location_input],
             outputs=[
                 detected_lang_output,
                 transcription_output,

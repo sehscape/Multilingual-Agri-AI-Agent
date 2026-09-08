@@ -9,6 +9,7 @@ Steps:
 from __future__ import annotations
 
 import requests
+from functools import lru_cache
 from typing import Optional
 
 from app.config import GEOCODING_API_URL, WEATHER_API_URL
@@ -34,8 +35,13 @@ _WMO_DESCRIPTIONS: dict[int, str] = {
 _REQUEST_TIMEOUT = 10  # seconds
 
 
+@lru_cache(maxsize=256)
 def _geocode(location: str) -> Optional[tuple[float, float, str]]:
-    """Return (lat, lon, resolved_name) for a location string, or None."""
+    """Return (lat, lon, resolved_name) for a location string, or None.
+
+    Cached: a place's coordinates are stable, so repeat lookups (very common —
+    farmers re-ask about the same village) skip the network round-trip.
+    """
     try:
         resp = requests.get(
             GEOCODING_API_URL,

@@ -8,6 +8,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from app.utils.logging import enable_utf8_console
+enable_utf8_console()
+
 from app.tools.weather_tool import get_weather_context
 
 TEST_LOCATIONS = [

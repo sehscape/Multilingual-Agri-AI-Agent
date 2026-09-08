@@ -42,9 +42,10 @@ def extract_intent(state: AgentState, llm: BaseLLM) -> AgentState:
         state.needs_scheme = bool(data.get("needs_scheme", False))
         state.needs_crop_info = bool(data.get("needs_crop_info", False))
 
+        stage_str = f"{state.crop_stage_days}d" if state.crop_stage_days else "—"
         state.add_trace(
-            f"Intent: {state.intent} | crop: {state.crop} | "
-            f"stage: {state.crop_stage_days}d | "
+            f"Intent: {state.intent} | crop: {state.crop or '—'} | "
+            f"stage: {stage_str} | "
             f"weather={state.needs_weather} scheme={state.needs_scheme} crop_info={state.needs_crop_info}"
         )
 

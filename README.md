@@ -1,25 +1,89 @@
+---
+title: Farmer Advisory Voice Agent
+emoji: 🌾
+colorFrom: green
+colorTo: yellow
+sdk: gradio
+sdk_version: 4.44.0
+app_file: app.py
+pinned: false
+license: mit
+---
+
 <div align="center">
 
 # 🌾 Farmer Advisory Voice Agent
 
-### A multilingual AI assistant that speaks to Indian farmers in their own language
+### *Speak your farming question. Hear real advice back — in your own language.*
 
 [![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white)](https://python.org)
 [![Gradio](https://img.shields.io/badge/Gradio-4.x-orange?logo=gradio)](https://gradio.app)
-[![HuggingFace](https://img.shields.io/badge/HuggingFace-Spaces-yellow?logo=huggingface)](https://huggingface.co)
+[![HuggingFace](https://img.shields.io/badge/🤗%20Spaces-Deploy-yellow)](https://huggingface.co)
+[![Voice](https://img.shields.io/badge/Voice-Hindi%20·%20Marathi%20·%20Punjabi-brightgreen)](#)
+[![Status](https://img.shields.io/badge/Status-All%2015%20phases%20✅-success)](#-project-status)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-*Farmer speaks in Hindi, Marathi, or Punjabi → AI responds with crop advice, weather, and government scheme information — in their own language, as voice output.*
+🎙️ **Talk** → 🧠 **AI thinks** → 🔊 **It answers out loud**
+*Crop advice · Live weather · Government schemes — grounded in real data, never made up.*
 
 </div>
 
 ---
 
-## The Problem
+## 🌱 Why this exists
 
-India has 140+ million farming households. Most farmers speak only their regional language, cannot read complex government documents, and have no easy way to get reliable, personalized agricultural advice — especially in rural areas with limited connectivity or literacy.
+> 140+ million Indian farming households. Most speak only their regional language,
+> can't wade through dense government PDFs, and have no easy way to get reliable,
+> personalised farm advice — especially where literacy and connectivity are low.
 
-**This project builds a voice-first AI assistant that bridges that gap.**
+A text-heavy app doesn't help someone who'd rather **just ask out loud**. So this is
+**voice-first**: the farmer talks, and the assistant talks back — in Hindi, Marathi,
+or Punjabi.
+
+---
+
+## 🎬 See it in action
+
+> 👨‍🌾 *"मेरी गेहूं 40 दिन की है, क्या खाद डालूं?"* — **"My wheat is 40 days old, what fertilizer should I apply?"**
+
+The assistant transcribes it, understands it's a **fertilizer** question about **wheat at 40 days**, looks up the crop's growth stage, and **speaks back**:
+
+> 🔊 *"Your wheat is in the tillering stage. Apply the second dose of urea (25 kg/acre) with your next irrigation, watch for aphids, and remove weeds before day 35."*
+
+Ask a bigger question — *"…and is there a scheme for irrigation?"* — and it also searches real government-scheme documents and folds that in. 🎯
+
+---
+
+## 🧠 How it works (in plain English)
+
+Think of it as a **small shop with 7 workers**, and your question travels down the line:
+
+```
+🎙️ You speak
+   │
+   ▼
+👂 Ears write down the words  (Whisper)
+   │
+   ▼
+🌐 Translate to English       (the app thinks in English)
+   │
+   ▼
+🧭 Router: "What is being asked?"   crop? weather? scheme?
+   │        picks only the workers it needs
+   ├── 🌱 Crop expert   (stage-by-stage advice)
+   ├── 🌦️ Weather checker (live forecast)
+   └── 🗂️ Scheme finder  (searches real govt documents)
+   │
+   ▼
+🧠 Brain writes ONE clear answer from what they found
+   │
+   ▼
+🌐 Translate back → 👄 Speak it aloud 🔊
+```
+
+**The golden rule:** the AI never invents facts. Scheme details come from real
+documents, weather from a live API, crop advice from a curated knowledge base — the
+AI only *phrases* them. No answer it can back up? It honestly says so.
 
 ---
 
@@ -146,14 +210,16 @@ The farmer hears actionable advice in their own language.
 | 5 | Crop knowledge tool (6 crops, stage-aware) | ✅ Complete |
 | 6 | Weather tool (Open-Meteo, farming advisories) | ✅ Complete |
 | 7 | Government scheme RAG (FAISS vector search) | ✅ Complete |
-| 8 | LangChain agent — tool orchestration | 🔄 Next |
-| 9 | End-to-end English pipeline test | ⏳ Pending |
-| 10 | IndicTrans2 output + Indic TTS | ⏳ Pending |
-| 11 | Full Gradio pipeline wiring | ⏳ Pending |
-| 12 | Testing & evaluation | ⏳ Pending |
-| 13 | Optimization (quantization, caching) | ⏳ Pending |
-| 14 | Hugging Face Spaces deployment | ⏳ Pending |
-| 15 | Documentation | ⏳ Pending |
+| 8 | Agent — sequential tool orchestration | ✅ Complete |
+| 9 | End-to-end English pipeline test | ✅ Complete |
+| 10 | IndicTrans2 output + Indic TTS (voice) | ✅ Complete |
+| 11 | Full Gradio pipeline wiring (auto-play voice) | ✅ Complete |
+| 12 | Testing & evaluation framework | ✅ Complete |
+| 13 | Optimization (GPU auto-detect, caching) | ✅ Complete |
+| 14 | Hugging Face Spaces deployment prep | ✅ Complete |
+| 15 | Documentation | ✅ Complete |
+
+> **Note:** the agent uses a deterministic **sequential** orchestrator (intent → required tools → answer) rather than a LangChain ReAct loop — chosen for predictability, speed, and to avoid loop-induced hallucination. See `app/agents/orchestrator.py`.
 
 ---
 
@@ -222,18 +288,36 @@ Open [http://127.0.0.1:7860](http://127.0.0.1:7860) in your browser.
 
 ## Testing
 
-Each phase has its own test script in `scripts/`:
+Each phase has a smoke-test script in `scripts/`, plus a `pytest` suite:
 
 ```bash
-# Phase 2 — STT
-python scripts/test_stt_phase2.py
+python scripts/test_stt_phase2.py         # STT
+python scripts/test_weather_phase6.py     # Weather tool
+python scripts/test_scheme_phase7.py      # Scheme RAG
+python scripts/test_agent_phase8.py       # Orchestrator (tool paths)
+python scripts/test_pipeline_phase4to8.py # Intent → orchestrator routing
+python scripts/test_e2e_phase9.py         # End-to-end: all intents + edge cases + safety
+python scripts/test_tts_phase10.py        # Voice output (translate + TTS)
+python scripts/test_local_llm.py          # Real open-source LLM on CPU (no GPU)
 
-# Phase 6 — Weather tool
-python scripts/test_weather_phase6.py
-
-# Phase 7 — Scheme RAG
-python scripts/test_scheme_phase7.py
+pytest -q                                 # Unit suite
 ```
+
+> On Windows the scripts force UTF-8 output; if you run Python directly, set
+> `PYTHONUTF8=1` so Devanagari/Gurmukhi text prints without errors.
+
+## Evaluation
+
+A reproducible metrics harness (spec §39) scores intent accuracy, tool selection,
+RAG retrieval quality/safety, and answer groundedness — usable as a CI gate:
+
+```bash
+python scripts/evaluate.py
+```
+
+Current dev/stub baseline: intent **100%**, tool-selection **100%**,
+RAG top-1 **100%** (mean relevance 0.60), off-topic refusal **100%**,
+answers actionable & cited **100%**.
 
 ---
 
@@ -269,9 +353,12 @@ Each crop has stage-by-stage advice covering irrigation, fertilizer, pest watch,
 |---|---|---|
 | STT | whisper-tiny | whisper-large-v3 |
 | Translation | Stub / IndicTrans2 | IndicTrans2 (both directions) |
-| LLM | StubLLM / HF Inference API | Llama 3.1 8B (4-bit) |
+| LLM | StubLLM · **small local model on CPU** (Qwen2.5-0.5B) · HF Inference API | Llama 3.1 8B (4-bit) |
 | Embeddings | paraphrase-multilingual-MiniLM | BAAI/bge-m3 |
-| TTS | Stub | ai4bharat/indic-parler-tts |
+| TTS | gTTS (`TTS_ENGINE=gtts`) — real Hi/Mr/Pa audio | ai4bharat/indic-parler-tts (`TTS_ENGINE=parler`) |
+
+Device is auto-detected (`app/utils/device.py`): CUDA + float16 on the GPU Space,
+CPU + float32 locally — no code change needed between the two.
 
 ---
 
@@ -293,6 +380,58 @@ Each crop has stage-by-stage advice covering irrigation, fertilizer, pest watch,
 ├── app.py               # HF Spaces entry point
 └── requirements.txt
 ```
+
+---
+
+## Deploying to Hugging Face Spaces
+
+The repo is Spaces-ready:
+
+- **`README.md`** starts with the Spaces YAML header (`sdk: gradio`, `app_file: app.py`).
+- **`app.py`** is the entry point.
+- **`packages.txt`** installs `ffmpeg` (needed to decode browser microphone audio).
+- **`requirements.txt`** lists Python deps. For production TTS, also install
+  `git+https://github.com/ai4bharat/indic-parler-tts`.
+
+Steps:
+1. Create a **Gradio** Space with a **GPU** (e.g. T4).
+2. Push this repo to it.
+3. In **Settings → Secrets/Variables**, set the production profile:
+   ```
+   USE_STUB_TRANSLATION=false
+   USE_STUB_LLM=false
+   USE_STUB_RAG=false
+   USE_HF_INFERENCE_API=false     # or true to use the hosted Inference API
+   TTS_ENGINE=parler
+   WHISPER_MODEL_ID=openai/whisper-large-v3
+   HF_TOKEN=...                    # if using gated models / Inference API
+   ```
+4. On first boot the Space downloads the models and builds/loads the FAISS index.
+
+The app auto-uses the GPU when present; no code change between local and Space.
+
+---
+
+## Limitations
+
+- **Local CPU dev speaks English.** Real regional voice needs IndicTrans2
+  (`USE_STUB_TRANSLATION=false`, ~4 GB, slow on CPU) — intended for the GPU Space.
+- **STT quality** depends on the Whisper size: `whisper-tiny` (dev) mishears Indic
+  speech; production uses `whisper-large-v3`.
+- **Knowledge coverage** is intentionally small (6 crops, 4 schemes) for the MVP.
+- **Scheme faithfulness** for *topically-related but unanswerable* questions relies
+  on the real LLM's judgement; the retrieval guardrail only rejects clearly
+  off-topic queries.
+- **gTTS** needs internet and offers a single generic voice per language.
+
+## Future Improvements
+
+- Enable real IndicTrans2 + Parler on the GPU Space for full regional voice.
+- Expand the crop and scheme knowledge bases; ingest real government PDFs with
+  page-level citations.
+- Add a typed-question input for text-only / accessibility use.
+- LLM-based answer faithfulness checking and citation grounding.
+- Response caching and quantization (4-bit LLM) for lower latency/memory.
 
 ---
 

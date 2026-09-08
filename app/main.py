@@ -1,8 +1,15 @@
 """Application entry point – imports and launches the Gradio UI."""
-from app.ui.gradio_app import build_ui
-from app.utils.logging import get_logger
+import os
 
+from app.ui.gradio_app import build_ui
+from app.utils.logging import get_logger, enable_utf8_console
+
+enable_utf8_console()
 logger = get_logger(__name__)
+
+# On Hugging Face Spaces the platform provides the public URL, so a share tunnel
+# is unnecessary (and unsupported). Locally, share=True gives a public link.
+_ON_SPACES = bool(os.getenv("SPACE_ID"))
 
 
 def main() -> None:
@@ -13,7 +20,7 @@ def main() -> None:
     demo.launch(
         server_name="0.0.0.0",
         server_port=7860,
-        share=True,
+        share=not _ON_SPACES,
         theme=gr.themes.Soft(),
         css=_CSS,
     )
