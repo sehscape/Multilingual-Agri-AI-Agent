@@ -8,11 +8,8 @@ enable_utf8_console()
 logger = get_logger(__name__)
 
 # On Hugging Face Spaces the platform provides the public URL, so a share tunnel
-# is unnecessary (and unsupported). On a self-hosted server (e.g. Oracle Cloud)
-# with a real public IP, GRADIO_SHARE=false does the same. Locally, the default
-# (share=True) gives a temporary public link for quick demos.
+# is unnecessary (and unsupported). Locally, share=True gives a public link.
 _ON_SPACES = bool(os.getenv("SPACE_ID"))
-_SHARE_OVERRIDE = os.getenv("GRADIO_SHARE")  # "true" / "false", optional
 
 
 def main() -> None:
@@ -20,14 +17,10 @@ def main() -> None:
     from app.ui.gradio_app import _CSS
     import gradio as gr
     demo = build_ui()
-    if _SHARE_OVERRIDE is not None:
-        use_share = _SHARE_OVERRIDE.strip().lower() == "true"
-    else:
-        use_share = not _ON_SPACES
     demo.launch(
         server_name="0.0.0.0",
         server_port=7860,
-        share=use_share,
+        share=not _ON_SPACES,
         theme=gr.themes.Soft(),
         css=_CSS,
     )
