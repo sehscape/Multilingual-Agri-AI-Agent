@@ -1,41 +1,40 @@
+# Full dependencies — local dev / GPU deploy / Colab.
+# For the free 512 MB host use requirements-lite.txt + LITE_MODE=true instead.
+#
+# Version floors match the stack this codebase is developed against; the host
+# resolves compatible wheels. Repo pins Python 3.11 via .python-version.
+
 # ─── Core ─────────────────────────────────────────────────────────────────────
-python-dotenv==1.0.1
-requests==2.32.3
-pydantic==2.7.4
+python-dotenv>=1.0
+requests>=2.31
+pydantic>=2.7
 
 # ─── UI ───────────────────────────────────────────────────────────────────────
-gradio==4.44.0
-
-# ─── LangChain ────────────────────────────────────────────────────────────────
-langchain==0.2.16
-langchain-community==0.2.16
-langchain-huggingface==0.0.3
+gradio==6.26.0
 
 # ─── ML / Models ──────────────────────────────────────────────────────────────
-torch==2.4.0
-torchaudio==2.4.0
-transformers==4.44.2
-accelerate==0.34.2
-sentence-transformers>=3.3.0
-openai-whisper==20231117
+torch>=2.4
+torchaudio>=2.4
+transformers>=4.44
+accelerate>=0.34
+sentence-transformers>=3.3
+# NOTE: Whisper STT uses transformers' WhisperForConditionalGeneration — the
+# standalone `openai-whisper` package is NOT needed (and its sdist breaks builds).
 
-# ─── Translation (IndicTrans2) ─────────────────────────────────────────────────
-# indictranstoolkit requires MSVC on Windows — use our pure-Python shim instead.
-# The shim (app/models/indic_processor.py) uses indic-nlp-library + sacremoses.
-sentencepiece==0.2.0
-indic-nlp-library==0.92
-sacremoses==0.2.0
+# ─── Translation (IndicTrans2 pure-Python shim) ───────────────────────────────
+sentencepiece>=0.2
+indic-nlp-library>=0.92
+sacremoses>=0.2
 
 # ─── RAG ──────────────────────────────────────────────────────────────────────
-faiss-cpu>=1.9.0
-pymupdf==1.24.10
+faiss-cpu>=1.9
+pymupdf>=1.24
 
-# ─── TTS (Indic) ──────────────────────────────────────────────────────────────
-# Dev default: gTTS — lightweight, CPU-friendly, needs internet (TTS_ENGINE=gtts).
-gTTS==2.5.3
-soundfile==0.12.1
-# Production engine (TTS_ENGINE=parler) — install separately (large, GPU):
-#   pip install git+https://github.com/ai4bharat/indic-parler-tts
+# ─── TTS ──────────────────────────────────────────────────────────────────────
+# gTTS = lightweight default (TTS_ENGINE=gtts). Production Indic voice
+# (TTS_ENGINE=parler): pip install git+https://github.com/ai4bharat/indic-parler-tts
+gTTS>=2.5
+soundfile>=0.12
 
 # ─── Utilities ────────────────────────────────────────────────────────────────
-numpy==1.26.4
+numpy>=1.26
