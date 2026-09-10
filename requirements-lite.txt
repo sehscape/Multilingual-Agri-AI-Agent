@@ -1,0 +1,16 @@
+# Lightweight dependencies for LITE_MODE deploys (Render free tier, 512 MB RAM).
+# NO torch / transformers / sentence-transformers / whisper / faiss / langchain.
+#
+# Use on the host with:  pip install -r requirements-lite.txt
+# and set env var:       LITE_MODE=true
+#
+# What still works: typed questions, live weather, crop advice,
+# keyword-based government-scheme search, English voice output (gTTS).
+# What's disabled:  microphone input, semantic search, the local LLM,
+#                   regional-language translation.
+
+python-dotenv==1.0.1
+requests==2.32.3
+numpy==1.26.4
+gradio==4.44.0
+gTTS==2.5.3

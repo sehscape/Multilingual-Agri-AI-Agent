@@ -77,6 +77,13 @@ CHUNK_OVERLAP: int = int(os.getenv("CHUNK_OVERLAP", "150"))
 # Chunks below this are dropped; if none qualify the tool reports "insufficient
 # information" instead of presenting weak matches as fact (see spec §12).
 RAG_MIN_SCORE: float = float(os.getenv("RAG_MIN_SCORE", "0.30"))
+# Retrieval backend for the scheme tool:
+#   "faiss" → semantic search with sentence-transformers embeddings (default)
+#   "bm25"  → pure-Python keyword search, no heavy deps (used in LITE_MODE)
+RAG_BACKEND: str = os.getenv("RAG_BACKEND", "faiss").lower()
+# Absolute BM25 score the top hit must reach for the bm25 backend to trust the
+# result (keyword scores are not 0-1). Below this → "insufficient information".
+BM25_MIN_SCORE: float = float(os.getenv("BM25_MIN_SCORE", "2.0"))
 
 # ─── LLM Generation ───────────────────────────────────────────────────────────
 MAX_NEW_TOKENS: int = int(os.getenv("MAX_NEW_TOKENS", "512"))
@@ -85,6 +92,21 @@ TEMPERATURE: float = float(os.getenv("TEMPERATURE", "0.3"))
 # ─── App ──────────────────────────────────────────────────────────────────────
 LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 DEV_MODE: bool = os.getenv("DEV_MODE", "true").lower() == "true"
+
+# ─── LITE mode (small free hosts: Render free tier, 512 MB RAM) ────────────────
+# Turns off every heavy component so the app fits in ~350 MB:
+#   • no microphone / Whisper  (typed input only)
+#   • keyword scheme search    (RAG_BACKEND=bm25, no torch)
+#   • rule-based answers        (USE_STUB_LLM)
+#   • English voice out         (USE_STUB_TRANSLATION, gTTS)
+LITE_MODE: bool = os.getenv("LITE_MODE", "false").lower() == "true"
+if LITE_MODE:
+    RAG_BACKEND = "bm25"
+    USE_STUB_LLM = True
+    USE_STUB_TRANSLATION = True
+    USE_STUB_RAG = False
+    TTS_ENGINE = "gtts"
+    DEV_MODE = False
 
 # Human-readable language names keyed by ISO 639-1 code used in the UI
 SUPPORTED_LANGUAGES: dict[str, str] = {

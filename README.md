@@ -383,32 +383,25 @@ CPU + float32 locally — no code change needed between the two.
 
 ---
 
-## Deploying to Hugging Face Spaces
+## Deployment
 
-The repo is Spaces-ready:
+Full step-by-step guide: **[`DEPLOY.md`](DEPLOY.md)**. In short:
 
-- **`README.md`** starts with the Spaces YAML header (`sdk: gradio`, `app_file: app.py`).
-- **`app.py`** is the entry point.
-- **`packages.txt`** installs `ffmpeg` (needed to decode browser microphone audio).
-- **`requirements.txt`** lists Python deps. For production TTS, also install
-  `git+https://github.com/ai4bharat/indic-parler-tts`.
+| Path | Cost | 24/7? | Features |
+|---|---|---|---|
+| **Google Colab** (`notebooks/run_full_app_colab.ipynb`) | Free | While the tab is open | **Everything** — mic, real LLM, semantic search, voice |
+| **Render — Lite** (`render.yaml`, `LITE_MODE=true`) | Free | ✅ (sleeps when idle) | Typed input, weather, crop advice, keyword scheme search, English voice |
+| **HF Spaces / Render Standard / GPU host** | Paid | ✅ | Everything, production models |
 
-Steps:
-1. Create a **Gradio** Space with a **GPU** (e.g. T4).
-2. Push this repo to it.
-3. In **Settings → Secrets/Variables**, set the production profile:
-   ```
-   USE_STUB_TRANSLATION=false
-   USE_STUB_LLM=false
-   USE_STUB_RAG=false
-   USE_HF_INFERENCE_API=false     # or true to use the hosted Inference API
-   TTS_ENGINE=parler
-   WHISPER_MODEL_ID=openai/whisper-large-v3
-   HF_TOKEN=...                    # if using gated models / Inference API
-   ```
-4. On first boot the Space downloads the models and builds/loads the FAISS index.
+> Mid-2026: Hugging Face Spaces now needs a **paid plan** for Gradio apps, and
+> Render's free tier is **512 MB RAM** — too small for Whisper + embeddings. The
+> **Lite build** (`LITE_MODE=true` + `requirements-lite.txt`) strips PyTorch and
+> the heavy models so it fits the free tier; `render.yaml` wires it up
+> automatically.
 
-The app auto-uses the GPU when present; no code change between local and Space.
+**Full app on a GPU host** — set: `USE_STUB_TRANSLATION=false`, `USE_STUB_LLM=false`,
+`USE_STUB_RAG=false`, `TTS_ENGINE=parler`, `WHISPER_MODEL_ID=openai/whisper-large-v3`.
+The app auto-detects the GPU — no code change.
 
 ---
 
@@ -418,6 +411,8 @@ The app auto-uses the GPU when present; no code change between local and Space.
   (`USE_STUB_TRANSLATION=false`, ~4 GB, slow on CPU) — intended for the GPU Space.
 - **STT quality** depends on the Whisper size: `whisper-tiny` (dev) mishears Indic
   speech; production uses `whisper-large-v3`.
+- **Free 24/7 hosting is the "Lite" build only** — no microphone, keyword (not
+  semantic) scheme search, rule-based answers. The full app needs a GPU/paid host.
 - **Knowledge coverage** is intentionally small (6 crops, 4 schemes) for the MVP.
 - **Scheme faithfulness** for *topically-related but unanswerable* questions relies
   on the real LLM's judgement; the retrieval guardrail only rejects clearly

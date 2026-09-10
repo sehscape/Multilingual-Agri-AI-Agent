@@ -13,7 +13,7 @@ import gradio as gr
 from app.utils.logging import get_logger
 from app.config import (
     DEV_MODE, WHISPER_MODEL_ID, USE_STUB_TRANSLATION, USE_STUB_LLM,
-    USE_HF_INFERENCE_API, LOCAL_LLM_MODEL_ID, TTS_ENGINE,
+    USE_HF_INFERENCE_API, LOCAL_LLM_MODEL_ID, TTS_ENGINE, LITE_MODE, RAG_BACKEND,
 )
 
 logger = get_logger(__name__)
@@ -56,8 +56,13 @@ def _get_llm():
     global _llm
     if _llm is None:
         from app.models.llm import get_llm
-        from app.utils.device import get_device
-        _llm = get_llm(device=get_device(), use_stub=USE_STUB_LLM)
+        # Only probe the device for a real local model — the stub needs nothing,
+        # and device probing would import torch (absent on LITE_MODE hosts).
+        if USE_STUB_LLM:
+            _llm = get_llm(use_stub=True)
+        else:
+            from app.utils.device import get_device
+            _llm = get_llm(device=get_device(), use_stub=False)
     return _llm
 
 
@@ -84,8 +89,13 @@ def _get_tts():
     global _tts
     if _tts is None:
         from app.models.tts import get_tts
-        from app.utils.device import get_device
-        _tts = get_tts(device=get_device())
+        # Device only matters for the parler engine; gtts/stub need nothing
+        # (and probing would import torch, absent on LITE_MODE hosts).
+        if TTS_ENGINE == "parler":
+            from app.utils.device import get_device
+            _tts = get_tts(device=get_device())
+        else:
+            _tts = get_tts()
     return _tts
 
 
@@ -355,17 +365,23 @@ _EXAMPLES = {
 
 def build_ui() -> gr.Blocks:
     if USE_STUB_LLM:
-        llm_mode = "stub"
+        llm_mode = "rule-based"
     elif USE_HF_INFERENCE_API:
         llm_mode = "HF Inference API"
     else:
         llm_mode = f"local ({LOCAL_LLM_MODEL_ID})"
-    mode_info = (
-        f"STT: `{WHISPER_MODEL_ID}` · "
-        f"Translation: {'stub' if USE_STUB_TRANSLATION else 'IndicTrans2'} · "
-        f"LLM: {llm_mode} · "
-        f"TTS: {TTS_ENGINE}"
-    )
+    if LITE_MODE:
+        mode_info = (
+            f"⚡ Lite mode · typed input · keyword scheme search · "
+            f"rule-based answers · gTTS voice (English)"
+        )
+    else:
+        mode_info = (
+            f"STT: `{WHISPER_MODEL_ID}` · "
+            f"Translation: {'stub' if USE_STUB_TRANSLATION else 'IndicTrans2'} · "
+            f"LLM: {llm_mode} · "
+            f"TTS: {TTS_ENGINE}"
+        )
 
     with gr.Blocks(title="Multilingual Agri Assistant") as demo:
 
@@ -384,6 +400,8 @@ def build_ui() -> gr.Blocks:
                 f"<center><small>⚙️ Dev mode &nbsp;|&nbsp; {mode_info}</small></center>",
                 elem_id="dev-banner"
             )
+        elif LITE_MODE:
+            gr.Markdown(f"<center><small>{mode_info}</small></center>")
 
         gr.Markdown("---")
 
@@ -393,15 +411,24 @@ def build_ui() -> gr.Blocks:
             # ── LEFT: Input ───────────────────────────────────────────────────
             with gr.Column(scale=1, min_width=300):
 
-                gr.Markdown("### 🎙️ Record your question")
-                audio_input = gr.Audio(
-                    sources=["microphone"],
-                    type="filepath",
-                    label="Press record and speak",
-                    show_label=False,
-                )
+                if LITE_MODE:
+                    # Voice input needs Whisper (torch) — off on small free hosts.
+                    audio_input = gr.Audio(visible=False)
+                    gr.Markdown("### ⌨️ Type your question (English)")
+                    gr.Markdown(
+                        "<small>🎙️ Voice input is available in the full version. "
+                        "This lightweight demo takes typed questions.</small>"
+                    )
+                else:
+                    gr.Markdown("### 🎙️ Record your question")
+                    audio_input = gr.Audio(
+                        sources=["microphone"],
+                        type="filepath",
+                        label="Press record and speak",
+                        show_label=False,
+                    )
+                    gr.Markdown("### ⌨️ …or type your question (English)")
 
-                gr.Markdown("### ⌨️ …or type your question (English)")
                 text_input = gr.Textbox(
                     placeholder="e.g. Will it rain in Pune tomorrow? Any scheme for irrigation?",
                     label="Type a question",

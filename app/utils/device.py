@@ -13,12 +13,19 @@ logger = get_logger(__name__)
 
 
 def get_device() -> str:
-    """Return 'cuda' if a GPU is available, else 'cpu'. Never raises."""
+    """Return 'cuda' if a GPU is available, else 'cpu'. Never raises.
+
+    Does not import torch unless it is actually installed — so LITE_MODE hosts
+    (which ship without torch) stay lightweight.
+    """
+    import importlib.util
+    if importlib.util.find_spec("torch") is None:
+        return "cpu"
     try:
         import torch
         if torch.cuda.is_available():
             return "cuda"
-    except Exception as exc:  # torch missing / broken → safe CPU fallback
+    except Exception as exc:  # torch broken → safe CPU fallback
         logger.debug("CUDA check failed (%s) — using CPU.", exc)
     return "cpu"
 

@@ -1,0 +1,24 @@
+# Render Blueprint — free "Lite" deploy of the Farmer Advisory Voice Agent.
+#
+# Render auto-detects this file. It runs the app in LITE_MODE so it fits the
+# free tier's 512 MB RAM: typed input, live weather, crop advice, keyword-based
+# government-scheme search, and English voice output (gTTS). No microphone,
+# no PyTorch.
+#
+# The free instance sleeps after ~15 min idle and wakes on the next visit
+# (~30-60 s cold start).
+
+services:
+  - type: web
+    name: farmer-advisory-voice-agent
+    runtime: python
+    plan: free
+    region: singapore              # closest Render region to India; change if you prefer
+    buildCommand: pip install -r requirements-lite.txt
+    startCommand: python app.py
+    healthCheckPath: /
+    envVars:
+      - key: LITE_MODE
+        value: "true"
+      - key: PYTHON_VERSION
+        value: "3.11.9"
