@@ -1,7 +1,7 @@
 """Application entry point – imports and launches the Gradio UI."""
 import os
 
-from app.ui.gradio_app import build_ui
+from app.ui.gradio_app import build_ui, build_theme, _CSS
 from app.utils.logging import get_logger, enable_utf8_console
 
 enable_utf8_console()
@@ -16,14 +16,13 @@ _PORT = int(os.getenv("PORT", "7860"))
 
 def main() -> None:
     logger.info("Starting Multilingual Agri Assistant (port=%s, hosted=%s)", _PORT, _ON_HOST)
-    from app.ui.gradio_app import _CSS
-    import gradio as gr
     demo = build_ui()
+    # Gradio 6 takes theme/css at launch() rather than on Blocks().
     demo.launch(
         server_name="0.0.0.0",
         server_port=_PORT,
         share=not _ON_HOST,
-        theme=gr.themes.Soft(),
+        theme=build_theme(),
         css=_CSS,
     )
 
