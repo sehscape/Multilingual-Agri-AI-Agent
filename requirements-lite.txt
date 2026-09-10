@@ -8,9 +8,12 @@
 # keyword-based government-scheme search, English voice output (gTTS).
 # What's disabled:  microphone input, semantic search, the local LLM,
 #                   regional-language translation.
+#
+# Versions are intentionally loose so the host installs wheels that match its
+# Python version (no source builds). The repo pins Python 3.11 via .python-version.
 
-python-dotenv==1.0.1
-requests==2.32.3
-numpy==1.26.4
+python-dotenv>=1.0
+requests>=2.31
+numpy>=1.26,<3
 gradio==4.44.0
-gTTS==2.5.3
+gTTS>=2.5

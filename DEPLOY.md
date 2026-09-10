@@ -38,12 +38,17 @@ The link dies when you close the tab. Re-run the last cell to get a new one.
 4. Connect your GitHub and pick the **Farmer-Advisory-Voice-Agent** repo.
 5. Render reads **`render.yaml`** automatically and fills in everything:
    - Runtime: **Python 3**
-   - Build command: `pip install -r requirements-lite.txt`
+   - Build command: `pip install --upgrade pip setuptools wheel && pip install -r requirements-lite.txt`
    - Start command: `python app.py`
    - Plan: **Free**
-   - Env var: `LITE_MODE=true`
-   If it doesn't auto-fill, enter those values by hand.
+   - Env vars: `LITE_MODE=true`, `PYTHON_VERSION=3.11.9`
+   If it doesn't auto-fill, enter those values by hand. **The build command must
+   point at `requirements-lite.txt`, not `requirements.txt`** — the default is wrong.
 6. Click **Create Web Service**.
+
+> The repo also carries a `.python-version` file (3.11.9). If the build ever fails
+> with `No module named 'pkg_resources'` or a numpy source build, Render picked a
+> newer Python — confirm `PYTHON_VERSION=3.11.9` is set and redeploy.
 
 ### What happens next
 

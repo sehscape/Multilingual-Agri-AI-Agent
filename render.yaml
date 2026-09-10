@@ -14,11 +14,12 @@ services:
     runtime: python
     plan: free
     region: singapore              # closest Render region to India; change if you prefer
-    buildCommand: pip install -r requirements-lite.txt
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements-lite.txt
     startCommand: python app.py
     healthCheckPath: /
     envVars:
       - key: LITE_MODE
         value: "true"
+      # Python version also pinned by .python-version (3.11.9) at the repo root.
       - key: PYTHON_VERSION
         value: "3.11.9"
