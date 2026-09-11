@@ -16,15 +16,19 @@ license: mit
 
 ### *Speak your farming question. Hear real advice back — in your own language.*
 
+[![Live demo](https://img.shields.io/badge/Live%20demo-Render-46E3B7?logo=render&logoColor=white)](https://farmer-advisory-voice-agent.onrender.com)
 [![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white)](https://python.org)
-[![Gradio](https://img.shields.io/badge/Gradio-4.x-orange?logo=gradio)](https://gradio.app)
-[![HuggingFace](https://img.shields.io/badge/🤗%20Spaces-Deploy-yellow)](https://huggingface.co)
-[![Voice](https://img.shields.io/badge/Voice-Hindi%20·%20Marathi%20·%20Punjabi-brightgreen)](#)
-[![Status](https://img.shields.io/badge/Status-All%2015%20phases%20✅-success)](#-project-status)
+[![Gradio](https://img.shields.io/badge/Gradio-6.x-orange?logo=gradio)](https://gradio.app)
+[![LangChain](https://img.shields.io/badge/Agent-LangChain%20ReAct-1C3C3C?logo=langchain)](#-how-it-works-in-plain-english)
+[![Languages](https://img.shields.io/badge/UI-English%20·%20Hindi%20·%20Punjabi%20·%20Marathi-brightgreen)](#features)
+[![Status](https://img.shields.io/badge/Status-All%2015%20phases%20✅-success)](#project-status)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 🎙️ **Talk** → 🧠 **AI thinks** → 🔊 **It answers out loud**
 *Crop advice · Live weather · Government schemes — grounded in real data, never made up.*
+
+**▶ Try it live: [farmer-advisory-voice-agent.onrender.com](https://farmer-advisory-voice-agent.onrender.com)**
+<sub>Free tier — the first visit after ~15 min idle takes ~1 minute to wake up.</sub>
 
 </div>
 
@@ -173,13 +177,14 @@ The farmer hears actionable advice in their own language.
 
 | Feature | Details |
 |---|---|
-| **Languages** | Hindi, Marathi, Punjabi (auto-detected) |
+| **4-language interface** | A picker switches the whole screen — labels, buttons, instructions, errors — between 🇬🇧 English, 🇮🇳 Hindi, ਪੰਜਾਬੀ Punjabi and मराठी Marathi |
+| **Voice questions in 4 languages** | Whisper listens in the chosen language; a Hindi/Marathi/Punjabi farm vocabulary lets the agent understand even imperfect transcripts |
+| **LangChain agent** | A ReAct `AgentExecutor` decides which tools to call (crop / weather / scheme), with a deterministic fallback |
 | **Crop Knowledge** | Wheat, Rice, Onion, Tomato, Cotton, Maize — stage-specific advice |
 | **Live Weather** | Real forecast via Open-Meteo API — temperature, rain, wind + farming advisories |
-| **Govt Schemes** | PM-KISAN, PMFBY crop insurance, Kisan Credit Card, Soil Health Card |
-| **Voice I/O** | Whisper STT + Indic Parler TTS |
+| **Govt Schemes** | PM-KISAN, PMFBY crop insurance, Kisan Credit Card, Soil Health Card — refuses off-topic questions instead of guessing |
+| **Voice reply** | gTTS (CPU) · ai4bharat Indic Parler TTS (GPU) |
 | **No API Key Needed** | Weather API is free and open |
-| **Gradio UI** | Clean browser interface, microphone input, voice output |
 
 ---
 
@@ -187,15 +192,16 @@ The farmer hears actionable advice in their own language.
 
 | Component | Technology |
 |---|---|
-| UI | [Gradio](https://gradio.app) |
-| Speech-to-Text | [OpenAI Whisper](https://github.com/openai/whisper) |
+| UI | [Gradio](https://gradio.app) 6 — 4-language interface |
+| Agent | [LangChain](https://python.langchain.com) ReAct `AgentExecutor` with tool-calling |
+| Speech-to-Text | [OpenAI Whisper](https://github.com/openai/whisper) (small; language-forced) |
 | Translation | [IndicTrans2](https://github.com/AI4Bharat/IndicTrans2) (AI4Bharat) |
 | LLM | [Llama 3.1 8B](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct) via HF Inference API |
 | Embeddings | [paraphrase-multilingual-MiniLM](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2) (dev) / [BGE-M3](https://huggingface.co/BAAI/bge-m3) (prod) |
 | Vector Store | [FAISS](https://github.com/facebookresearch/faiss) |
 | Weather API | [Open-Meteo](https://open-meteo.com) (free, no key) |
 | TTS | [ai4bharat/indic-parler-tts](https://huggingface.co/ai4bharat/indic-parler-tts) |
-| Framework | Python 3.11, LangChain, PyTorch |
+| Framework | Python 3.11, PyTorch |
 
 ---
 
@@ -219,7 +225,22 @@ The farmer hears actionable advice in their own language.
 | 14 | Hugging Face Spaces deployment prep | ✅ Complete |
 | 15 | Documentation | ✅ Complete |
 
-> **Note:** the agent uses a deterministic **sequential** orchestrator (intent → required tools → answer) rather than a LangChain ReAct loop — chosen for predictability, speed, and to avoid loop-induced hallucination. See `app/agents/orchestrator.py`.
+**Beyond the 15 phases:**
+
+| Addition | Status |
+|---|---|
+| LangChain ReAct agent with tool-calling (default engine) | ✅ Complete |
+| 4-language interface + voice questions in every language | ✅ Complete |
+| Lite build for free 512 MB hosting | ✅ Complete |
+| Live deployment on Render | ✅ Live |
+
+> **Agent engines.** By default a **LangChain ReAct `AgentExecutor`** runs the
+> tool loop (`app/agents/langchain_agent.py`). On CPU its decisions come from a
+> deterministic rule-based policy that speaks LangChain's ReAct protocol; point
+> it at a real LLM (Qwen / Llama-3.1-8B / Gemma) and the model makes them. If the
+> loop ever fails, the deterministic **sequential orchestrator**
+> (`app/agents/orchestrator.py`) takes over — or select it with
+> `AGENT_BACKEND=sequential`.
 
 ---
 
@@ -299,6 +320,9 @@ python scripts/test_pipeline_phase4to8.py # Intent → orchestrator routing
 python scripts/test_e2e_phase9.py         # End-to-end: all intents + edge cases + safety
 python scripts/test_tts_phase10.py        # Voice output (translate + TTS)
 python scripts/test_local_llm.py          # Real open-source LLM on CPU (no GPU)
+python scripts/test_langchain_agent.py    # LangChain agent: tool choice for 9 intents + fallback
+python scripts/test_i18n.py               # 4-language UI + spoken questions in each language
+python scripts/test_lite_mode.py          # Lite build runs with the heavy ML libraries absent
 
 pytest -q                                 # Unit suite
 ```
@@ -385,12 +409,15 @@ CPU + float32 locally — no code change needed between the two.
 
 ## Deployment
 
+**Live now:** [farmer-advisory-voice-agent.onrender.com](https://farmer-advisory-voice-agent.onrender.com)
+(Render, Lite build — redeploys automatically on every push to `main`).
+
 Full step-by-step guide: **[`DEPLOY.md`](DEPLOY.md)**. In short:
 
 | Path | Cost | 24/7? | Features |
 |---|---|---|---|
-| **Google Colab** (`notebooks/run_full_app_colab.ipynb`) | Free | While the tab is open | **Everything** — mic, real LLM, semantic search, voice |
-| **Render — Lite** (`render.yaml`, `LITE_MODE=true`) | Free | ✅ (sleeps when idle) | Typed input, weather, crop advice, keyword scheme search, English voice |
+| **Google Colab** (`notebooks/run_full_app_colab.ipynb`) | Free | While the tab is open | **Everything** — mic in 4 languages, LangChain agent on a real LLM, semantic search, voice |
+| **Render — Lite** (`render.yaml`, `LITE_MODE=true`) | Free | ✅ (sleeps when idle) | 4-language interface, typed input, LangChain agent, weather, crop advice, keyword scheme search, English voice |
 | **HF Spaces / Render Standard / GPU host** | Paid | ✅ | Everything, production models |
 
 > Mid-2026: Hugging Face Spaces now needs a **paid plan** for Gradio apps, and
@@ -407,10 +434,19 @@ The app auto-detects the GPU — no code change.
 
 ## Limitations
 
-- **Local CPU dev speaks English.** Real regional voice needs IndicTrans2
-  (`USE_STUB_TRANSLATION=false`, ~4 GB, slow on CPU) — intended for the GPU Space.
-- **STT quality** depends on the Whisper size: `whisper-tiny` (dev) mishears Indic
-  speech; production uses `whisper-large-v3`.
+- **Answers are in English unless IndicTrans2 is enabled.** The whole interface
+  switches language and spoken questions work in all four, but the advice itself
+  (and the spoken reply) is English without the ~4 GB translator
+  (`USE_STUB_TRANSLATION=false`) — intended for a GPU host. Typed questions must
+  be in English for the same reason; the app says so in the chosen language.
+- **Speech recognition on CPU is approximate.** `whisper-small` transcribes Hindi
+  fairly well but garbles Marathi and Punjabi, and its speech→English translation
+  fails for those two. A Hindi/Marathi/Punjabi farm vocabulary in the router
+  recovers the crop, place and topic from the imperfect transcript (tested on real
+  garbled output); `whisper-large-v3` on a GPU is far more accurate.
+- **On CPU the agent's decisions are rule-based.** The LangChain loop, tools and
+  parsing are real, but a deterministic policy picks the tools unless a real LLM
+  is configured.
 - **Free 24/7 hosting is the "Lite" build only** — no microphone, keyword (not
   semantic) scheme search, rule-based answers. The full app needs a GPU/paid host.
 - **Knowledge coverage** is intentionally small (6 crops, 4 schemes) for the MVP.
@@ -421,10 +457,14 @@ The app auto-detects the GPU — no code change.
 
 ## Future Improvements
 
-- Enable real IndicTrans2 + Parler on the GPU Space for full regional voice.
+- Enable real IndicTrans2 + Parler on a GPU host so answers and the spoken reply
+  come back in Hindi / Punjabi / Marathi, and typed regional questions work.
+- Drive the LangChain agent with Llama-3.1-8B or Gemma on a GPU instead of the
+  rule-based policy.
+- Remember the chosen language between visits, and accept `?lang=hi` links to
+  share a pre-set language with farmers.
 - Expand the crop and scheme knowledge bases; ingest real government PDFs with
   page-level citations.
-- Add a typed-question input for text-only / accessibility use.
 - LLM-based answer faithfulness checking and citation grounding.
 - Response caching and quantization (4-bit LLM) for lower latency/memory.
 
