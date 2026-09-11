@@ -410,7 +410,8 @@ CPU + float32 locally — no code change needed between the two.
 ## Deployment
 
 **Live now:** [farmer-advisory-voice-agent.onrender.com](https://farmer-advisory-voice-agent.onrender.com)
-(Render, Lite build — redeploys automatically on every push to `main`).
+(Render, Lite build). After pushing to `main`, redeploy from the Render
+dashboard: **Manual Deploy → Deploy latest commit**.
 
 Full step-by-step guide: **[`DEPLOY.md`](DEPLOY.md)**. In short:
 

@@ -8,7 +8,9 @@ Two ways to show this project running:
 | **B. Render (Lite)** | Free | ✅ Yes (sleeps when idle, wakes on visit) | 4-language interface, typed input, LangChain agent, weather, crop advice, keyword scheme search, English voice | A permanent portfolio link |
 
 **Currently live:** https://farmer-advisory-voice-agent.onrender.com (option B).
-Every push to `main` on GitHub redeploys it automatically.
+After a push to `main`, redeploy it from the Render dashboard with
+**Manual Deploy → Deploy latest commit** (this service clones the public repo
+without Render's GitHub app, so pushes don't trigger deploys on their own).
 
 > **Why not the full app on a free 24/7 host?** As of mid-2026, Hugging Face
 > Spaces requires a paid plan for Gradio apps, and Render's free tier gives only
@@ -74,7 +76,9 @@ The link dies when you close the tab. Re-run the last cell to get a new one.
 - The free instance **sleeps after ~15 min** with no visitors; the next visit
   wakes it in ~30–60 s. That's normal for the free tier. **Open the link a couple
   of minutes before a demo.**
-- To redeploy after a code change: just `git push` — Render auto-deploys.
+- To redeploy after a code change: `git push`, then in Render click
+  **Manual Deploy → Deploy latest commit**. (Connecting Render's GitHub app
+  under *Settings → Build & Deploy* turns on automatic deploys.)
 - Free tier = 750 instance-hours/month (enough for one always-available service).
 - Memory: the Lite build (with LangChain) uses ~170 MB of the 512 MB limit.
 
