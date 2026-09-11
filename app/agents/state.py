@@ -25,6 +25,11 @@ class AgentState:
     needs_weather: bool = False
     needs_scheme: bool = False
     needs_crop_info: bool = False
+    scheme_query: str = ""               # what to search the scheme documents for
+    # The tool plan the understanding step settled on (needs_* flags, crop,
+    # location, scheme_query). When set, the rule-based ReAct policy follows it
+    # instead of re-reading the question text.
+    tool_plan: Optional[dict] = None
 
     # ── Tool outputs (all in English) ─────────────────────────────────────────
     weather_data: Optional[dict] = None

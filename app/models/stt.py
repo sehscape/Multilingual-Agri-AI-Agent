@@ -181,6 +181,85 @@ class WhisperSTT(BaseSTT):
         return result
 
 
+# A sentence in each language that primes Whisper with the script and the
+# farm words farmers use, so crop and scheme names come out spelled right.
+_GROQ_STT_PROMPTS: dict[str, str] = {
+    "hi": "किसान गेहूं, धान, कपास, प्याज, टमाटर, मक्का, खाद, यूरिया, सिंचाई, "
+          "बारिश, मौसम, कीड़े और सरकारी योजनाओं के बारे में पूछ रहा है।",
+    "mr": "शेतकरी गहू, भात, कापूस, कांदा, टोमॅटो, मका, खत, युरिया, पाणी, "
+          "पाऊस, हवामान, कीड आणि सरकारी योजनांबद्दल विचारत आहे.",
+    "pa": "ਕਿਸਾਨ ਕਣਕ, ਝੋਨਾ, ਕਪਾਹ, ਪਿਆਜ਼, ਟਮਾਟਰ, ਮੱਕੀ, ਖਾਦ, ਯੂਰੀਆ, ਪਾਣੀ, "
+          "ਮੀਂਹ, ਮੌਸਮ, ਕੀੜੇ ਅਤੇ ਸਰਕਾਰੀ ਸਕੀਮਾਂ ਬਾਰੇ ਪੁੱਛ ਰਿਹਾ ਹੈ।",
+    "en": "A farmer asks about wheat, paddy, cotton, onion, tomato, maize, "
+          "fertilizer, urea, irrigation, rain, weather, pests and government schemes.",
+}
+
+# What Whisper tends to "hear" in silence or noise.
+_SILENCE_PHRASES = {
+    "thank you", "thanks for watching", "thank you for watching", "you",
+    "धन्यवाद", "शुक्रिया", "सब्सक्राइब", "ਧੰਨਵਾਦ", "धन्यवाद.",
+}
+
+
+def _clean_words(text: str) -> list[str]:
+    import re
+    return re.findall(r"[\wऀ-੿]+", (text or "").lower())
+
+
+def _is_silence(text: str, no_speech_prob: float, prompt: Optional[str]) -> bool:
+    """True when the 'transcript' is really silence, noise, or an echo of the prompt."""
+    words = _clean_words(text)
+    if not words:
+        return True
+    if " ".join(words) in _SILENCE_PHRASES and no_speech_prob > 0.2:
+        return True
+    if no_speech_prob >= 0.8:
+        return True
+    if prompt and len(words) >= 4:
+        prompt_words = set(_clean_words(prompt))
+        if sum(w in prompt_words for w in words) / len(words) >= 0.85:
+            return True  # Whisper repeated its priming sentence
+    return False
+
+
+class GroqWhisperSTT(BaseSTT):
+    """Whisper-large-v3 on Groq's free API — no model on this machine.
+
+    The language the farmer chose is forced (Whisper often confuses Hindi and
+    Marathi on short clips). Silence and noise come back as text="" with
+    no_speech=True, so the app can ask the farmer to speak again.
+    """
+
+    def __init__(self, client=None) -> None:
+        self._client = client
+
+    @property
+    def model_id(self) -> str:
+        return f"groq/{self.client.stt_model}"
+
+    @property
+    def client(self):
+        if self._client is None:
+            from app.models.groq_client import get_groq_client
+            self._client = get_groq_client()
+        return self._client
+
+    def transcribe(self, audio_path: str, language: Optional[str] = None,
+                   translate: bool = False) -> dict:
+        lang = language if language in _WHISPER_LANG_MAP else None
+        prompt = _GROQ_STT_PROMPTS.get(lang or "")
+        r = self.client.transcribe(audio_path, language=lang, prompt=prompt)
+        silent = _is_silence(r["text"], r.get("no_speech_prob") or 0.0, prompt)
+        return {
+            "text": "" if silent else r["text"],
+            "language": lang or "unknown",
+            "language_name": _WHISPER_LANG_MAP.get(lang, "unknown"),
+            "duration": r.get("duration"),
+            "no_speech": silent,
+            "raw_text": r["text"],
+        }
+
+
 class StubSTT(BaseSTT):
     """Returns hardcoded results – for unit tests and offline dev."""
 
@@ -212,6 +291,9 @@ class StubSTT(BaseSTT):
 
 
 def get_stt(device: str = "cpu", use_stub: bool = False) -> BaseSTT:
+    from app.config import STT_ENGINE
     if use_stub:
         return StubSTT()
+    if STT_ENGINE == "groq":
+        return GroqWhisperSTT()
     return WhisperSTT(device=device)

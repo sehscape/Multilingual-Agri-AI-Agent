@@ -173,7 +173,7 @@ class StubLLM(BaseLLM):
                        # Whisper's phonetic spellings of it
                        "पाऊस", "पाउस", "पावस", "पावुस", "हवामान", "गारपीट",
                        "ਮੀਂਹ", "ਬਾਰਿਸ਼", "ਮੌਸਮ", "ਤਾਪਮਾਨ", "मींह")
-    _REG_SCHEME_KW = ("योजना", "सब्सिडी", "अनुदान", "ऋण", "कर्ज", "लोन", "बीमा",
+    _REG_SCHEME_KW = ("योजना", "सब्सिडी", "अनुदान", "ऋण", "कर्ज", "लोन", "बीमा", "विमा",
                       "पीएम किसान", "पीएम-किसान", "क्रेडिट",
                       "ਯੋਜਨਾ", "ਸਕੀਮ", "ਕਰਜ਼ਾ", "ਬੀਮਾ", "ਕ੍ਰੈਡਿਟ")
     _REG_FERT_KW = ("खाद", "उर्वरक", "यूरिया", "डीएपी", "खत", "युरिया", "ਖਾਦ", "ਯੂਰੀਆ")
@@ -221,6 +221,12 @@ class StubLLM(BaseLLM):
         t = re.sub(rf"({words})\s*{cls._DAY_WORDS}",
                    lambda m: f"{cls._REG_NUMBERS[m.group(1)]} day", t)
         return re.sub(rf"(\d+)\s*{cls._DAY_WORDS}", r"\1 day", t)
+
+    def __init__(self, plan: Optional[dict] = None) -> None:
+        # A tool plan already worked out for this request (crop / weather /
+        # scheme needs + their inputs). Without one the ReAct policy classifies
+        # the question text itself.
+        self._plan = plan
 
     def generate(self, prompt: str) -> str:
         logger.warning("StubLLM: building response from injected context.")
@@ -271,7 +277,7 @@ class StubLLM(BaseLLM):
         question = question.strip()
         called = set(re.findall(r"^Action:[ \t]*(\w+)", scratchpad, re.M))
 
-        c = self._classify(question)
+        c = self._plan or self._classify(question)
         plan = []
         if c["needs_crop_info"]:
             plan.append(("crop_knowledge", c["crop"] or "",
@@ -280,7 +286,7 @@ class StubLLM(BaseLLM):
             plan.append(("weather_forecast", c["location"] or "",
                          "I should check the live weather for the farmer's location."))
         if c["needs_scheme"]:
-            plan.append(("government_schemes", question,
+            plan.append(("government_schemes", c.get("scheme_query") or question,
                          "I should search the official government scheme documents."))
 
         for tool, tool_input, thought in plan:

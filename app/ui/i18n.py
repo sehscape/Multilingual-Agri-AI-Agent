@@ -220,6 +220,246 @@ STRINGS: dict[str, dict[str, str]] = {
         "pa": "ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ ਸਵਾਲ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ ਲਿਖੋ।",
         "mr": "कृपया तुमचा प्रश्न इंग्रजीत लिहा.",
     },
+
+    # ══ Voice + regional build (Groq, or IndicTrans2) ════════════════════════
+    # Used instead of the "in English" wording above when the app can hear and
+    # answer every language.
+    "hero_body_voice": {
+        "en": "Tap the microphone and ask about your crop, the weather over your field, "
+              "or a government scheme — in Hindi, Punjabi, Marathi or English. The answer "
+              "is spoken back in your language.",
+        "hi": "माइक दबाइए और अपनी फसल, खेत के मौसम या किसी सरकारी योजना के बारे में "
+              "पूछिए — हिन्दी, पंजाबी, मराठी या अंग्रेज़ी में। जवाब आपकी भाषा में बोलकर "
+              "सुनाया जाएगा।",
+        "pa": "ਮਾਈਕ ਦਬਾਓ ਅਤੇ ਆਪਣੀ ਫ਼ਸਲ, ਖੇਤ ਦੇ ਮੌਸਮ ਜਾਂ ਕਿਸੇ ਸਰਕਾਰੀ ਸਕੀਮ ਬਾਰੇ ਪੁੱਛੋ — "
+              "ਹਿੰਦੀ, ਪੰਜਾਬੀ, ਮਰਾਠੀ ਜਾਂ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ। ਜਵਾਬ ਤੁਹਾਡੀ ਭਾਸ਼ਾ ਵਿੱਚ ਬੋਲ ਕੇ "
+              "ਸੁਣਾਇਆ ਜਾਵੇਗਾ।",
+        "mr": "माइक दाबा आणि तुमचे पीक, शेतातील हवामान किंवा एखाद्या सरकारी योजनेबद्दल "
+              "विचारा — हिंदी, पंजाबी, मराठी किंवा इंग्रजीत. उत्तर तुमच्या भाषेत बोलून "
+              "ऐकवले जाईल.",
+    },
+    "mic_note_auto": {  # {language} = the chosen language's name
+        "en": "Tap the microphone, ask in {language}, then tap stop. The answer plays by itself.",
+        "hi": "माइक दबाइए, {language} में पूछिए, फिर रोकिए। जवाब अपने-आप सुनाई देगा।",
+        "pa": "ਮਾਈਕ ਦਬਾਓ, {language} ਵਿੱਚ ਪੁੱਛੋ, ਫਿਰ ਰੋਕੋ। ਜਵਾਬ ਆਪਣੇ-ਆਪ ਸੁਣਾਈ ਦੇਵੇਗਾ।",
+        "mr": "माइक दाबा, {language}मध्ये विचारा, मग थांबवा. उत्तर आपोआप ऐकू येईल.",
+    },
+    "eyebrow_or_type_any": {"en": "Or type", "hi": "या लिखिए", "pa": "ਜਾਂ ਲਿਖੋ", "mr": "किंवा लिहा"},
+    "text_placeholder_native": {
+        "en": "Will it rain in Pune tomorrow? Any scheme for irrigation?",
+        "hi": "यहाँ लिखिए, जैसे: क्या कल पुणे में बारिश होगी?",
+        "pa": "ਇੱਥੇ ਲਿਖੋ, ਜਿਵੇਂ: ਕੀ ਕੱਲ੍ਹ ਲੁਧਿਆਣਾ ਵਿੱਚ ਮੀਂਹ ਪਵੇਗਾ?",
+        "mr": "येथे लिहा, उदा.: उद्या नाशिकमध्ये पाऊस येईल का?",
+    },
+    "location_note_voice": {
+        "en": "Say your village in the question, type it here, or tap 📍 once — it is remembered.",
+        "hi": "सवाल में अपने गाँव का नाम बोलिए, यहाँ लिखिए, या एक बार 📍 दबाइए — याद रखा जाएगा।",
+        "pa": "ਸਵਾਲ ਵਿੱਚ ਆਪਣੇ ਪਿੰਡ ਦਾ ਨਾਮ ਬੋਲੋ, ਇੱਥੇ ਲਿਖੋ, ਜਾਂ ਇੱਕ ਵਾਰ 📍 ਦਬਾਓ — ਯਾਦ ਰੱਖਿਆ ਜਾਵੇਗਾ।",
+        "mr": "प्रश्नात तुमच्या गावाचे नाव सांगा, येथे लिहा, किंवा एकदा 📍 दाबा — लक्षात ठेवले जाईल.",
+    },
+    "location_placeholder_native": {
+        "en": "Your village or town", "hi": "आपका गाँव या शहर",
+        "pa": "ਤੁਹਾਡਾ ਪਿੰਡ ਜਾਂ ਸ਼ਹਿਰ", "mr": "तुमचे गाव किंवा शहर",
+    },
+    "gps_button": {
+        "en": "📍 Use my location", "hi": "📍 मेरी लोकेशन लें",
+        "pa": "📍 ਮੇਰੀ ਲੋਕੇਸ਼ਨ ਲਓ", "mr": "📍 माझे ठिकाण वापरा",
+    },
+    "your_location": {
+        "en": "your location", "hi": "आपकी जगह", "pa": "ਤੁਹਾਡੀ ਥਾਂ", "mr": "तुमचे ठिकाण",
+    },
+    "eyebrow_can_help": {
+        "en": "What I can help with", "hi": "मैं किसमें मदद कर सकता हूँ",
+        "pa": "ਮੈਂ ਕਿਸ ਵਿੱਚ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ", "mr": "मी कशात मदत करू शकतो",
+    },
+    "help_crop": {
+        "en": "🌾 Crop care — fertilizer, water, pests and disease — for wheat, rice, "
+              "cotton, onion, tomato and maize",
+        "hi": "🌾 फसल की देखभाल — खाद, पानी, कीड़े और रोग — गेहूं, धान, कपास, प्याज, "
+              "टमाटर और मक्का के लिए",
+        "pa": "🌾 ਫ਼ਸਲ ਦੀ ਸੰਭਾਲ — ਖਾਦ, ਪਾਣੀ, ਕੀੜੇ ਅਤੇ ਰੋਗ — ਕਣਕ, ਝੋਨਾ, ਕਪਾਹ, ਪਿਆਜ਼, "
+              "ਟਮਾਟਰ ਅਤੇ ਮੱਕੀ ਲਈ",
+        "mr": "🌾 पिकाची काळजी — खत, पाणी, कीड आणि रोग — गहू, भात, कापूस, कांदा, "
+              "टोमॅटो आणि मका यांसाठी",
+    },
+    "help_weather": {
+        "en": "🌦 Weather — rain, heat and wind for your village, for the next 3 days",
+        "hi": "🌦 मौसम — आपके गाँव में बारिश, गर्मी और हवा, अगले 3 दिन",
+        "pa": "🌦 ਮੌਸਮ — ਤੁਹਾਡੇ ਪਿੰਡ ਵਿੱਚ ਮੀਂਹ, ਗਰਮੀ ਅਤੇ ਹਵਾ, ਅਗਲੇ 3 ਦਿਨ",
+        "mr": "🌦 हवामान — तुमच्या गावातील पाऊस, उष्णता आणि वारा, पुढील 3 दिवस",
+    },
+    "help_scheme": {
+        "en": "🏛 Government schemes — PM-KISAN, crop insurance (PMFBY), Kisan Credit "
+              "Card, Soil Health Card",
+        "hi": "🏛 सरकारी योजनाएँ — पीएम किसान, फसल बीमा (PMFBY), किसान क्रेडिट कार्ड, "
+              "मृदा स्वास्थ्य कार्ड",
+        "pa": "🏛 ਸਰਕਾਰੀ ਸਕੀਮਾਂ — ਪੀਐਮ ਕਿਸਾਨ, ਫ਼ਸਲ ਬੀਮਾ (PMFBY), ਕਿਸਾਨ ਕ੍ਰੈਡਿਟ ਕਾਰਡ, "
+              "ਸੋਇਲ ਹੈਲਥ ਕਾਰਡ",
+        "mr": "🏛 सरकारी योजना — पीएम किसान, पीक विमा (PMFBY), किसान क्रेडिट कार्ड, "
+              "मृदा आरोग्य पत्रिका",
+    },
+    "heard_prefix": {"en": "You asked", "hi": "आपने पूछा", "pa": "ਤੁਸੀਂ ਪੁੱਛਿਆ", "mr": "तुम्ही विचारले"},
+
+    # ── Questions back to the farmer (shown and spoken) ──────────────────────
+    "ask_crop": {
+        "en": "Which crop is this about? I can advise on wheat, rice, cotton, onion, "
+              "tomato and maize.",
+        "hi": "यह किस फसल के बारे में है? मैं गेहूं, धान, कपास, प्याज, टमाटर और मक्का के "
+              "बारे में सलाह दे सकता हूँ।",
+        "pa": "ਇਹ ਕਿਹੜੀ ਫ਼ਸਲ ਬਾਰੇ ਹੈ? ਮੈਂ ਕਣਕ, ਝੋਨਾ, ਕਪਾਹ, ਪਿਆਜ਼, ਟਮਾਟਰ ਅਤੇ ਮੱਕੀ ਬਾਰੇ "
+              "ਸਲਾਹ ਦੇ ਸਕਦਾ ਹਾਂ।",
+        "mr": "हे कोणत्या पिकाबद्दल आहे? मी गहू, भात, कापूस, कांदा, टोमॅटो आणि मका "
+              "यांबद्दल सल्ला देऊ शकतो.",
+    },
+    "ask_age": {  # {crop} = crop name in the chosen language
+        "en": "How many days old is your {crop} crop? Please tell me, for example: “40 days”.",
+        "hi": "आपकी {crop} की फसल कितने दिन की है? कृपया बताइए, जैसे: “40 दिन”।",
+        "pa": "ਤੁਹਾਡੀ {crop} ਦੀ ਫ਼ਸਲ ਕਿੰਨੇ ਦਿਨਾਂ ਦੀ ਹੈ? ਕਿਰਪਾ ਕਰਕੇ ਦੱਸੋ, ਜਿਵੇਂ: “40 ਦਿਨ”।",
+        "mr": "तुमचे पीक ({crop}) किती दिवसांचे आहे? कृपया सांगा, उदा.: “40 दिवस”.",
+    },
+    "ask_age_check": {  # {crop} {days} {total}
+        "en": "Your {crop} crop is usually ready in about {total} days, but you said {days} "
+              "days. Please check the crop's age and tell me again.",
+        "hi": "{crop} की फसल आमतौर पर लगभग {total} दिन में तैयार हो जाती है, पर आपने "
+              "{days} दिन बताए। कृपया फसल की उम्र जाँचकर फिर से बताइए।",
+        "pa": "{crop} ਦੀ ਫ਼ਸਲ ਆਮ ਤੌਰ 'ਤੇ ਲਗਭਗ {total} ਦਿਨਾਂ ਵਿੱਚ ਤਿਆਰ ਹੋ ਜਾਂਦੀ ਹੈ, ਪਰ ਤੁਸੀਂ "
+              "{days} ਦਿਨ ਦੱਸੇ। ਕਿਰਪਾ ਕਰਕੇ ਫ਼ਸਲ ਦੀ ਉਮਰ ਜਾਂਚ ਕੇ ਦੁਬਾਰਾ ਦੱਸੋ।",
+        "mr": "{crop} पीक साधारणपणे सुमारे {total} दिवसांत तयार होते, पण तुम्ही {days} "
+              "दिवस सांगितले. कृपया पिकाचे वय तपासून पुन्हा सांगा.",
+    },
+    "ask_location": {
+        "en": "Which village or town are you in? Say its name, or tap “📍 Use my location”.",
+        "hi": "आप किस गाँव या शहर में हैं? उसका नाम बोलिए, या “📍 मेरी लोकेशन लें” दबाइए।",
+        "pa": "ਤੁਸੀਂ ਕਿਹੜੇ ਪਿੰਡ ਜਾਂ ਸ਼ਹਿਰ ਵਿੱਚ ਹੋ? ਉਸਦਾ ਨਾਮ ਬੋਲੋ, ਜਾਂ “📍 ਮੇਰੀ ਲੋਕੇਸ਼ਨ ਲਓ” ਦਬਾਓ।",
+        "mr": "तुम्ही कोणत्या गावात किंवा शहरात आहात? त्याचे नाव सांगा, किंवा "
+              "“📍 माझे ठिकाण वापरा” दाबा.",
+    },
+    "ask_place_not_found": {  # {place}
+        "en": "I could not find “{place}”. Please say the name of a nearby big town or your district.",
+        "hi": "मुझे “{place}” नहीं मिला। कृपया पास के किसी बड़े शहर या अपने ज़िले का नाम बताइए।",
+        "pa": "ਮੈਨੂੰ “{place}” ਨਹੀਂ ਮਿਲਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਨੇੜੇ ਦੇ ਕਿਸੇ ਵੱਡੇ ਸ਼ਹਿਰ ਜਾਂ ਆਪਣੇ "
+              "ਜ਼ਿਲ੍ਹੇ ਦਾ ਨਾਮ ਦੱਸੋ।",
+        "mr": "मला “{place}” सापडले नाही. कृपया जवळच्या मोठ्या शहराचे किंवा तुमच्या "
+              "जिल्ह्याचे नाव सांगा.",
+    },
+    "ask_unsupported_crop": {  # {crop} = the crop as the farmer said it
+        "en": "I don't have advice for {crop} yet. I can help with wheat, rice, cotton, "
+              "onion, tomato and maize.",
+        "hi": "अभी मेरे पास {crop} के बारे में जानकारी नहीं है। मैं गेहूं, धान, कपास, "
+              "प्याज, टमाटर और मक्का में मदद कर सकता हूँ।",
+        "pa": "ਅਜੇ ਮੇਰੇ ਕੋਲ {crop} ਬਾਰੇ ਜਾਣਕਾਰੀ ਨਹੀਂ ਹੈ। ਮੈਂ ਕਣਕ, ਝੋਨਾ, ਕਪਾਹ, ਪਿਆਜ਼, "
+              "ਟਮਾਟਰ ਅਤੇ ਮੱਕੀ ਵਿੱਚ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ।",
+        "mr": "सध्या माझ्याकडे {crop} बद्दल माहिती नाही. मी गहू, भात, कापूस, कांदा, "
+              "टोमॅटो आणि मका यांबाबत मदत करू शकतो.",
+    },
+    "ask_scheme_unknown": {
+        "en": "I don't have details of that scheme. I can tell you about PM-KISAN, crop "
+              "insurance (PM Fasal Bima Yojana), Kisan Credit Card and Soil Health Card.",
+        "hi": "उस योजना की जानकारी मेरे पास नहीं है। मैं पीएम किसान, फसल बीमा (प्रधानमंत्री "
+              "फसल बीमा योजना), किसान क्रेडिट कार्ड और मृदा स्वास्थ्य कार्ड के बारे में "
+              "बता सकता हूँ।",
+        "pa": "ਉਸ ਸਕੀਮ ਦੀ ਜਾਣਕਾਰੀ ਮੇਰੇ ਕੋਲ ਨਹੀਂ ਹੈ। ਮੈਂ ਪੀਐਮ ਕਿਸਾਨ, ਫ਼ਸਲ ਬੀਮਾ (ਪ੍ਰਧਾਨ "
+              "ਮੰਤਰੀ ਫ਼ਸਲ ਬੀਮਾ ਯੋਜਨਾ), ਕਿਸਾਨ ਕ੍ਰੈਡਿਟ ਕਾਰਡ ਅਤੇ ਸੋਇਲ ਹੈਲਥ ਕਾਰਡ ਬਾਰੇ "
+              "ਦੱਸ ਸਕਦਾ ਹਾਂ।",
+        "mr": "त्या योजनेची माहिती माझ्याकडे नाही. मी पीएम किसान, पीक विमा (प्रधानमंत्री "
+              "पीक विमा योजना), किसान क्रेडिट कार्ड आणि मृदा आरोग्य पत्रिका यांबद्दल "
+              "सांगू शकतो.",
+    },
+    "ask_offtopic": {  # {example} = a sample question in the chosen language
+        "en": "I can help only with farming: crop care, the weather for your field, and "
+              "government schemes for farmers. For example, ask: “{example}”",
+        "hi": "मैं सिर्फ़ खेती में मदद कर सकता हूँ: फसल की देखभाल, खेत का मौसम और किसानों "
+              "की सरकारी योजनाएँ। जैसे पूछिए: “{example}”",
+        "pa": "ਮੈਂ ਸਿਰਫ਼ ਖੇਤੀ ਵਿੱਚ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ: ਫ਼ਸਲ ਦੀ ਸੰਭਾਲ, ਖੇਤ ਦਾ ਮੌਸਮ ਅਤੇ "
+              "ਕਿਸਾਨਾਂ ਲਈ ਸਰਕਾਰੀ ਸਕੀਮਾਂ। ਜਿਵੇਂ ਪੁੱਛੋ: “{example}”",
+        "mr": "मी फक्त शेतीविषयी मदत करू शकतो: पिकाची काळजी, शेतातील हवामान आणि "
+              "शेतकऱ्यांसाठी सरकारी योजना. उदा. असे विचारा: “{example}”",
+    },
+    "ask_unclear": {  # {example}
+        "en": "Sorry, I did not understand. Please ask again about your crop, the weather, "
+              "or a government scheme. For example: “{example}”",
+        "hi": "माफ़ कीजिए, मैं समझ नहीं पाया। कृपया अपनी फसल, मौसम या किसी सरकारी योजना "
+              "के बारे में फिर से पूछिए। जैसे: “{example}”",
+        "pa": "ਮਾਫ਼ ਕਰਨਾ, ਮੈਂ ਸਮਝ ਨਹੀਂ ਸਕਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੀ ਫ਼ਸਲ, ਮੌਸਮ ਜਾਂ ਕਿਸੇ "
+              "ਸਰਕਾਰੀ ਸਕੀਮ ਬਾਰੇ ਦੁਬਾਰਾ ਪੁੱਛੋ। ਜਿਵੇਂ: “{example}”",
+        "mr": "माफ करा, मला समजले नाही. कृपया तुमचे पीक, हवामान किंवा एखाद्या सरकारी "
+              "योजनेबद्दल पुन्हा विचारा. उदा.: “{example}”",
+    },
+    "msg_greeting": {  # {example}
+        "en": "Namaste! Ask me about your crop, the weather, or a government scheme. "
+              "For example: “{example}”",
+        "hi": "नमस्ते! मुझसे अपनी फसल, मौसम या किसी सरकारी योजना के बारे में पूछिए। "
+              "जैसे: “{example}”",
+        "pa": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਨੂੰ ਆਪਣੀ ਫ਼ਸਲ, ਮੌਸਮ ਜਾਂ ਕਿਸੇ ਸਰਕਾਰੀ ਸਕੀਮ ਬਾਰੇ ਪੁੱਛੋ। "
+              "ਜਿਵੇਂ: “{example}”",
+        "mr": "नमस्कार! मला तुमचे पीक, हवामान किंवा एखाद्या सरकारी योजनेबद्दल विचारा. "
+              "उदा.: “{example}”",
+    },
+    "note_age_for_exact": {  # {crop}
+        "en": "For exact fertilizer and water advice, tell me how many days old your "
+              "{crop} crop is.",
+        "hi": "खाद और पानी की सही सलाह के लिए बताइए कि आपकी {crop} की फसल कितने दिन की है।",
+        "pa": "ਖਾਦ ਅਤੇ ਪਾਣੀ ਦੀ ਸਹੀ ਸਲਾਹ ਲਈ ਦੱਸੋ ਕਿ ਤੁਹਾਡੀ {crop} ਦੀ ਫ਼ਸਲ ਕਿੰਨੇ ਦਿਨਾਂ ਦੀ ਹੈ।",
+        "mr": "खत आणि पाण्याच्या अचूक सल्ल्यासाठी तुमचे पीक ({crop}) किती दिवसांचे आहे "
+              "ते सांगा.",
+    },
+    "note_weather_down": {
+        "en": "The weather service is not responding right now. Please ask about the "
+              "weather again in a few minutes.",
+        "hi": "मौसम सेवा अभी जवाब नहीं दे रही है। कृपया थोड़ी देर बाद मौसम के बारे में फिर पूछिए।",
+        "pa": "ਮੌਸਮ ਸੇਵਾ ਇਸ ਵੇਲੇ ਜਵਾਬ ਨਹੀਂ ਦੇ ਰਹੀ। ਕਿਰਪਾ ਕਰਕੇ ਥੋੜ੍ਹੀ ਦੇਰ ਬਾਅਦ ਮੌਸਮ "
+              "ਬਾਰੇ ਦੁਬਾਰਾ ਪੁੱਛੋ।",
+        "mr": "हवामान सेवा सध्या प्रतिसाद देत नाही. कृपया थोड्या वेळाने हवामानाबद्दल "
+              "पुन्हा विचारा.",
+    },
+
+    # ── Voice and service problems (shown and spoken) ────────────────────────
+    "err_no_speech": {
+        "en": "I could not hear you. Tap the microphone, speak clearly close to the phone, "
+              "then tap stop.",
+        "hi": "मुझे आपकी आवाज़ सुनाई नहीं दी। माइक दबाइए, फ़ोन के पास साफ़ बोलिए, फिर रोकिए।",
+        "pa": "ਮੈਨੂੰ ਤੁਹਾਡੀ ਆਵਾਜ਼ ਸੁਣਾਈ ਨਹੀਂ ਦਿੱਤੀ। ਮਾਈਕ ਦਬਾਓ, ਫ਼ੋਨ ਦੇ ਨੇੜੇ ਸਾਫ਼ ਬੋਲੋ, "
+              "ਫਿਰ ਰੋਕੋ।",
+        "mr": "मला तुमचा आवाज ऐकू आला नाही. माइक दाबा, फोनजवळ स्पष्ट बोला, मग थांबवा.",
+    },
+    "err_busy": {
+        "en": "Many farmers are asking right now. Please wait one minute and ask again.",
+        "hi": "अभी बहुत किसान सवाल पूछ रहे हैं। कृपया एक मिनट रुककर फिर पूछिए।",
+        "pa": "ਇਸ ਵੇਲੇ ਬਹੁਤ ਕਿਸਾਨ ਸਵਾਲ ਪੁੱਛ ਰਹੇ ਹਨ। ਕਿਰਪਾ ਕਰਕੇ ਇੱਕ ਮਿੰਟ ਰੁਕ ਕੇ ਦੁਬਾਰਾ ਪੁੱਛੋ।",
+        "mr": "सध्या बरेच शेतकरी प्रश्न विचारत आहेत. कृपया एक मिनिट थांबून पुन्हा विचारा.",
+    },
+    "err_service": {
+        "en": "The voice service is not working right now. Please try again in a few minutes.",
+        "hi": "आवाज़ सेवा अभी काम नहीं कर रही है। कृपया कुछ मिनट बाद फिर कोशिश कीजिए।",
+        "pa": "ਆਵਾਜ਼ ਸੇਵਾ ਇਸ ਵੇਲੇ ਕੰਮ ਨਹੀਂ ਕਰ ਰਹੀ। ਕਿਰਪਾ ਕਰਕੇ ਕੁਝ ਮਿੰਟਾਂ ਬਾਅਦ ਦੁਬਾਰਾ "
+              "ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+        "mr": "आवाज सेवा सध्या काम करत नाही. कृपया काही मिनिटांनी पुन्हा प्रयत्न करा.",
+    },
+    "err_too_long": {
+        "en": "That recording is too long. Please ask in under one minute.",
+        "hi": "रिकॉर्डिंग बहुत लंबी है। कृपया एक मिनट से कम में पूछिए।",
+        "pa": "ਰਿਕਾਰਡਿੰਗ ਬਹੁਤ ਲੰਮੀ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਇੱਕ ਮਿੰਟ ਤੋਂ ਘੱਟ ਵਿੱਚ ਪੁੱਛੋ।",
+        "mr": "रेकॉर्डिंग खूप लांब आहे. कृपया एका मिनिटापेक्षा कमी वेळात विचारा.",
+    },
+    "note_english_fallback": {  # {language}
+        "en": "I could not prepare the answer in {language} just now, so here it is in English.",
+        "hi": "अभी {language} में जवाब तैयार नहीं हो सका, इसलिए अंग्रेज़ी में दिया है। "
+              "{language} के लिए एक मिनट बाद फिर पूछिए।",
+        "pa": "ਹੁਣੇ {language} ਵਿੱਚ ਜਵਾਬ ਤਿਆਰ ਨਹੀਂ ਹੋ ਸਕਿਆ, ਇਸ ਲਈ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ ਦਿੱਤਾ ਹੈ। "
+              "{language} ਲਈ ਇੱਕ ਮਿੰਟ ਬਾਅਦ ਦੁਬਾਰਾ ਪੁੱਛੋ।",
+        "mr": "आत्ता {language}मध्ये उत्तर तयार होऊ शकले नाही, म्हणून इंग्रजीत दिले आहे. "
+              "{language}साठी एका मिनिटाने पुन्हा विचारा.",
+    },
+}
+
+# Crop names as a farmer says them, per language.
+CROP_NAMES = {
+    "wheat": {"en": "wheat", "hi": "गेहूं", "pa": "ਕਣਕ", "mr": "गहू"},
+    "rice": {"en": "rice", "hi": "धान", "pa": "ਝੋਨਾ", "mr": "भात"},
+    "onion": {"en": "onion", "hi": "प्याज", "pa": "ਪਿਆਜ਼", "mr": "कांदा"},
+    "tomato": {"en": "tomato", "hi": "टमाटर", "pa": "ਟਮਾਟਰ", "mr": "टोमॅटो"},
+    "cotton": {"en": "cotton", "hi": "कपास", "pa": "ਕਪਾਹ", "mr": "कापूस"},
+    "maize": {"en": "maize", "hi": "मक्का", "pa": "ਮੱਕੀ", "mr": "मका"},
 }
 
 # Spoken-question prompts shown under "Or say it aloud", per chosen language.
@@ -266,3 +506,9 @@ def lang_name(code: str, ui_lang: str | None) -> str:
     """Name of language `code`, written in the UI language."""
     names = LANG_NAMES[normalize_lang(ui_lang)]
     return names.get(code, names[DEFAULT_LANG])
+
+
+def crop_label(crop: str, lang: str | None) -> str:
+    """A knowledge-base crop's name in the chosen language."""
+    names = CROP_NAMES.get(crop)
+    return names[normalize_lang(lang)] if names else crop

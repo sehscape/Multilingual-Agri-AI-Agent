@@ -1,9 +1,11 @@
 # Render Blueprint — free "Lite" deploy of the Farmer Advisory Voice Agent.
 #
 # Render auto-detects this file. It runs the app in LITE_MODE so it fits the
-# free tier's 512 MB RAM: typed input, live weather, crop advice, keyword-based
-# government-scheme search, and English voice output (gTTS). No microphone,
-# no PyTorch.
+# free tier's 512 MB RAM: live weather, crop advice, keyword-based
+# government-scheme search and a spoken reply (gTTS), with no PyTorch.
+# With GROQ_API_KEY set (free, console.groq.com — see DEPLOY.md section C) the
+# microphone is on and questions and answers work in Hindi, Punjabi, Marathi
+# and English. Without it: typed English questions only.
 #
 # The free instance sleeps after ~15 min idle and wakes on the next visit
 # (~30-60 s cold start).
@@ -23,3 +25,6 @@ services:
       # Python version also pinned by .python-version (3.11.9) at the repo root.
       - key: PYTHON_VERSION
         value: "3.11.9"
+      # Secret — entered in the Render dashboard, never stored in the repo.
+      - key: GROQ_API_KEY
+        sync: false

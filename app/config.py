@@ -99,12 +99,36 @@ TEMPERATURE: float = float(os.getenv("TEMPERATURE", "0.3"))
 LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 DEV_MODE: bool = os.getenv("DEV_MODE", "true").lower() == "true"
 
+# ─── Groq cloud: free speech-to-text + open-weight LLM ────────────────────────
+# With a free key from console.groq.com the app hears and answers in Hindi,
+# Punjabi and Marathi even on a 512 MB host: Whisper-large-v3 turns speech into
+# text, and an open-weight LLM understands the question and writes the answer
+# in the farmer's language (from the tool results only). Keep the key in .env
+# or the host's environment settings — never in the repo.
+GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "").strip()
+GROQ_API_URL: str = os.getenv("GROQ_API_URL", "https://api.groq.com/openai/v1")
+# Tried in order. A model this account can't use is skipped for good; one that
+# is over its rate limit is skipped for that request only.
+GROQ_LLM_MODELS: list[str] = [
+    m.strip() for m in os.getenv(
+        "GROQ_LLM_MODELS",
+        "openai/gpt-oss-120b,openai/gpt-oss-20b,llama-3.3-70b-versatile",
+    ).split(",") if m.strip()
+]
+GROQ_STT_MODEL: str = os.getenv("GROQ_STT_MODEL", "whisper-large-v3")
+USE_GROQ: bool = bool(GROQ_API_KEY) and os.getenv("USE_GROQ", "true").lower() == "true"
+
+# Which speech-to-text engine hears the microphone:
+#   auto  → Groq Whisper when GROQ_API_KEY is set, else local Whisper (full build)
+#   groq  → Groq Whisper only        local → local Whisper only
+STT_BACKEND: str = os.getenv("STT_BACKEND", "auto").lower()
+
 # ─── LITE mode (small free hosts: Render free tier, 512 MB RAM) ────────────────
 # Turns off every heavy component so the app fits in ~350 MB:
-#   • no microphone / Whisper  (typed input only)
+#   • no local Whisper          (voice needs GROQ_API_KEY)
 #   • keyword scheme search    (RAG_BACKEND=bm25, no torch)
-#   • rule-based answers        (USE_STUB_LLM)
-#   • English voice out         (USE_STUB_TRANSLATION, gTTS)
+#   • rule-based agent brain    (USE_STUB_LLM)
+#   • no local translator       (USE_STUB_TRANSLATION; Groq writes regional answers)
 LITE_MODE: bool = os.getenv("LITE_MODE", "false").lower() == "true"
 if LITE_MODE:
     RAG_BACKEND = "bm25"
@@ -113,6 +137,17 @@ if LITE_MODE:
     USE_STUB_RAG = False
     TTS_ENGINE = "gtts"
     DEV_MODE = False
+
+# ─── Resolved capabilities (what this build can actually do) ───────────────────
+if STT_BACKEND == "groq" or (STT_BACKEND == "auto" and USE_GROQ):
+    STT_ENGINE = "groq" if USE_GROQ else "none"
+elif not LITE_MODE:
+    STT_ENGINE = "local"          # transformers Whisper on this machine
+else:
+    STT_ENGINE = "none"
+VOICE_READY: bool = STT_ENGINE != "none"
+# Questions and answers in Hindi / Punjabi / Marathi: Groq LLM, or IndicTrans2.
+REGIONAL_READY: bool = USE_GROQ or not USE_STUB_TRANSLATION
 
 # Human-readable language names keyed by ISO 639-1 code used in the UI
 SUPPORTED_LANGUAGES: dict[str, str] = {

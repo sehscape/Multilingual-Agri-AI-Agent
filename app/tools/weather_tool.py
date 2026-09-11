@@ -8,6 +8,7 @@ Steps:
 """
 from __future__ import annotations
 
+import re
 import requests
 from functools import lru_cache
 from typing import Optional
@@ -35,28 +36,52 @@ _WMO_DESCRIPTIONS: dict[int, str] = {
 _REQUEST_TIMEOUT = 10  # seconds
 
 
+_COORDS = re.compile(r"^\s*(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)\s*$")
+
+
+def _parse_coords(location: str) -> Optional[tuple[float, float]]:
+    """'18.5204, 73.8567' (from the 📍 button) → (lat, lon)."""
+    m = _COORDS.match(location or "")
+    if not m:
+        return None
+    lat, lon = float(m.group(1)), float(m.group(2))
+    return (lat, lon) if -90 <= lat <= 90 and -180 <= lon <= 180 else None
+
+
+def _search_place(name: str) -> list[dict]:
+    resp = requests.get(
+        GEOCODING_API_URL,
+        params={"name": name, "count": 10, "language": "en", "format": "json"},
+        timeout=_REQUEST_TIMEOUT,
+    )
+    resp.raise_for_status()
+    return resp.json().get("results", []) or []
+
+
 @lru_cache(maxsize=256)
 def _geocode(location: str) -> Optional[tuple[float, float, str]]:
     """Return (lat, lon, resolved_name) for a location string, or None.
 
-    Cached: a place's coordinates are stable, so repeat lookups (very common —
-    farmers re-ask about the same village) skip the network round-trip.
+    Farmers are in India, so an Indian match wins over a same-named town
+    abroad. "Shirur, Pune" is retried as "Shirur" (the geocoder matches place
+    names only). Cached: a place's coordinates are stable, so repeat lookups
+    (very common — farmers re-ask about the same village) skip the network.
     """
     try:
-        resp = requests.get(
-            GEOCODING_API_URL,
-            params={"name": location, "count": 1, "language": "en", "format": "json"},
-            timeout=_REQUEST_TIMEOUT,
-        )
-        resp.raise_for_status()
-        results = resp.json().get("results", [])
+        candidates = [location] + [p.strip() for p in location.split(",")[:1]
+                                   if "," in location and p.strip()]
+        results = []
+        for name in candidates:
+            results = _search_place(name)
+            if results:
+                break
         if not results:
             logger.warning("Geocoding found no results for '%s'", location)
             return None
-        r = results[0]
+        r = next((x for x in results if x.get("country_code") == "IN"), results[0])
         name = r.get("name", location)
-        country = r.get("country", "")
-        display = f"{name}, {country}" if country else name
+        region = r.get("admin1", "") if r.get("country_code") == "IN" else r.get("country", "")
+        display = f"{name}, {region}" if region else name
         return float(r["latitude"]), float(r["longitude"]), display
     except Exception as exc:
         logger.error("Geocoding error for '%s': %s", location, exc)
@@ -202,11 +227,16 @@ def get_weather_context(location: Optional[str]) -> tuple[Optional[dict], str]:
     if not location:
         return None, "No location specified. Please provide a village, city, or district name."
 
-    geo = _geocode(location)
-    if geo is None:
-        return None, f"Could not find location '{location}'. Please check the spelling or try a nearby city."
-
-    lat, lon, display = geo
+    coords = _parse_coords(location)
+    if coords:
+        lat, lon = coords
+        display = f"the farmer's location ({lat:.2f}, {lon:.2f})"
+    else:
+        geo = _geocode(location)
+        if geo is None:
+            return None, (f"Could not find location '{location}'. "
+                          "Please check the spelling or try a nearby city.")
+        lat, lon, display = geo
     logger.info("Resolved '%s' → %s (%.4f, %.4f)", location, display, lat, lon)
 
     raw = _fetch_forecast(lat, lon)

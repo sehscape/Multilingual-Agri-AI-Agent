@@ -31,8 +31,11 @@ _fail = 0
 
 def _simulate_lite_host() -> None:
     """Force LITE_MODE and make the heavy ML packages unimportable, as on
-    Render. Must run before anything from `app` is imported."""
+    Render. Must run before anything from `app` is imported. No Groq key: this
+    is the typed-English Lite build (scripts/test_voice_languages.py covers
+    the Lite build with a key)."""
     os.environ["LITE_MODE"] = "true"
+    os.environ["GROQ_API_KEY"] = ""
     real_import = builtins.__import__
 
     def no_heavy_import(name, *args, **kwargs):

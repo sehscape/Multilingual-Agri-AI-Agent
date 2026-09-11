@@ -4,10 +4,11 @@
 # Use on the host with:  pip install -r requirements-lite.txt
 # and set env var:       LITE_MODE=true
 #
-# What still works: typed questions, live weather, crop advice,
-# keyword-based government-scheme search, English voice output (gTTS).
-# What's disabled:  microphone input, semantic search, the local LLM,
-#                   regional-language translation.
+# What works: live weather, crop advice, keyword-based government-scheme
+# search, spoken replies (gTTS) — and, with GROQ_API_KEY set, the microphone
+# plus questions and answers in Hindi / Punjabi / Marathi (Groq's API, called
+# with `requests`: nothing extra to install).
+# What's disabled:  local Whisper, semantic search, the local LLM / translator.
 #
 # gradio is pinned to the version this codebase is developed against; its
 # transitive deps (huggingface_hub, fastapi, uvicorn, …) resolve automatically.

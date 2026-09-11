@@ -84,7 +84,7 @@ def _build_tools(state: AgentState) -> list[Tool]:
         return summary
 
     def scheme_tool(tool_input: str) -> str:
-        out = get_scheme_context(tool_input.strip() or state.english_text)
+        out = get_scheme_context(tool_input.strip() or state.scheme_query or state.english_text)
         state.scheme_docs = [{"context": out}]
         return out
 
@@ -122,10 +122,13 @@ class LangChainAgent:
                  else getattr(self.llm, "model_id", type(self.llm).__name__))
         state.add_trace(f"LangChain ReAct agent (decisions: {brain})")
         tools = _build_tools(state)
+        # The rule-based policy follows the plan the understanding step made.
+        decider = (StubLLM(plan=state.tool_plan)
+                   if isinstance(self.llm, StubLLM) and state.tool_plan else self.llm)
 
         try:
             executor = AgentExecutor(
-                agent=create_react_agent(LangChainLLMAdapter(inner=self.llm),
+                agent=create_react_agent(LangChainLLMAdapter(inner=decider),
                                          tools, _REACT_PROMPT),
                 tools=tools,
                 max_iterations=self.max_iterations,

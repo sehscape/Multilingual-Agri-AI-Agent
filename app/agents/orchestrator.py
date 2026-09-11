@@ -94,7 +94,8 @@ class AgentOrchestrator:
     def _run_scheme_tool(self, state: AgentState) -> AgentState:
         from app.tools.scheme_tool import get_scheme_context
         t0 = time.time()
-        query = state.english_text or "government agricultural scheme information"
+        query = (state.scheme_query or state.english_text
+                 or "government agricultural scheme information")
         try:
             context = get_scheme_context(query)
             state.scheme_docs = [{"context": context}]

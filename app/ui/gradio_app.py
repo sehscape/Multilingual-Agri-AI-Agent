@@ -1,12 +1,22 @@
 """Gradio UI — farmer-facing console, in English, Hindi, Punjabi and Marathi.
 
-Flow: typed or spoken question → intent extraction → agent (LangChain ReAct by
-default: crop / weather / scheme tools) → answer → spoken reply.
+Flow: a spoken or typed question → understanding (what is asked, what is
+missing) → a question back to the farmer when something is missing, else the
+agent (LangChain ReAct by default: crop / weather / scheme tools) → the answer
+in the farmer's language → spoken reply.
 
-The language picked in the top bar drives the whole interface (app/ui/i18n.py)
-and the language the microphone listens in. Answers are English unless a real
-translator (IndicTrans2) is configured — see _pipeline().
+The language picked in the top bar drives the whole interface (app/ui/i18n.py),
+the language the microphone listens in, and the language of the answer.
+
+Engines (app/config.py):
+  • GROQ_API_KEY set — Groq's Whisper-large-v3 hears all four languages and
+    an open-weight LLM understands the question and writes the answer in the
+    farmer's language, from the tool facts only. Fits the 512 MB Render host.
+  • no key, full build — local Whisper; answers in English unless IndicTrans2
+    is configured.
+  • no key, LITE build — typed English questions only.
 """
+import html
 import time
 import gradio as gr
 
@@ -14,7 +24,8 @@ from app.utils.logging import get_logger
 from app.config import (
     DEV_MODE, WHISPER_MODEL_ID, USE_STUB_TRANSLATION, USE_STUB_LLM,
     USE_HF_INFERENCE_API, LOCAL_LLM_MODEL_ID, TTS_ENGINE, LITE_MODE, RAG_BACKEND,
-    AGENT_BACKEND,
+    AGENT_BACKEND, USE_GROQ, GROQ_LLM_MODELS, GROQ_STT_MODEL, STT_ENGINE,
+    VOICE_READY, REGIONAL_READY,
 )
 from app.ui.i18n import (
     DEFAULT_LANG, LANG_CHOICES, SPOKEN_EXAMPLES, lang_name, normalize_lang, t,
@@ -22,21 +33,30 @@ from app.ui.i18n import (
 
 logger = get_logger(__name__)
 
-# A real English↔regional text translator (IndicTrans2) is configured. Without
-# it, spoken regional questions reach the agent via Whisper's speech→English
-# translation plus the original transcript, and answers stay in English.
+# A local English↔regional translator (IndicTrans2) is configured.
 _MT_READY = not USE_STUB_TRANSLATION
+
+# Groq failures → what the farmer is told.
+_GROQ_ERROR_KEYS = {"rate_limit": "err_busy", "too_large": "err_too_long"}
 
 
 def _has_indic(text: str) -> bool:
     """True if text contains Devanagari (U+0900–097F) or Gurmukhi (U+0A00–0A7F)."""
     return any(0x0900 <= ord(ch) <= 0x0A7F for ch in text)
 
+
+def _typed_language(text: str, ui_lang: str) -> str:
+    """The language a typed question is written in, judged by its script."""
+    if any(0x0A00 <= ord(ch) <= 0x0A7F for ch in text):
+        return "pa"
+    if any(0x0900 <= ord(ch) <= 0x097F for ch in text):
+        return ui_lang if ui_lang in ("hi", "mr") else "hi"
+    return "en"
+
 # ── Singletons ────────────────────────────────────────────────────────────────
 _stt = None
 _translator = None
 _llm = None
-_router_llm = None
 _orchestrator = None
 _tts = None
 
@@ -44,10 +64,22 @@ _tts = None
 def _get_stt():
     global _stt
     if _stt is None:
-        from app.models.stt import WhisperSTT
-        from app.utils.device import get_device
-        _stt = WhisperSTT(device=get_device())
+        if STT_ENGINE == "groq":
+            from app.models.stt import GroqWhisperSTT
+            _stt = GroqWhisperSTT()
+        else:
+            from app.models.stt import WhisperSTT
+            from app.utils.device import get_device
+            _stt = WhisperSTT(device=get_device())
     return _stt
+
+
+def _groq():
+    """The shared Groq client, or None when no key is configured."""
+    if not USE_GROQ:
+        return None
+    from app.models.groq_client import get_groq_client
+    return get_groq_client()
 
 
 def _get_translator():
@@ -60,29 +92,20 @@ def _get_translator():
 
 
 def _get_llm():
-    """Answer LLM — real (local/API) when USE_STUB_LLM is off, else the stub."""
+    """The agent's own answer LLM. With Groq on, Groq writes the farmer's answer
+    and this rule-based composer only provides the English fallback, so no slow
+    local model is loaded. Otherwise: real (local/API) when USE_STUB_LLM is off."""
     global _llm
     if _llm is None:
         from app.models.llm import get_llm
         # Only probe the device for a real local model — the stub needs nothing,
         # and device probing would import torch (absent on LITE_MODE hosts).
-        if USE_STUB_LLM:
+        if USE_STUB_LLM or USE_GROQ:
             _llm = get_llm(use_stub=True)
         else:
             from app.utils.device import get_device
             _llm = get_llm(device=get_device(), use_stub=False)
     return _llm
-
-
-def _get_router_llm():
-    """Intent router — always the fast, deterministic rule-based classifier.
-    Kept separate from the answer LLM so routing stays instant and reliable on
-    CPU (no slow model call just to pick which tools to run)."""
-    global _router_llm
-    if _router_llm is None:
-        from app.models.llm import StubLLM
-        _router_llm = StubLLM()
-    return _router_llm
 
 
 def _get_orchestrator():
@@ -116,9 +139,27 @@ def _get_tts():
     return _tts
 
 
+def _speak(text: str, lang: str, trace: list) -> "str | None":
+    """Voice for `text` in `lang` — a path to an audio file, or None."""
+    from app.agents.reply_writer import clean_for_speech
+    voice_text = clean_for_speech(text)[:1200]
+    if not voice_text:
+        return None
+    try:
+        t0 = time.time()
+        path = _get_tts().generate(voice_text, lang)
+        trace.append(f"[TTS] {TTS_ENGINE} · {lang} in {time.time()-t0:.1f}s"
+                     f"{'' if path else ' — no audio, text still shown'}")
+        return path
+    except Exception as e:
+        logger.error("TTS failed: %s", e)
+        trace.append(f"[TTS] ERROR: {e} — text answer still shown")
+        return None
+
+
 def _run_output_stage(state, trace, target_lang: "str | None" = None) -> "str | None":
-    """Output boundary — translate the English answer to the farmer's language
-    and synthesize voice. Returns a path to an audio file, or None.
+    """Output boundary for the IndicTrans2 build — translate the English answer
+    to the farmer's language and synthesize voice. Returns an audio path or None.
 
     target_lang: the language to answer in (the one chosen on the page). When
     omitted, the language the question was asked in is used."""
@@ -130,7 +171,7 @@ def _run_output_stage(state, trace, target_lang: "str | None" = None) -> "str | 
         target_lang = state.source_language
     target = target_lang if target_lang in ("hi", "mr", "pa") else "en"
 
-    # Step 5a: English answer → regional text (skip when stubbed or already English)
+    # English answer → regional text (skip when stubbed or already English)
     if target != "en" and not USE_STUB_TRANSLATION:
         try:
             t0 = time.time()
@@ -147,7 +188,7 @@ def _run_output_stage(state, trace, target_lang: "str | None" = None) -> "str | 
         note = "stub, " if (target != "en" and USE_STUB_TRANSLATION) else ""
         trace.append(f"[Translate-out] {note}speaking English answer")
 
-    # Step 5b: text → voice (trim long text to keep the clip reasonable)
+    # Text → voice (trim long text to keep the clip reasonable)
     voice_text = state.regional_answer[:1200]
     try:
         t0 = time.time()
@@ -165,149 +206,237 @@ def _run_output_stage(state, trace, target_lang: "str | None" = None) -> "str | 
 
 # ── Pipeline ──────────────────────────────────────────────────────────────────
 
-def _pipeline(audio, text_query, location, lang) -> dict:
-    """Full pipeline: (typed text OR voice) → intent → agent → answer → voice.
+def _pending(u, plan) -> "dict | None":
+    """What to remember when the farmer was asked for a missing detail, so a
+    reply of just "40 days" or "Nashik" completes the earlier question."""
+    if not plan.missing:
+        return None
+    return {"english": u.english, "missing": plan.missing, "understanding": u.to_dict()}
+
+
+def _intent_label(u) -> str:
+    wants = [u.wants_crop_advice, u.wants_weather, u.wants_scheme]
+    if sum(wants) > 1:
+        return "multiple"
+    if u.wants_scheme:
+        return "government_scheme"
+    if u.wants_weather:
+        return "weather"
+    return {"fertilizer": "fertilizer", "irrigation": "irrigation",
+            "pest_disease": "pest_or_disease"}.get(u.advice_topic or "", "crop_advice")
+
+
+def _intent_summary(u, plan) -> str:
+    tools = [n for n, on in (("crop", plan.run_crop), ("weather", plan.run_weather),
+                             ("scheme", plan.run_scheme)) if on]
+    age = f"{u.crop_age_days} days" if u.crop_age_days is not None else "—"
+    return (f"Understood by : {u.engine}\n"
+            f"Topic         : {u.topic}\n"
+            f"Crop          : {u.crop or '—'}\n"
+            f"Age           : {age}\n"
+            f"Place         : {u.weather_place or '—'}\n"
+            f"Tools         : {' '.join(tools) or '—'}\n"
+            f"Asked back    : {', '.join(plan.missing) or '—'}")
+
+
+def _pipeline(audio, text_query, location, lang, pending=None) -> dict:
+    """Full pipeline: (typed text OR voice) → understanding → agent → answer → voice.
 
     `lang` is the language chosen on the page. It controls every message the
-    farmer sees and the language the microphone listens for:
-      • Typed questions are English. Typed Hindi/Punjabi/Marathi is translated
-        only when a real translator (IndicTrans2) is configured; otherwise the
-        farmer gets a message, in their language, asking for English.
-      • Spoken questions are transcribed in the chosen language. Without
-        IndicTrans2, Whisper's own speech→English translation plus the
-        original transcript carry them to the agent (see routing_text()).
-      • The answer is given in the chosen language when IndicTrans2 is
-        configured, otherwise in English.
+    farmer sees and hears, the language the microphone listens for, and the
+    language of the answer. `pending` is the question the assistant is waiting
+    on a detail for (crop age, place, crop), if any.
     """
+    from app.agents.answering import generate_answer
+    from app.agents.clarify import check_results, plan_request
     from app.agents.state import AgentState
-    from app.agents.intent import extract_intent
+    from app.agents.understanding import understand
 
     lang = normalize_lang(lang)
     text_query = (text_query or "").strip()
-    location = (location or "").strip() or None
-    pipeline_t0 = time.time()
-    trace = [f"[UI] language: {lang}"]
+    saved_location = (location or "").strip() or None
+    started = time.time()
+    client = _groq()
+    trace = [f"[UI] language: {lang} · stt {STT_ENGINE} · "
+             f"understanding {'groq llm' if client else 'rules'}"]
 
-    def prompt_only(message: str) -> dict:
-        """Result for a request that never reached the agent."""
-        return {"detected": t("pending", lang), "transcription": "", "english": "",
-                "answer": message, "audio": None, "intent": "",
-                "tools_html": _no_tools_html(lang), "trace": "",
-                "detected_key": None, "tools_flags": None}
+    def reply_only(message, detected_key=None, heard="", english="", intent="", keep=None):
+        """A reply that is just a message — a question back to the farmer, or a
+        problem to report. Shown and spoken like any answer."""
+        audio_path = _speak(message, lang, trace)
+        trace.append(f"[Total] response time: {time.time()-started:.1f}s")
+        return {"detected": _detected_text(lang, detected_key), "transcription": heard,
+                "english": english, "answer": message, "audio": audio_path,
+                "intent": intent, "tools_html": _no_tools_html(lang),
+                "trace": "\n".join(trace), "detected_key": detected_key,
+                "tools_flags": None, "pending": keep, "heard": heard}
 
+    # ── 1. The farmer's words ────────────────────────────────────────────────
+    english_hint = None
     if text_query:
-        # ── Typed input ───────────────────────────────────────────────────────
-        mode, q_lang, english = "typed", "en", text_query
-        if _has_indic(text_query):
-            if not _MT_READY:
-                key = "err_type_english_lite" if LITE_MODE else "err_type_english"
-                return prompt_only(t(key, lang))
-            gurmukhi = any(0x0A00 <= ord(ch) <= 0x0A7F for ch in text_query)
-            q_lang = "pa" if gurmukhi else (lang if lang in ("hi", "mr") else "hi")
-            try:
-                english = _get_translator().translate_to_english(text_query, q_lang)
-                trace.append(f"[Translate] {q_lang}→en: '{english}'")
-            except Exception as e:
-                logger.error("Translation failed: %s", e)
-                trace.append(f"[Translate] ERROR: {e} — using original text")
-        transcription = text_query
-        state = AgentState(source_language=q_lang, original_text=text_query,
-                           english_text=english, location=location)
-        trace.append(f"[Input] typed: '{text_query}'")
+        mode, q_lang, heard = "typed", _typed_language(text_query, lang), text_query
+        if q_lang != "en" and not REGIONAL_READY:
+            key = "err_type_english_lite" if LITE_MODE else "err_type_english"
+            return reply_only(t(key, lang), keep=pending)
+        trace.append(f"[Input] typed ({q_lang}): '{heard}'")
     elif audio is None:
-        key = "err_no_input_lite" if LITE_MODE else "err_no_input"
-        return prompt_only(t(key, lang))
+        return reply_only(t("err_no_input" if VOICE_READY else "err_no_input_lite", lang),
+                          keep=pending)
     else:
-        # ── Voice input — Whisper listens in the chosen language ─────────────
+        from app.models.groq_client import GroqError
         mode, q_lang = "voice", lang
-        whisper_mt = lang != "en" and not _MT_READY
-        trace.append(f"[STT] {WHISPER_MODEL_ID} · language={lang}"
-                     f"{' · speech→English' if whisper_mt else ''}")
+        # Without a regional-language engine, Whisper's own speech→English
+        # translation carries a regional question to the agent.
+        whisper_mt = lang != "en" and not REGIONAL_READY
+        t0 = time.time()
         try:
-            t0 = time.time()
             result = _get_stt().transcribe(audio, language=lang, translate=whisper_mt)
+        except GroqError as e:
+            logger.error("STT failed: %s", e)
+            trace.append(f"[STT] ERROR ({e.kind}): {e}")
+            return reply_only(t(_GROQ_ERROR_KEYS.get(e.kind, "err_service"), lang),
+                              detected_key=(lang, "voice"), keep=pending)
         except Exception as e:
             logger.error("STT failed: %s", e)
-            return prompt_only(t("err_stt", lang, err=e))
-        transcription = result["text"]
-        trace.append(f"[STT] {time.time()-t0:.1f}s: '{transcription}'")
-        state = AgentState(source_language=lang, original_text=transcription,
-                           location=location)
-        if lang == "en":
-            state.english_text = transcription
-        elif whisper_mt:
-            state.english_text = result.get("english_text") or transcription
-            trace.append(f"[Translate] Whisper speech→English: '{state.english_text}'")
-        else:
-            try:
-                t0 = time.time()
-                state.english_text = _get_translator().translate_to_english(transcription, lang)
-                trace.append(f"[Translate] {lang}→en in {time.time()-t0:.1f}s: "
-                             f"'{state.english_text}'")
-            except Exception as e:
-                logger.error("Translation failed: %s", e)
-                state.english_text = transcription
-                trace.append(f"[Translate] ERROR: {e} — using original text")
+            return reply_only(t("err_stt", lang, err=e), keep=pending)
+        heard = (result.get("text") or "").strip()
+        trace.append(f"[STT] {getattr(_get_stt(), 'model_id', WHISPER_MODEL_ID)} · {lang} · "
+                     f"{time.time()-t0:.1f}s: '{heard}'")
+        if not heard:
+            return reply_only(t("err_no_speech", lang), detected_key=(lang, "voice"),
+                              keep=pending)
+        if whisper_mt:
+            english_hint = result.get("english_text") or None
+            trace.append(f"[Translate] Whisper speech→English: '{english_hint}'")
+    detected_key = (q_lang, mode)
 
-    # ── Intent extraction (entities + tool hints) ─────────────────────────────
+    # IndicTrans2 build (no Groq): translate the question for the router.
+    if english_hint is None and q_lang != "en" and _MT_READY and not client:
+        try:
+            english_hint = _get_translator().translate_to_english(heard, q_lang)
+            trace.append(f"[Translate] {q_lang}→en: '{english_hint}'")
+        except Exception as e:
+            logger.error("Translation failed: %s", e)
+            trace.append(f"[Translate] ERROR: {e} — using original text")
+
+    # ── 2. Understand: what is asked, and what is missing ────────────────────
     t0 = time.time()
-    state = extract_intent(state, _get_router_llm())
-    trace.append(f"[Intent] {state.trace[-1] if state.trace else 'done'} "
-                 f"in {time.time()-t0:.1f}s")
+    u = understand(heard, lang, saved_location=saved_location, pending=pending,
+                   client=client, english=english_hint)
+    trace.append(f"[Understand] {u.summary()} ({time.time()-t0:.1f}s)")
+    trace.append(f"[Understand] english: '{u.english}'")
+    plan = plan_request(u, lang)
+    intent = _intent_summary(u, plan)
+    if plan.reply:
+        trace.append(f"[Clarify] {', '.join(plan.missing) or u.topic} → asking the farmer")
+        return reply_only(plan.reply, detected_key, heard, u.english, intent,
+                          keep=_pending(u, plan))
 
-    intent_summary = (
-        f"Intent    : {state.intent}\n"
-        f"Crop      : {state.crop or '—'}\n"
-        f"Stage     : {f'{state.crop_stage_days} days' if state.crop_stage_days else '—'}\n"
-        f"Location  : {state.location or '—'}\n"
-        f"Tools     : "
-        f"{'crop ' if state.needs_crop_info else ''}"
-        f"{'weather ' if state.needs_weather else ''}"
-        f"{'scheme' if state.needs_scheme else ''}"
-    )
-
-    # ── Agent: tools + answer ─────────────────────────────────────────────────
-    trace.append(f"[Agent] {AGENT_BACKEND}{' · rule-based LLM' if USE_STUB_LLM else ''}")
+    # ── 3. Agent: the tools the question needs ───────────────────────────────
+    state = AgentState(source_language=q_lang, original_text=heard,
+                       english_text=u.english, location=plan.location)
+    state.intent = _intent_label(u)
+    state.crop, state.crop_stage_days = plan.crop, plan.days
+    state.needs_crop_info, state.needs_weather = plan.run_crop, plan.run_weather
+    state.needs_scheme, state.scheme_query = plan.run_scheme, plan.scheme_query
+    state.tool_plan = plan.tool_plan()
+    trace.append(f"[Agent] {AGENT_BACKEND}{' · rule-based ReAct policy' if USE_STUB_LLM or client else ''}")
     t0 = time.time()
     state = _get_orchestrator().run(state)
-    for msg in state.trace[1:]:
-        trace.append(f"  {msg}")
+    trace += [f"  {msg}" for msg in state.trace]
     trace.append(f"[Agent] done in {time.time()-t0:.1f}s")
 
-    # ── Output: answer language + voice ───────────────────────────────────────
-    target = lang if (lang != "en" and _MT_READY) else "en"
-    trace.append(f"[Output] answer language: {target} · TTS {TTS_ENGINE}")
-    audio_path = _run_output_stage(state, trace, target_lang=target)
-    translated = (target != "en" and state.regional_answer
-                  and state.regional_answer != state.english_answer)
-    answer = state.regional_answer if translated else state.english_answer
+    had = (bool(state.weather_data), bool(state.scheme_docs))
+    check_results(plan, state, u, lang)
+    if plan.reply:  # the only part asked about could not be answered
+        trace.append(f"[Clarify] after tools: {', '.join(plan.missing) or 'not covered'}")
+        return reply_only(plan.reply, detected_key, heard, u.english, intent,
+                          keep=_pending(u, plan))
+    if (bool(state.weather_data), bool(state.scheme_docs)) != had:
+        generate_answer(state, _get_llm())  # the fallback answer, minus what was dropped
 
-    total = time.time() - pipeline_t0
+    # ── 4. The answer, in the farmer's language ──────────────────────────────
+    answer, answer_lang = None, lang
+    if client is not None:
+        from app.agents.reply_writer import write_reply
+        t0 = time.time()
+        try:
+            answer = write_reply(client, state, lang)
+            trace.append(f"[Answer] {client.last_model} wrote the {lang} answer "
+                         f"in {time.time()-t0:.1f}s")
+        except Exception as e:
+            logger.error("Answer writing failed: %s", e)
+            trace.append(f"[Answer] LLM failed ({e}) — rule-based English answer")
+    if answer is None and lang != "en" and _MT_READY:
+        t0 = time.time()
+        try:
+            answer = _get_translator().translate_from_english(state.english_answer, lang)
+            trace.append(f"[Translate-out] en→{lang} in {time.time()-t0:.1f}s")
+        except Exception as e:
+            logger.error("Output translation failed: %s", e)
+            trace.append(f"[Translate-out] ERROR: {e}")
+    if answer is None:
+        answer, answer_lang = state.english_answer, "en"
+    state.regional_answer = answer
+
+    notes = plan.notes(lang)
+    text = answer + (f"\n\n{notes}" if notes else "")
+    if answer_lang == lang:
+        audio_path = _speak(text, lang, trace)
+    elif REGIONAL_READY:
+        # Couldn't write it in their language right now: tell them so, in their
+        # language and out loud. The English stays on screen for a helper.
+        fallback = t("note_english_fallback", lang, language=lang_name(lang, lang))
+        text = f"{fallback}\n\n{text}"
+        audio_path = _speak(f"{fallback} {notes}", lang, trace)
+    else:
+        audio_path = _speak(answer, "en", trace)  # English-answer build
+
+    total = time.time() - started
     state.latency["total"] = round(total, 2)
     trace.append(f"[Total] response time: {total:.1f}s")
 
     flags = _tool_flags(state)
-    detected_key = (q_lang, mode)
-    return {"detected": _detected_text(lang, detected_key), "transcription": transcription,
-            "english": state.english_text, "answer": answer, "audio": audio_path,
-            "intent": intent_summary, "tools_html": _tools_strip(lang, flags),
-            "trace": "\n".join(trace), "detected_key": detected_key, "tools_flags": flags}
+    return {"detected": _detected_text(lang, detected_key), "transcription": heard,
+            "english": u.english, "answer": text, "audio": audio_path,
+            "intent": intent, "tools_html": _tools_strip(lang, flags),
+            "trace": "\n".join(trace), "detected_key": detected_key, "tools_flags": flags,
+            "pending": _pending(u, plan), "heard": heard}
 
 
-def _run_pipeline(audio, text_query, location, lang_code=DEFAULT_LANG):
+def _run_pipeline(audio, text_query, location, lang_code=DEFAULT_LANG, pending=None):
     """Pipeline result as an 8-tuple: detected language, transcript, English
     text, answer, audio path, intent summary, tool-status HTML, trace."""
-    r = _pipeline(audio, text_query, location, lang_code)
+    r = _pipeline(audio, text_query, location, lang_code, pending)
     return (r["detected"], r["transcription"], r["english"], r["answer"], r["audio"],
             r["intent"], r["tools_html"], r["trace"])
 
 
-def _on_ask(audio, text_query, location, lang_code):
-    """Ask-button handler: the pipeline result plus the two states the page keeps
-    so it can re-render the language readout and tool chips on a language switch."""
-    r = _pipeline(audio, text_query, location, lang_code)
+def _outputs(r: dict, lang: str) -> tuple:
+    """Values for the page, in the order of the handlers' `outputs` lists."""
     return (r["detected"], r["transcription"], r["english"], r["answer"], r["audio"],
-            r["intent"], r["tools_html"], r["trace"], r["detected_key"], r["tools_flags"])
+            r["intent"], r["tools_html"], r["trace"], _heard_html(r["heard"], lang),
+            r["detected_key"], r["tools_flags"], r["pending"], r["heard"])
+
+
+def _on_ask(audio, text_query, location, lang_code, pending=None):
+    """Ask button: the typed question if there is one, else the recording."""
+    return _outputs(_pipeline(audio, text_query, location, lang_code, pending), lang_code)
+
+
+def _on_voice(audio, location, lang_code, pending=None):
+    """The farmer tapped stop — answer the recording straight away. If the
+    recording hasn't reached the server, change nothing: the Ask button still
+    sends it."""
+    if audio is None:
+        return tuple(gr.skip() for _ in range(14))
+    result = _outputs(_pipeline(audio, "", location, lang_code, pending), lang_code)
+    return result + (None,)  # clear the recorder, ready for the next question
+
+
+def _on_example(example, location, lang_code):
+    """An example question was tapped — ask it as a fresh question."""
+    return _outputs(_pipeline(None, example, location, lang_code, None), lang_code)
 
 
 def _detected_text(ui_lang: str, detected_key) -> str:
@@ -316,6 +445,14 @@ def _detected_text(ui_lang: str, detected_key) -> str:
         return t("pending", ui_lang)
     q_lang, mode = detected_key
     return f"{lang_name(q_lang, ui_lang)} · {t('mode_' + mode, ui_lang)}"
+
+
+def _heard_html(heard: "str | None", lang: str) -> str:
+    """'You asked: “…”' above the answer. The farmer's words are escaped."""
+    if not heard:
+        return ""
+    return (f'<div class="ag-heard"><span class="ag-heard-label">{t("heard_prefix", lang)}</span>'
+            f'“{html.escape(heard)}”</div>')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -606,16 +743,19 @@ footer { display: none !important; }
 /* ═══ Indic scripts ═══
    The design's wide tracking and uppercase are Latin-only devices: tracking
    pulls Devanagari/Gurmukhi letters off their headline bar. The page carries
-   lang="hi|mr|pa" once a language is picked, so relax them there. */
-html:is([lang="hi"], [lang="mr"], [lang="pa"]) :is(
+   lang="hi|mr|pa" once a language is picked, so relax them there.
+   Gradio re-emits every rule behind a long `.gradio-container… .contain`
+   prefix, which outranks a plain html[lang] selector; `:not(#ag-none)` adds
+   ID-level weight so these overrides still win. */
+html:is([lang="hi"], [lang="mr"], [lang="pa"]):not(#ag-none) :is(
   .ag-brand-name, .ag-hero-eyebrow, .ag-eyebrow-text, .ag-tools-caption,
   .ag-chip-note, .ag-footer, .ag-phrase-lang, .ag-panel label > span,
-  .ag-ask button, button.ag-ask, .ag-diag .label-wrap
+  .ag-ask button, button.ag-ask, .ag-diag .label-wrap, .ag-heard-label
 ) {
   letter-spacing: .01em !important;
   text-transform: none !important;
 }
-html:is([lang="hi"], [lang="mr"], [lang="pa"]) .ag-hero h1 {
+html:is([lang="hi"], [lang="mr"], [lang="pa"]):not(#ag-none) .ag-hero h1 {
   letter-spacing: 0;
   line-height: 1.3;
 }
@@ -867,6 +1007,37 @@ button.ag-example:hover::before { background: var(--ag-accent); width: 12px; }
   width: 5px; height: 1px; background: var(--ag-accent);
 }
 
+/* ═══ Voice-first additions ═══ */
+/* The microphone is the main way in: give it room and a clear edge. */
+.ag-mic { min-height: 132px; border-width: 2px !important; border-color: var(--ag-accent) !important; }
+.ag-mic button { font-size: 15px !important; }
+/* Location field + 📍 button on one line */
+.ag-place { gap: 8px !important; align-items: stretch !important; flex-wrap: nowrap !important; }
+.ag-place > * { min-width: 0 !important; }
+button.ag-gps {
+  white-space: nowrap !important;
+  font-size: 13px !important;
+  border-radius: 2px !important;
+  padding: 0 12px !important;
+}
+/* "You asked: …" above the answer */
+.ag-heard { font-size: 15px; line-height: 1.6; color: var(--ag-dim); margin: 0 0 14px; }
+.ag-heard-label {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ag-faint);
+  margin-right: 10px;
+}
+.ag-answer textarea { font-size: 17px !important; }
+/* What I can help with */
+.ag-help-line {
+  font-size: 14px; line-height: 1.7;
+  color: var(--ag-dim);
+  padding: 11px 0;
+  border-bottom: 1px solid var(--ag-line);
+}
+.ag-help-line:last-child { border-bottom: none; }
+
 /* ═══ Diagnostics accordion ═══ */
 .ag-diag { margin-top: 8px !important; border-top: 1px solid var(--ag-line) !important; }
 .ag-diag .label-wrap {
@@ -897,9 +1068,9 @@ button.ag-example:hover::before { background: var(--ag-accent); width: 12px; }
 """
 
 # ── Example prompts ───────────────────────────────────────────────────────────
-# Typed questions are English, so the clickable examples are English in every
-# UI language. The spoken prompts under "Or say it aloud" follow the language
-# picked on the page (app/ui/i18n.py → SPOKEN_EXAMPLES).
+# Tapping one asks it straight away. They follow the page language when the
+# app can take questions in every language; otherwise typed questions are
+# English, so the examples are too.
 _TYPED_EXAMPLES = [
     "My wheat is 40 days old, which fertiliser should I apply?",
     "Will it rain in Nashik tomorrow? Should I irrigate my paddy?",
@@ -908,28 +1079,36 @@ _TYPED_EXAMPLES = [
 ]
 
 
-def _phrases_html(lang: str) -> str:
-    lines = "".join(f'<div class="ag-phrase">{p}</div>'
-                    for p in SPOKEN_EXAMPLES[normalize_lang(lang)])
-    return f'<div class="ag-phrases"><div class="ag-phrase-group">{lines}</div></div>'
+def _examples(lang: str) -> list[str]:
+    lang = normalize_lang(lang)
+    if REGIONAL_READY and lang != "en":
+        return list(SPOKEN_EXAMPLES[lang])
+    return list(_TYPED_EXAMPLES)
+
+
+def _help_html(lang: str) -> str:
+    """What the assistant can help with — sets expectations before asking."""
+    lines = "".join(f'<div class="ag-help-line">{t(key, lang)}</div>'
+                    for key in ("help_crop", "help_weather", "help_scheme"))
+    return f'<div class="ag-help">{lines}</div>'
 
 
 # ── Localised fragments ───────────────────────────────────────────────────────
 
 def _mode_info() -> str:
     """Technical build line under the hero (kept in English — it's diagnostic)."""
-    if USE_STUB_LLM:
+    if USE_GROQ:
+        llm_mode = f"groq {GROQ_LLM_MODELS[0] if GROQ_LLM_MODELS else '?'}"
+    elif USE_STUB_LLM:
         llm_mode = "rule-based"
     elif USE_HF_INFERENCE_API:
         llm_mode = "HF Inference API"
     else:
         llm_mode = f"local ({LOCAL_LLM_MODEL_ID})"
-    if LITE_MODE:
-        return (f"lite · typed input · keyword scheme search · {AGENT_BACKEND} agent · "
-                f"rule-based answers · gTTS")
-    return (f"stt {WHISPER_MODEL_ID} · "
-            f"mt {'stub' if USE_STUB_TRANSLATION else 'indictrans2'} · "
-            f"agent {AGENT_BACKEND} · llm {llm_mode} · rag {RAG_BACKEND} · tts {TTS_ENGINE}")
+    voice = {"groq": f"groq {GROQ_STT_MODEL}", "local": WHISPER_MODEL_ID}.get(STT_ENGINE, "off")
+    answers = "4 languages" if REGIONAL_READY else "English answers"
+    return (f"{'lite' if LITE_MODE else 'full'} · voice {voice} · llm {llm_mode} · "
+            f"agent {AGENT_BACKEND} · rag {RAG_BACKEND} · tts {TTS_ENGINE} · {answers}")
 
 
 def _brand_html(lang: str) -> str:
@@ -937,66 +1116,124 @@ def _brand_html(lang: str) -> str:
             f'<span class="ag-brand-name">{t("brand", lang)}</span></div>')
 
 
+def _hero_body_key() -> str:
+    if VOICE_READY and REGIONAL_READY:
+        return "hero_body_voice"
+    return "hero_body_full" if VOICE_READY else "hero_body_lite"
+
+
 def _hero_html(lang: str) -> str:
-    body = t("hero_body_lite" if LITE_MODE else "hero_body_full", lang)
     return (f'<div class="ag-hero">'
             f'<div class="ag-hero-eyebrow">{t("hero_eyebrow", lang)}</div>'
-            f'<h1>{t("hero_title", lang)}</h1><p>{body}</p>'
+            f'<h1>{t("hero_title", lang)}</h1><p>{t(_hero_body_key(), lang)}</p>'
             f'<div class="ag-mode">{_mode_info()}</div></div>')
 
 
 def _footer_html(lang: str) -> str:
+    stack = "Whisper · Groq · LangChain · gTTS" if USE_GROQ else "Whisper · LangChain · FAISS · gTTS"
     return (f'<div class="ag-footer"><span>{t("footer_left", lang)}</span>'
-            f'<span>Whisper · LangChain · FAISS · gTTS</span></div>')
+            f'<span>{stack}</span></div>')
 
 
-def _localized(lang, detected_key=None, tools_flags=None) -> list:
+def _mic_note(lang: str) -> str:
+    return _note(t("mic_note_auto", lang, language=lang_name(lang, lang)))
+
+
+def _localized(lang, detected_key=None, tools_flags=None, heard=None) -> list:
     """An update for every language-dependent component, in the same order as
     the `localized` list in build_ui(). Runs whenever the language changes."""
     lang = normalize_lang(lang)
+    regional = REGIONAL_READY
     return [
         gr.update(value=_brand_html(lang)),
         gr.update(value=_hero_html(lang)),
         gr.update(value=_eyebrow(t("eyebrow_speak", lang), "01")),
-        gr.update(value=_note(t("mic_note", lang, language=lang_name(lang, lang)))),
-        gr.update(value=_eyebrow(t("eyebrow_or_type", lang), "02")),
+        gr.update(value=_mic_note(lang)),
+        gr.update(value=_eyebrow(t("eyebrow_or_type_any" if regional else "eyebrow_or_type",
+                                   lang), "02")),
         gr.update(value=_eyebrow(t("eyebrow_question", lang), "01")),
         gr.update(value=_note(t("lite_note", lang))),
-        gr.update(placeholder=t("text_placeholder", lang)),
-        gr.update(value=_eyebrow(t("eyebrow_location", lang), "02" if LITE_MODE else "03")),
-        gr.update(value=_note(t("location_note", lang))),
-        gr.update(placeholder=t("location_placeholder", lang)),
+        gr.update(placeholder=t("text_placeholder_native" if regional else "text_placeholder",
+                                lang)),
+        gr.update(value=_eyebrow(t("eyebrow_location", lang), "03" if VOICE_READY else "02")),
+        gr.update(value=_note(t("location_note_voice" if VOICE_READY else "location_note",
+                                lang))),
+        gr.update(placeholder=t("location_placeholder_native" if regional
+                                else "location_placeholder", lang)),
         gr.update(value=t("ask_button", lang)),
         gr.update(value=_eyebrow(t("eyebrow_detected", lang))),
         gr.update(value=_detected_text(lang, detected_key)),
         gr.update(value=_eyebrow(t("eyebrow_try", lang))),
         gr.update(value=_eyebrow(t("eyebrow_response", lang))),
         gr.update(value=_note(t("answer_note", lang)),
-                  visible=lang != "en" and not _MT_READY),
+                  visible=lang != "en" and not regional),
         gr.update(value=_tools_strip(lang, tools_flags)),
         gr.update(placeholder=t("answer_placeholder", lang)),
         gr.update(label=t("audio_label", lang)),
-        gr.update(value=_eyebrow(t("eyebrow_say_aloud", lang))),
-        gr.update(value=_phrases_html(lang)),
+        gr.update(value=_eyebrow(t("eyebrow_can_help", lang))),
+        gr.update(value=_help_html(lang)),
         gr.update(label=t("diag", lang)),
         gr.update(label=t("heard_label", lang), placeholder=t("heard_placeholder", lang)),
         gr.update(label=t("english_label", lang), placeholder=t("english_placeholder", lang)),
         gr.update(label=t("intent_label", lang)),
         gr.update(label=t("trace_label", lang)),
         gr.update(value=_footer_html(lang)),
+        gr.update(value=t("gps_button", lang)),
+        gr.update(value=_heard_html(heard, lang)),
+        *[gr.update(value=e) for e in _examples(lang)],
     ]
+
+
+# ── Browser-side helpers ──────────────────────────────────────────────────────
+# Remember the farmer's language and place on this phone, so the next visit
+# opens ready to talk. First visit: follow the phone's own language.
+_RESTORE_JS = """
+() => {
+  let lang = null, place = "";
+  try { lang = localStorage.getItem("ag_lang"); place = localStorage.getItem("ag_place") || ""; }
+  catch (e) {}
+  if (!["en", "hi", "pa", "mr"].includes(lang)) {
+    const nav = (navigator.language || "").toLowerCase();
+    lang = nav.startsWith("hi") ? "hi" : nav.startsWith("mr") ? "mr"
+         : nav.startsWith("pa") ? "pa" : "en";
+  }
+  document.documentElement.lang = lang;
+  return [lang, place];
+}
+"""
+_SAVE_LANG_JS = """
+(l) => { document.documentElement.lang = l; try { localStorage.setItem("ag_lang", l); } catch (e) {} }
+"""
+_SAVE_PLACE_JS = """
+(p) => { try { localStorage.setItem("ag_place", p || ""); } catch (e) {} }
+"""
+# 📍 — the phone's GPS position, as "lat, lon" for the weather lookup.
+_GPS_JS = """
+async (current) => {
+  if (!navigator.geolocation) { return current; }
+  try {
+    const pos = await new Promise((ok, fail) => navigator.geolocation.getCurrentPosition(
+      ok, fail, {enableHighAccuracy: false, timeout: 15000, maximumAge: 600000}));
+    return pos.coords.latitude.toFixed(4) + ", " + pos.coords.longitude.toFixed(4);
+  } catch (e) { return current; }
+}
+"""
 
 
 # ── UI builder ────────────────────────────────────────────────────────────────
 
 def build_ui() -> gr.Blocks:
     lang = DEFAULT_LANG
+    regional = REGIONAL_READY
 
     with gr.Blocks(title="Agri Assistant", fill_width=True) as demo:
         # Remembered so a language switch can re-render the last result's
-        # language readout and tool chips in the new language.
+        # language readout, tool chips and "you asked" line in the new language.
         detected_state = gr.State(None)
         tools_state = gr.State(None)
+        heard_state = gr.State(None)
+        # The question waiting on a detail the farmer was asked for.
+        pending_state = gr.State(None)
 
         # ── Top bar: brand + language picker ──────────────────────────────────
         with gr.Row(equal_height=True, elem_classes=["ag-topbar"]):
@@ -1019,38 +1256,47 @@ def build_ui() -> gr.Blocks:
             # ── LEFT: the ask ────────────────────────────────────────────────
             with gr.Column(scale=5, min_width=300,
                            elem_classes=["ag-panel", "ag-panel--ask"]):
-                # Voice (full build) — hidden on LITE_MODE hosts (no Whisper).
+                # Voice — whenever a speech-to-text engine is available.
                 speak_eyebrow = gr.HTML(_eyebrow(t("eyebrow_speak", lang), "01"),
-                                        visible=not LITE_MODE)
-                mic_note = gr.HTML(_note(t("mic_note", lang, language=lang_name(lang, lang))),
-                                   visible=not LITE_MODE)
+                                        visible=VOICE_READY)
+                mic_note = gr.HTML(_mic_note(lang), visible=VOICE_READY)
                 audio_input = gr.Audio(
                     sources=["microphone"],
                     type="filepath",
                     show_label=False,
+                    editable=False,
                     elem_classes=["ag-mic"],
-                    visible=not LITE_MODE,
+                    visible=VOICE_READY,
                 )
-                or_type_eyebrow = gr.HTML(_eyebrow(t("eyebrow_or_type", lang), "02"),
-                                          visible=not LITE_MODE)
-                # Typed-only (LITE_MODE)
+                or_type_eyebrow = gr.HTML(
+                    _eyebrow(t("eyebrow_or_type_any" if regional else "eyebrow_or_type",
+                               lang), "02"),
+                    visible=VOICE_READY)
+                # Typed-only build (LITE without a Groq key)
                 question_eyebrow = gr.HTML(_eyebrow(t("eyebrow_question", lang), "01"),
-                                           visible=LITE_MODE)
-                lite_note = gr.HTML(_note(t("lite_note", lang)), visible=LITE_MODE)
+                                           visible=not VOICE_READY)
+                lite_note = gr.HTML(_note(t("lite_note", lang)), visible=not VOICE_READY)
 
                 text_input = gr.Textbox(
-                    placeholder=t("text_placeholder", lang),
+                    placeholder=t("text_placeholder_native" if regional
+                                  else "text_placeholder", lang),
                     show_label=False,
                     lines=3,
                 )
 
                 location_eyebrow = gr.HTML(
-                    _eyebrow(t("eyebrow_location", lang), "02" if LITE_MODE else "03"))
-                location_note = gr.HTML(_note(t("location_note", lang)))
-                location_input = gr.Textbox(
-                    placeholder=t("location_placeholder", lang),
-                    show_label=False,
-                )
+                    _eyebrow(t("eyebrow_location", lang), "03" if VOICE_READY else "02"))
+                location_note = gr.HTML(_note(t("location_note_voice" if VOICE_READY
+                                                else "location_note", lang)))
+                with gr.Row(equal_height=True, elem_classes=["ag-place"]):
+                    location_input = gr.Textbox(
+                        placeholder=t("location_placeholder_native" if regional
+                                      else "location_placeholder", lang),
+                        show_label=False,
+                        scale=3,
+                    )
+                    gps_btn = gr.Button(t("gps_button", lang), size="sm", scale=2,
+                                        elem_classes=["ag-gps"])
 
                 submit_btn = gr.Button(
                     t("ask_button", lang),
@@ -1072,11 +1318,8 @@ def build_ui() -> gr.Blocks:
 
                 try_eyebrow = gr.HTML(_eyebrow(t("eyebrow_try", lang)))
                 with gr.Column(elem_classes=["ag-examples"]):
-                    for example in _TYPED_EXAMPLES:
-                        gr.Button(
-                            example, size="sm", elem_classes=["ag-example"]
-                        ).click(fn=lambda e=example: e, inputs=None,
-                                outputs=text_input)
+                    example_btns = [gr.Button(e, size="sm", elem_classes=["ag-example"])
+                                    for e in _examples(lang)]
 
             # ── RIGHT: the answer ────────────────────────────────────────────
             with gr.Column(scale=7, min_width=340,
@@ -1086,6 +1329,7 @@ def build_ui() -> gr.Blocks:
                 answer_note = gr.HTML(_note(t("answer_note", lang)), visible=False)
 
                 tools_html_output = gr.HTML(_no_tools_html(lang))
+                heard_html = gr.HTML("")
 
                 answer_output = gr.Textbox(
                     show_label=False,
@@ -1103,9 +1347,8 @@ def build_ui() -> gr.Blocks:
                     elem_classes=["ag-audio"],
                 )
 
-                say_eyebrow = gr.HTML(_eyebrow(t("eyebrow_say_aloud", lang)),
-                                      visible=not LITE_MODE)
-                phrases_html = gr.HTML(_phrases_html(lang), visible=not LITE_MODE)
+                help_eyebrow = gr.HTML(_eyebrow(t("eyebrow_can_help", lang)))
+                help_html = gr.HTML(_help_html(lang))
 
         # ── Diagnostics ───────────────────────────────────────────────────────
         with gr.Accordion(t("diag", lang), open=False,
@@ -1123,7 +1366,7 @@ def build_ui() -> gr.Blocks:
                     interactive=False,
                     placeholder=t("english_placeholder", lang),
                 )
-            intent_output = gr.Textbox(label=t("intent_label", lang), lines=6,
+            intent_output = gr.Textbox(label=t("intent_label", lang), lines=7,
                                        interactive=False)
             trace_output = gr.Textbox(label=t("trace_label", lang), lines=14,
                                       interactive=False, visible=DEV_MODE)
@@ -1138,35 +1381,44 @@ def build_ui() -> gr.Blocks:
             question_eyebrow, lite_note, text_input, location_eyebrow, location_note,
             location_input, submit_btn, detected_eyebrow, detected_lang_output,
             try_eyebrow, response_eyebrow, answer_note, tools_html_output,
-            answer_output, audio_output, say_eyebrow, phrases_html, diag_accordion,
+            answer_output, audio_output, help_eyebrow, help_html, diag_accordion,
             transcription_output, english_output, intent_output, trace_output,
-            footer_html,
+            footer_html, gps_btn, heard_html, *example_btns,
+        ]
+        # Order must match _outputs().
+        results = [
+            detected_lang_output, transcription_output, english_output, answer_output,
+            audio_output, intent_output, tools_html_output, trace_output, heard_html,
+            detected_state, tools_state, pending_state, heard_state,
         ]
 
         submit_btn.click(
             fn=_on_ask,
-            inputs=[audio_input, text_input, location_input, lang_radio],
-            outputs=[
-                detected_lang_output,
-                transcription_output,
-                english_output,
-                answer_output,
-                audio_output,
-                intent_output,
-                tools_html_output,
-                trace_output,
-                detected_state,
-                tools_state,
-            ],
+            inputs=[audio_input, text_input, location_input, lang_radio, pending_state],
+            outputs=results,
         )
+        # Voice-first: tapping stop sends the question — no extra button to find.
+        # The recorder is then cleared, ready for the next question.
+        audio_input.stop_recording(
+            fn=_on_voice,
+            inputs=[audio_input, location_input, lang_radio, pending_state],
+            outputs=results + [audio_input],
+        )
+        for btn in example_btns:
+            btn.click(fn=lambda e: e, inputs=btn, outputs=text_input).then(
+                fn=_on_example, inputs=[btn, location_input, lang_radio], outputs=results)
+
+        gps_btn.click(fn=None, inputs=location_input, outputs=location_input, js=_GPS_JS)
+        location_input.change(fn=None, inputs=location_input, js=_SAVE_PLACE_JS)
+
         lang_radio.change(
             fn=_localized,
-            inputs=[lang_radio, detected_state, tools_state],
+            inputs=[lang_radio, detected_state, tools_state, heard_state],
             outputs=localized,
         )
-        # Tag the page with the language so the CSS can relax the letterspacing
-        # that would otherwise break Devanagari / Gurmukhi letterforms.
-        lang_radio.change(fn=None, inputs=lang_radio,
-                          js="(l) => { document.documentElement.lang = l; }")
+        # Tag the page with the language (the CSS relaxes the letterspacing that
+        # would break Devanagari / Gurmukhi) and remember it on this phone.
+        lang_radio.change(fn=None, inputs=lang_radio, js=_SAVE_LANG_JS)
+        demo.load(fn=None, inputs=None, outputs=[lang_radio, location_input], js=_RESTORE_JS)
 
     return demo

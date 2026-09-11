@@ -16,12 +16,16 @@ Usage (from project root, venv active):
     python scripts/test_i18n.py            # everything (~2 min)
     python scripts/test_i18n.py --no-voice # skip the Whisper section
 """
+import os
 import re
 import string
 import sys
 import tempfile
 from pathlib import Path
 
+# This checks the build without a Groq key (local Whisper, English answers).
+# The Groq build — answers in every language — is scripts/test_voice_languages.py.
+os.environ["GROQ_API_KEY"] = ""
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.utils.logging import enable_utf8_console
