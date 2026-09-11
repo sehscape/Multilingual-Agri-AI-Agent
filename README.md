@@ -50,11 +50,17 @@ or Punjabi.
 
 > 👨‍🌾 *"मेरी गेहूं 40 दिन की है, क्या खाद डालूं?"* — **"My wheat is 40 days old, what fertilizer should I apply?"**
 
-The assistant transcribes it, understands it's a **fertilizer** question about **wheat at 40 days**, looks up the crop's growth stage, and **speaks back**:
+The assistant transcribes it, understands it's a **fertilizer** question about **wheat at 40 days**, looks up the crop's growth stage, and **speaks back — in Hindi**:
 
-> 🔊 *"Your wheat is in the tillering stage. Apply the second dose of urea (25 kg/acre) with your next irrigation, watch for aphids, and remove weeds before day 35."*
+> 🔊 *"आपकी गेहूं अभी कल्ले निकलने (टिलरिंग) की अवस्था में है। अगली सिंचाई के साथ यूरिया की दूसरी खुराक 25 किलो प्रति एकड़ डालिए…"*
+> *(Your wheat is in the tillering stage. Apply the second dose of urea, 25 kg per acre, with the next irrigation…)*
 
 Ask a bigger question — *"…and is there a scheme for irrigation?"* — and it also searches real government-scheme documents and folds that in. 🎯
+
+Leave something out and it **asks back, out loud, in your language**:
+
+> 👨‍🌾 *"गेहूं में खाद कब डालें?"* → 🔊 *"आपकी गेहूं की फसल कितने दिन की है? कृपया बताइए, जैसे: 40 दिन।"*
+> 👨‍🌾 *"40 दिन"* → 🔊 the full answer — it remembers what you were asking.
 
 ---
 
@@ -63,26 +69,27 @@ Ask a bigger question — *"…and is there a scheme for irrigation?"* — and i
 Think of it as a **small shop with 7 workers**, and your question travels down the line:
 
 ```
-🎙️ You speak
+🎙️ You speak (tap the mic, tap stop — that's it)
    │
    ▼
-👂 Ears write down the words  (Whisper)
+👂 Ears write down the words        (Whisper-large-v3)
    │
    ▼
-🌐 Translate to English       (the app thinks in English)
+🧐 Understand: "What is being asked? What is missing?"
+   │   crop? its age? your village? weather? scheme?
+   ├── something missing → ❓ ask you back, out loud, in your language
    │
    ▼
-🧭 Router: "What is being asked?"   crop? weather? scheme?
-   │        picks only the workers it needs
+🧭 Agent picks only the workers it needs   (LangChain)
    ├── 🌱 Crop expert   (stage-by-stage advice)
    ├── 🌦️ Weather checker (live forecast)
    └── 🗂️ Scheme finder  (searches real govt documents)
    │
    ▼
-🧠 Brain writes ONE clear answer from what they found
+🧠 Brain writes ONE clear answer, in YOUR language, from what they found
    │
    ▼
-🌐 Translate back → 👄 Speak it aloud 🔊
+👄 Speak it aloud 🔊
 ```
 
 **The golden rule:** the AI never invents facts. Scheme details come from real
@@ -169,7 +176,14 @@ The farmer hears actionable advice in their own language.
                      in their own language
 ```
 
-> **Key design principle:** All AI reasoning happens in English. Regional language appears only at the input (STT) and output (TTS) boundaries. This avoids multilingual hallucination and keeps the LLM focused.
+> **Key design principle:** All tool work happens in English. Regional language appears only at the input and output boundaries. This avoids multilingual hallucination and keeps the LLM focused.
+>
+> **On the free Render host** the heavy boxes above run in the cloud instead: with a free
+> [Groq](https://console.groq.com) key, **Whisper-large-v3** does the listening and an
+> **open-weight LLM** (OpenAI's gpt-oss-120b, Apache-2.0) does the two translation steps —
+> it understands the question (any of the 4 languages, even with speech-recognition
+> mistakes) and writes the answer in the farmer's language **from the tool facts only**.
+> The app itself stays under 200 MB of RAM.
 
 ---
 
@@ -178,13 +192,16 @@ The farmer hears actionable advice in their own language.
 | Feature | Details |
 |---|---|
 | **4-language interface** | A picker switches the whole screen — labels, buttons, instructions, errors — between 🇬🇧 English, 🇮🇳 Hindi, ਪੰਜਾਬੀ Punjabi and मराठी Marathi |
-| **Voice questions in 4 languages** | Whisper listens in the chosen language; a Hindi/Marathi/Punjabi farm vocabulary lets the agent understand even imperfect transcripts |
+| **Voice questions in 4 languages** | Tap the mic, speak, tap stop — the question is sent by itself. Whisper listens in the chosen language |
+| **Answers in the farmer's language** | Shown *and* spoken in Hindi / Punjabi / Marathi / English — whichever was chosen |
+| **Asks back when something is missing** | No crop age → "how many days old?"; no village → "where are you?"; impossible age, unknown crop, unclear or off-topic question → a clear spoken message. The farmer can reply with just "40 days" or "Nashik" |
+| **Made for farmers who can't read** | Every message is spoken; the language and village are remembered on the phone; 📍 fills the location from GPS; silence or noise → "please speak again" |
 | **LangChain agent** | A ReAct `AgentExecutor` decides which tools to call (crop / weather / scheme), with a deterministic fallback |
 | **Crop Knowledge** | Wheat, Rice, Onion, Tomato, Cotton, Maize — stage-specific advice |
 | **Live Weather** | Real forecast via Open-Meteo API — temperature, rain, wind + farming advisories |
 | **Govt Schemes** | PM-KISAN, PMFBY crop insurance, Kisan Credit Card, Soil Health Card — refuses off-topic questions instead of guessing |
 | **Voice reply** | gTTS (CPU) · ai4bharat Indic Parler TTS (GPU) |
-| **No API Key Needed** | Weather API is free and open |
+| **Free to run** | Weather API needs no key; Groq's free plan covers voice + regional answers (no card) |
 
 ---
 
@@ -194,9 +211,10 @@ The farmer hears actionable advice in their own language.
 |---|---|
 | UI | [Gradio](https://gradio.app) 6 — 4-language interface |
 | Agent | [LangChain](https://python.langchain.com) ReAct `AgentExecutor` with tool-calling |
-| Speech-to-Text | [OpenAI Whisper](https://github.com/openai/whisper) (small; language-forced) |
-| Translation | [IndicTrans2](https://github.com/AI4Bharat/IndicTrans2) (AI4Bharat) |
-| LLM | [Llama 3.1 8B](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct) via HF Inference API |
+| Speech-to-Text | [OpenAI Whisper](https://github.com/openai/whisper) — large-v3 via [Groq](https://console.groq.com) (free API) or small locally; language-forced |
+| Understanding + regional answers | Open-weight LLM via Groq — [gpt-oss-120b](https://huggingface.co/openai/gpt-oss-120b) (Apache-2.0), falls back to gpt-oss-20b / Llama 3.3 70B |
+| Translation (GPU build) | [IndicTrans2](https://github.com/AI4Bharat/IndicTrans2) (AI4Bharat) |
+| LLM (GPU build) | [Llama 3.1 8B](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct) via HF Inference API |
 | Embeddings | [paraphrase-multilingual-MiniLM](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2) (dev) / [BGE-M3](https://huggingface.co/BAAI/bge-m3) (prod) |
 | Vector Store | [FAISS](https://github.com/facebookresearch/faiss) |
 | Weather API | [Open-Meteo](https://open-meteo.com) (free, no key) |
@@ -233,6 +251,9 @@ The farmer hears actionable advice in their own language.
 | 4-language interface + voice questions in every language | ✅ Complete |
 | Lite build for free 512 MB hosting | ✅ Complete |
 | Live deployment on Render | ✅ Live |
+| Voice + answers in all 4 languages on the free host (Groq Whisper + open LLM) | ✅ Complete |
+| Asks back for missing / wrong details, remembers the conversation | ✅ Complete |
+| Voice-first journey: auto-send on stop, 📍 GPS, language & village remembered | ✅ Complete |
 
 > **Agent engines.** By default a **LangChain ReAct `AgentExecutor`** runs the
 > tool loop (`app/agents/langchain_agent.py`). On CPU its decisions come from a
@@ -281,6 +302,8 @@ pip install -r requirements.txt
 ```bash
 cp .env.example .env
 # Edit .env — add your HF_TOKEN if you have one (optional for local dev)
+# For voice + answers in Hindi / Punjabi / Marathi, add GROQ_API_KEY
+# (free, from console.groq.com — see DEPLOY.md). Never commit .env.
 ```
 
 The defaults in `.env` use stub models for fast local dev (no large downloads):
@@ -323,6 +346,8 @@ python scripts/test_local_llm.py          # Real open-source LLM on CPU (no GPU)
 python scripts/test_langchain_agent.py    # LangChain agent: tool choice for 9 intents + fallback
 python scripts/test_i18n.py               # 4-language UI + spoken questions in each language
 python scripts/test_lite_mode.py          # Lite build runs with the heavy ML libraries absent
+python scripts/test_voice_languages.py    # Render build + Groq (faked): voice, 4 languages, ask-backs, failures
+python scripts/test_groq_live.py          # Same journey with your real GROQ_API_KEY (skips without one)
 
 pytest -q                                 # Unit suite
 ```
@@ -418,7 +443,7 @@ Full step-by-step guide: **[`DEPLOY.md`](DEPLOY.md)**. In short:
 | Path | Cost | 24/7? | Features |
 |---|---|---|---|
 | **Google Colab** (`notebooks/run_full_app_colab.ipynb`) | Free | While the tab is open | **Everything** — mic in 4 languages, LangChain agent on a real LLM, semantic search, voice |
-| **Render — Lite** (`render.yaml`, `LITE_MODE=true`) | Free | ✅ (sleeps when idle) | 4-language interface, typed input, LangChain agent, weather, crop advice, keyword scheme search, English voice |
+| **Render — Lite** (`render.yaml`, `LITE_MODE=true`) | Free | ✅ (sleeps when idle) | With a free `GROQ_API_KEY`: **mic + answers in all 4 languages**, ask-backs, LangChain agent, weather, crop advice, keyword scheme search, voice reply. Without the key: typed English only |
 | **HF Spaces / Render Standard / GPU host** | Paid | ✅ | Everything, production models |
 
 > Mid-2026: Hugging Face Spaces now needs a **paid plan** for Gradio apps, and
@@ -435,21 +460,22 @@ The app auto-detects the GPU — no code change.
 
 ## Limitations
 
-- **Answers are in English unless IndicTrans2 is enabled.** The whole interface
-  switches language and spoken questions work in all four, but the advice itself
-  (and the spoken reply) is English without the ~4 GB translator
-  (`USE_STUB_TRANSLATION=false`) — intended for a GPU host. Typed questions must
-  be in English for the same reason; the app says so in the chosen language.
-- **Speech recognition on CPU is approximate.** `whisper-small` transcribes Hindi
-  fairly well but garbles Marathi and Punjabi, and its speech→English translation
-  fails for those two. A Hindi/Marathi/Punjabi farm vocabulary in the router
-  recovers the crop, place and topic from the imperfect transcript (tested on real
-  garbled output); `whisper-large-v3` on a GPU is far more accurate.
-- **On CPU the agent's decisions are rule-based.** The LangChain loop, tools and
-  parsing are real, but a deterministic policy picks the tools unless a real LLM
-  is configured.
-- **Free 24/7 hosting is the "Lite" build only** — no microphone, keyword (not
-  semantic) scheme search, rule-based answers. The full app needs a GPU/paid host.
+- **Regional answers need a Groq key (or IndicTrans2 on a GPU).** Without
+  `GROQ_API_KEY`, the Lite build takes typed English only, and the local build
+  answers in English. With the key, Groq's free plan allows about 2,000 voice
+  questions a day and a few hundred thousand LLM tokens (roughly 50–60 full
+  answers a day on gpt-oss-120b before it moves to the next model). Over the
+  limit, the farmer hears "please wait a minute" in their language.
+- **Groq sees the question.** Voice clips and question text go to Groq's API to
+  be transcribed and understood (GPS coordinates don't — they only go to the
+  weather service). Fine for a demo; a production deployment should self-host.
+- **Speech recognition without Groq is approximate.** Local `whisper-small` garbles
+  Marathi and Punjabi; a Hindi/Marathi/Punjabi farm vocabulary in the rules still
+  recovers the crop, place and topic (tested on real garbled output).
+- **Tool choice is rule-based.** The LangChain loop, tools and parsing are real,
+  and the tool plan comes from the LLM's understanding of the question, but a
+  deterministic policy drives the ReAct steps (fast, free, reliable).
+- **Scheme search on the free host is keyword-based** (BM25), not semantic.
 - **Knowledge coverage** is intentionally small (6 crops, 4 schemes) for the MVP.
 - **Scheme faithfulness** for *topically-related but unanswerable* questions relies
   on the real LLM's judgement; the retrieval guardrail only rejects clearly
@@ -458,12 +484,11 @@ The app auto-detects the GPU — no code change.
 
 ## Future Improvements
 
-- Enable real IndicTrans2 + Parler on a GPU host so answers and the spoken reply
-  come back in Hindi / Punjabi / Marathi, and typed regional questions work.
-- Drive the LangChain agent with Llama-3.1-8B or Gemma on a GPU instead of the
-  rule-based policy.
-- Remember the chosen language between visits, and accept `?lang=hi` links to
-  share a pre-set language with farmers.
+- Self-host Whisper + an open LLM (or IndicTrans2 + Parler) on a GPU so no
+  question leaves the server, with a more natural Indic voice than gTTS.
+- Drive the LangChain agent's ReAct steps with Llama-3.1-8B or Gemma on a GPU
+  instead of the rule-based policy.
+- Accept `?lang=hi` links to share a pre-set language with farmers.
 - Expand the crop and scheme knowledge bases; ingest real government PDFs with
   page-level citations.
 - LLM-based answer faithfulness checking and citation grounding.
