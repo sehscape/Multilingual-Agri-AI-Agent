@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 
 def extract_intent(state: AgentState, llm: BaseLLM) -> AgentState:
     """Populate intent fields on state by calling the LLM. Returns mutated state."""
-    prompt = INTENT_EXTRACTION_PROMPT.format(english_query=state.english_text)
+    prompt = INTENT_EXTRACTION_PROMPT.format(english_query=state.routing_text())
 
     try:
         raw = llm.generate(prompt)

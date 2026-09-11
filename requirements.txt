@@ -12,6 +12,10 @@ pydantic>=2.7
 # ─── UI ───────────────────────────────────────────────────────────────────────
 gradio==6.26.0
 
+# ─── Agent (LangChain ReAct AgentExecutor with tool-calling) ──────────────────
+langchain>=0.3,<0.4
+langchain-core>=0.3,<0.4
+
 # ─── ML / Models ──────────────────────────────────────────────────────────────
 torch>=2.4
 torchaudio>=2.4

@@ -1,5 +1,5 @@
 # Lightweight dependencies for LITE_MODE deploys (Render free tier, 512 MB RAM).
-# NO torch / transformers / sentence-transformers / whisper / faiss / langchain.
+# NO torch / transformers / sentence-transformers / whisper / faiss.
 #
 # Use on the host with:  pip install -r requirements-lite.txt
 # and set env var:       LITE_MODE=true
@@ -18,3 +18,7 @@ requests>=2.31
 numpy>=1.26
 gradio==6.26.0
 gTTS>=2.5
+# LangChain agent (pure Python, ~25 MB RAM; no torch). Its optional
+# `transformers` import is skipped when transformers isn't installed.
+langchain>=0.3,<0.4
+langchain-core>=0.3,<0.4

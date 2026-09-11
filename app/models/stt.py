@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
+from typing import Optional
 
 from app.config import WHISPER_MODEL_ID
 from app.utils.logging import get_logger
@@ -36,14 +37,21 @@ _WHISPER_LANG_MAP: dict[str, str] = {v: k for k, v in _WHISPER_LANG_REVERSE.item
 
 class BaseSTT(ABC):
     @abstractmethod
-    def transcribe(self, audio_path: str) -> dict[str, str]:
+    def transcribe(self, audio_path: str, language: Optional[str] = None,
+                   translate: bool = False) -> dict[str, str]:
         """
-        Transcribe audio and auto-detect language.
+        Transcribe audio.
+
+        Args:
+            language:  ISO code ("hi" | "mr" | "pa" | "en") to force; None → auto-detect.
+            translate: also return Whisper's speech-to-English translation
+                       (only when a non-English language is forced).
 
         Returns:
             {
-                "text":     <transcription in detected script>,
-                "language": <ISO 639-1 code: "hi" | "mr" | "pa" | "en" | "unknown">
+                "text":         <transcription in the spoken script>,
+                "language":     <ISO 639-1 code: "hi" | "mr" | "pa" | "en" | "unknown">,
+                "english_text": <English translation — present only when translate=True>
             }
         """
 
@@ -83,7 +91,8 @@ class WhisperSTT(BaseSTT):
 
         logger.info("Whisper loaded.")
 
-    def transcribe(self, audio_path: str) -> dict[str, str]:
+    def transcribe(self, audio_path: str, language: Optional[str] = None,
+                   translate: bool = False) -> dict[str, str]:
         import torch
         import numpy as np
         import soundfile as sf
@@ -109,12 +118,15 @@ class WhisperSTT(BaseSTT):
         )
         input_features = inputs.input_features.to(self.device)
 
-        # ── 4. Generate — no forced language → auto-detect ─────────────────────
+        # ── 4. Generate — forced language when given, else auto-detect ─────────
+        # Forcing the language the farmer chose avoids Whisper's frequent
+        # mis-detections between Hindi and Marathi (and "unknown" on short clips).
+        forced = _WHISPER_LANG_MAP.get(language) if language else None
+        gen_kwargs = {"task": "transcribe"}
+        if forced:
+            gen_kwargs["language"] = forced
         with torch.no_grad():
-            predicted_ids = self._model.generate(
-                input_features,
-                task="transcribe",
-            )
+            predicted_ids = self._model.generate(input_features, **gen_kwargs)
 
         # ── 5. Detect language by parsing the full special-token sequence ───────
         # Decode keeping special tokens so we can search by name, not by index.
@@ -140,6 +152,8 @@ class WhisperSTT(BaseSTT):
             break
 
         iso_lang = _WHISPER_LANG_REVERSE.get(lang_name, "unknown")
+        if forced:
+            iso_lang, lang_name = language, forced
         logger.info("STT | lang_name=%r → iso=%r  (all specials: %s)",
                     lang_name, iso_lang, all_specials)
 
@@ -147,12 +161,24 @@ class WhisperSTT(BaseSTT):
         text = self._processor.batch_decode(
             predicted_ids, skip_special_tokens=True
         )[0].strip()
+        result = {"text": text, "language": iso_lang, "language_name": lang_name}
+
+        # ── 7. Optional speech → English translation (same audio features) ─────
+        # Whisper's built-in translate task lets regional speech reach the
+        # English agent without a separate multi-GB translation model.
+        if translate and forced and language != "en":
+            with torch.no_grad():
+                trans_ids = self._model.generate(
+                    input_features, language=forced, task="translate"
+                )
+            result["english_text"] = self._processor.batch_decode(
+                trans_ids, skip_special_tokens=True
+            )[0].strip()
 
         elapsed = time.time() - t0
-        logger.info("STT | %.1fs | detected=%s (%s) | chars=%d",
-                    elapsed, lang_name, iso_lang, len(text))
-
-        return {"text": text, "language": iso_lang, "language_name": lang_name}
+        logger.info("STT | %.1fs | language=%s (%s) | chars=%d | translated=%s",
+                    elapsed, lang_name, iso_lang, len(text), "english_text" in result)
+        return result
 
 
 class StubSTT(BaseSTT):
@@ -177,8 +203,9 @@ class StubSTT(BaseSTT):
     ]
     _idx = 0
 
-    def transcribe(self, audio_path: str) -> dict[str, str]:
-        result = self._STUBS[StubSTT._idx % len(self._STUBS)]
+    def transcribe(self, audio_path: str, language: Optional[str] = None,
+                   translate: bool = False) -> dict[str, str]:
+        result = dict(self._STUBS[StubSTT._idx % len(self._STUBS)])
         StubSTT._idx += 1
         logger.warning("StubSTT | returning %s stub.", result["language_name"])
         return result

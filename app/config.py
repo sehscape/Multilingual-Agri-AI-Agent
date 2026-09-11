@@ -85,6 +85,12 @@ RAG_BACKEND: str = os.getenv("RAG_BACKEND", "faiss").lower()
 # result (keyword scores are not 0-1). Below this → "insufficient information".
 BM25_MIN_SCORE: float = float(os.getenv("BM25_MIN_SCORE", "2.0"))
 
+# ─── Agent engine ─────────────────────────────────────────────────────────────
+#   "langchain"  → LangChain ReAct AgentExecutor with tool-calling (default)
+#   "sequential" → deterministic orchestrator (intent flags → tools in order)
+# If LangChain isn't installed the app falls back to "sequential" automatically.
+AGENT_BACKEND: str = os.getenv("AGENT_BACKEND", "langchain").lower()
+
 # ─── LLM Generation ───────────────────────────────────────────────────────────
 MAX_NEW_TOKENS: int = int(os.getenv("MAX_NEW_TOKENS", "512"))
 TEMPERATURE: float = float(os.getenv("TEMPERATURE", "0.3"))

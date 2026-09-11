@@ -43,5 +43,17 @@ class AgentState:
     def add_trace(self, msg: str) -> None:
         self.trace.append(msg)
 
+    def routing_text(self) -> str:
+        """The text the agent should reason over: the English query, plus the
+        farmer's original words when they differ (e.g. a Hindi/Marathi/Punjabi
+        voice transcript). Machine translation of regional speech is often
+        lossy, so keeping the original lets the router still spot the crop,
+        place and topic."""
+        english = (self.english_text or "").strip()
+        original = " ".join((self.original_text or "").split())
+        if original and original != english and not original.isascii():
+            return f"{english} (original: {original})"
+        return english
+
     def trace_summary(self) -> str:
         return "\n".join(self.trace)

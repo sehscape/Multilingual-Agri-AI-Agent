@@ -1,11 +1,11 @@
-"""Gradio UI — redesigned for farmer-friendliness.
+"""Gradio UI — farmer-facing console, in English, Hindi, Punjabi and Marathi.
 
-Phases wired:
-  2  — Whisper STT (auto language detection)
-  3  — IndicTrans2 regional → English
-  4  — Intent extraction
-  8  — Orchestrator (crop / weather / scheme tools + LLM answer)
-  10 — IndicTrans2 English → regional + Indic TTS (pending)
+Flow: typed or spoken question → intent extraction → agent (LangChain ReAct by
+default: crop / weather / scheme tools) → answer → spoken reply.
+
+The language picked in the top bar drives the whole interface (app/ui/i18n.py)
+and the language the microphone listens in. Answers are English unless a real
+translator (IndicTrans2) is configured — see _pipeline().
 """
 import time
 import gradio as gr
@@ -14,17 +14,23 @@ from app.utils.logging import get_logger
 from app.config import (
     DEV_MODE, WHISPER_MODEL_ID, USE_STUB_TRANSLATION, USE_STUB_LLM,
     USE_HF_INFERENCE_API, LOCAL_LLM_MODEL_ID, TTS_ENGINE, LITE_MODE, RAG_BACKEND,
+    AGENT_BACKEND,
+)
+from app.ui.i18n import (
+    DEFAULT_LANG, LANG_CHOICES, SPOKEN_EXAMPLES, lang_name, normalize_lang, t,
 )
 
 logger = get_logger(__name__)
 
-_LANG_DISPLAY = {"hi": "Hindi", "mr": "Marathi", "pa": "Punjabi",
-                 "en": "English", "unknown": "Unknown"}
+# A real English↔regional text translator (IndicTrans2) is configured. Without
+# it, spoken regional questions reach the agent via Whisper's speech→English
+# translation plus the original transcript, and answers stay in English.
+_MT_READY = not USE_STUB_TRANSLATION
 
-_LANG_FLAG = {"hi": "Hindi", "mr": "Marathi", "pa": "Punjabi",
-              "en": "English", "unknown": "Unrecognised"}
 
-_LANG_PENDING = "Awaiting your question"
+def _has_indic(text: str) -> bool:
+    """True if text contains Devanagari (U+0900–097F) or Gurmukhi (U+0A00–0A7F)."""
+    return any(0x0900 <= ord(ch) <= 0x0A7F for ch in text)
 
 # ── Singletons ────────────────────────────────────────────────────────────────
 _stt = None
@@ -80,8 +86,17 @@ def _get_router_llm():
 
 
 def _get_orchestrator():
+    """Agent engine: the LangChain ReAct agent by default, or the deterministic
+    sequential orchestrator (AGENT_BACKEND=sequential, or if LangChain is absent)."""
     global _orchestrator
     if _orchestrator is None:
+        if AGENT_BACKEND == "langchain":
+            try:
+                from app.agents.langchain_agent import get_langchain_agent
+                _orchestrator = get_langchain_agent(_get_llm())
+                return _orchestrator
+            except ImportError as exc:
+                logger.warning("LangChain unavailable (%s) — using sequential orchestrator.", exc)
         from app.agents.orchestrator import get_orchestrator
         _orchestrator = get_orchestrator(_get_llm())
     return _orchestrator
@@ -101,15 +116,19 @@ def _get_tts():
     return _tts
 
 
-def _run_output_stage(state, trace) -> "str | None":
+def _run_output_stage(state, trace, target_lang: "str | None" = None) -> "str | None":
     """Output boundary — translate the English answer to the farmer's language
-    and synthesize voice. Returns a path to an audio file, or None."""
+    and synthesize voice. Returns a path to an audio file, or None.
+
+    target_lang: the language to answer in (the one chosen on the page). When
+    omitted, the language the question was asked in is used."""
     answer = (state.english_answer or "").strip()
     if not answer:
         return None
 
-    # Target voice language: the detected regional language, else English.
-    target = state.source_language if state.source_language in ("hi", "mr", "pa") else "en"
+    if target_lang is None:
+        target_lang = state.source_language
+    target = target_lang if target_lang in ("hi", "mr", "pa") else "en"
 
     # Step 5a: English answer → regional text (skip when stubbed or already English)
     if target != "en" and not USE_STUB_TRANSLATION:
@@ -146,86 +165,95 @@ def _run_output_stage(state, trace) -> "str | None":
 
 # ── Pipeline ──────────────────────────────────────────────────────────────────
 
-def _run_pipeline(audio, text_query, location: str):
-    """Full pipeline: (typed text OR STT→translate) → intent → orchestrate → answer.
+def _pipeline(audio, text_query, location, lang) -> dict:
+    """Full pipeline: (typed text OR voice) → intent → agent → answer → voice.
 
-    A typed English question takes priority and bypasses STT + translation — the
-    reliable way to exercise the weather and government-scheme tools in dev mode,
-    where Whisper-small + stub translation cannot carry spoken Indic queries
-    through to the English router.
+    `lang` is the language chosen on the page. It controls every message the
+    farmer sees and the language the microphone listens for:
+      • Typed questions are English. Typed Hindi/Punjabi/Marathi is translated
+        only when a real translator (IndicTrans2) is configured; otherwise the
+        farmer gets a message, in their language, asking for English.
+      • Spoken questions are transcribed in the chosen language. Without
+        IndicTrans2, Whisper's own speech→English translation plus the
+        original transcript carry them to the agent (see routing_text()).
+      • The answer is given in the chosen language when IndicTrans2 is
+        configured, otherwise in English.
     """
     from app.agents.state import AgentState
     from app.agents.intent import extract_intent
 
-    # Return signature:
-    # detected_lang, transcription, english_text, answer, audio_out,
-    # intent_box, tools_html, trace_box
-
+    lang = normalize_lang(lang)
     text_query = (text_query or "").strip()
+    location = (location or "").strip() or None
     pipeline_t0 = time.time()
-    trace = []
-    detected_display = _LANG_PENDING
+    trace = [f"[UI] language: {lang}"]
+
+    def prompt_only(message: str) -> dict:
+        """Result for a request that never reached the agent."""
+        return {"detected": t("pending", lang), "transcription": "", "english": "",
+                "answer": message, "audio": None, "intent": "",
+                "tools_html": _no_tools_html(lang), "trace": "",
+                "detected_key": None, "tools_flags": None}
 
     if text_query:
-        # ── Typed input — skip STT + translation ──────────────────────────────
-        detected_display = "English (typed)"
+        # ── Typed input ───────────────────────────────────────────────────────
+        mode, q_lang, english = "typed", "en", text_query
+        if _has_indic(text_query):
+            if not _MT_READY:
+                key = "err_type_english_lite" if LITE_MODE else "err_type_english"
+                return prompt_only(t(key, lang))
+            gurmukhi = any(0x0A00 <= ord(ch) <= 0x0A7F for ch in text_query)
+            q_lang = "pa" if gurmukhi else (lang if lang in ("hi", "mr") else "hi")
+            try:
+                english = _get_translator().translate_to_english(text_query, q_lang)
+                trace.append(f"[Translate] {q_lang}→en: '{english}'")
+            except Exception as e:
+                logger.error("Translation failed: %s", e)
+                trace.append(f"[Translate] ERROR: {e} — using original text")
         transcription = text_query
-        state = AgentState(
-            source_language="en",
-            original_text=text_query,
-            english_text=text_query,
-            location=location.strip() or None,
-        )
-        trace.append(f"[Input] Typed query: '{text_query}'")
-        trace.append("[STT] skipped — typed input")
-        trace.append("[Translate] skipped — already English")
+        state = AgentState(source_language=q_lang, original_text=text_query,
+                           english_text=english, location=location)
+        trace.append(f"[Input] typed: '{text_query}'")
     elif audio is None:
-        msg = "Type a question above, or tap the microphone and speak."
-        return _LANG_PENDING, "", "", msg, None, "", _no_tools_html(), ""
+        key = "err_no_input_lite" if LITE_MODE else "err_no_input"
+        return prompt_only(t(key, lang))
     else:
-        # ── Step 1: Whisper STT ───────────────────────────────────────────────
-        trace.append(f"[STT] Model: {WHISPER_MODEL_ID}")
+        # ── Voice input — Whisper listens in the chosen language ─────────────
+        mode, q_lang = "voice", lang
+        whisper_mt = lang != "en" and not _MT_READY
+        trace.append(f"[STT] {WHISPER_MODEL_ID} · language={lang}"
+                     f"{' · speech→English' if whisper_mt else ''}")
         try:
             t0 = time.time()
-            result = _get_stt().transcribe(audio)
-            transcription = result["text"]
-            iso_lang = result["language"]
-            detected_display = _LANG_FLAG.get(iso_lang, iso_lang)
-            trace.append(f"[STT] Detected: {detected_display} in {time.time()-t0:.1f}s")
-            trace.append(f"[STT] '{transcription}'")
+            result = _get_stt().transcribe(audio, language=lang, translate=whisper_mt)
         except Exception as e:
             logger.error("STT failed: %s", e)
-            return (_LANG_PENDING, "", "",
-                    f"Speech recognition failed: {e}", None, "",
-                    _no_tools_html(), "")
-
-        state = AgentState(
-            source_language=iso_lang,
-            original_text=transcription,
-            location=location.strip() or None,
-        )
-
-        # ── Step 2: Translate regional → English ─────────────────────────────
-        stub_note = " [stub]" if USE_STUB_TRANSLATION else ""
-        trace.append(f"[Translate{stub_note}] {_LANG_DISPLAY.get(iso_lang, iso_lang)} → English")
-        try:
-            t0 = time.time()
-            if iso_lang in ("en", "unknown"):
-                state.english_text = transcription
-                trace.append("[Translate] Already English — skipped.")
-            else:
-                state.english_text = _get_translator().translate_to_english(transcription, iso_lang)
-                trace.append(f"[Translate] Done in {time.time()-t0:.1f}s: '{state.english_text}'")
-        except Exception as e:
-            logger.error("Translation failed: %s", e)
+            return prompt_only(t("err_stt", lang, err=e))
+        transcription = result["text"]
+        trace.append(f"[STT] {time.time()-t0:.1f}s: '{transcription}'")
+        state = AgentState(source_language=lang, original_text=transcription,
+                           location=location)
+        if lang == "en":
             state.english_text = transcription
-            trace.append(f"[Translate] ERROR: {e} — using original text")
+        elif whisper_mt:
+            state.english_text = result.get("english_text") or transcription
+            trace.append(f"[Translate] Whisper speech→English: '{state.english_text}'")
+        else:
+            try:
+                t0 = time.time()
+                state.english_text = _get_translator().translate_to_english(transcription, lang)
+                trace.append(f"[Translate] {lang}→en in {time.time()-t0:.1f}s: "
+                             f"'{state.english_text}'")
+            except Exception as e:
+                logger.error("Translation failed: %s", e)
+                state.english_text = transcription
+                trace.append(f"[Translate] ERROR: {e} — using original text")
 
-    # ── Step 3: Intent extraction ─────────────────────────────────────────────
-    trace.append("[Intent] rule-based router")
+    # ── Intent extraction (entities + tool hints) ─────────────────────────────
     t0 = time.time()
     state = extract_intent(state, _get_router_llm())
-    trace.append(f"[Intent] {state.trace[-1] if state.trace else 'done'} in {time.time()-t0:.1f}s")
+    trace.append(f"[Intent] {state.trace[-1] if state.trace else 'done'} "
+                 f"in {time.time()-t0:.1f}s")
 
     intent_summary = (
         f"Intent    : {state.intent}\n"
@@ -238,37 +266,57 @@ def _run_pipeline(audio, text_query, location: str):
         f"{'scheme' if state.needs_scheme else ''}"
     )
 
-    # ── Step 4: Orchestrator (tools + LLM answer) ─────────────────────────────
-    stub_note = " [stub]" if USE_STUB_LLM else ""
-    trace.append(f"[Orchestrator{stub_note}]")
+    # ── Agent: tools + answer ─────────────────────────────────────────────────
+    trace.append(f"[Agent] {AGENT_BACKEND}{' · rule-based LLM' if USE_STUB_LLM else ''}")
     t0 = time.time()
     state = _get_orchestrator().run(state)
     for msg in state.trace[1:]:
         trace.append(f"  {msg}")
-    trace.append(f"[Orchestrator] Done in {time.time()-t0:.1f}s")
+    trace.append(f"[Agent] done in {time.time()-t0:.1f}s")
 
-    # ── Step 5: Output boundary — translate answer + synthesize voice ─────────
-    stub_note = " [stub]" if USE_STUB_TRANSLATION else ""
-    trace.append(f"[Output{stub_note}] translate + TTS ({TTS_ENGINE})")
-    audio_path = _run_output_stage(state, trace)
+    # ── Output: answer language + voice ───────────────────────────────────────
+    target = lang if (lang != "en" and _MT_READY) else "en"
+    trace.append(f"[Output] answer language: {target} · TTS {TTS_ENGINE}")
+    audio_path = _run_output_stage(state, trace, target_lang=target)
+    translated = (target != "en" and state.regional_answer
+                  and state.regional_answer != state.english_answer)
+    answer = state.regional_answer if translated else state.english_answer
 
     total = time.time() - pipeline_t0
     state.latency["total"] = round(total, 2)
     trace.append(f"[Total] response time: {total:.1f}s")
 
-    tools_html = _build_tools_html(state)
-    trace_text = "\n".join(trace)
+    flags = _tool_flags(state)
+    detected_key = (q_lang, mode)
+    return {"detected": _detected_text(lang, detected_key), "transcription": transcription,
+            "english": state.english_text, "answer": answer, "audio": audio_path,
+            "intent": intent_summary, "tools_html": _tools_strip(lang, flags),
+            "trace": "\n".join(trace), "detected_key": detected_key, "tools_flags": flags}
 
-    return (
-        detected_display,
-        transcription,
-        state.english_text,
-        state.english_answer,
-        audio_path,        # voice output (Phase 10)
-        intent_summary,
-        tools_html,
-        trace_text,
-    )
+
+def _run_pipeline(audio, text_query, location, lang_code=DEFAULT_LANG):
+    """Pipeline result as an 8-tuple: detected language, transcript, English
+    text, answer, audio path, intent summary, tool-status HTML, trace."""
+    r = _pipeline(audio, text_query, location, lang_code)
+    return (r["detected"], r["transcription"], r["english"], r["answer"], r["audio"],
+            r["intent"], r["tools_html"], r["trace"])
+
+
+def _on_ask(audio, text_query, location, lang_code):
+    """Ask-button handler: the pipeline result plus the two states the page keeps
+    so it can re-render the language readout and tool chips on a language switch."""
+    r = _pipeline(audio, text_query, location, lang_code)
+    return (r["detected"], r["transcription"], r["english"], r["answer"], r["audio"],
+            r["intent"], r["tools_html"], r["trace"], r["detected_key"], r["tools_flags"])
+
+
+def _detected_text(ui_lang: str, detected_key) -> str:
+    """'Hindi · voice', written in the UI language — or the waiting message."""
+    if not detected_key:
+        return t("pending", ui_lang)
+    q_lang, mode = detected_key
+    return f"{lang_name(q_lang, ui_lang)} · {t('mode_' + mode, ui_lang)}"
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Presentation layer
@@ -285,9 +333,9 @@ def _run_pipeline(audio, text_query, location: str):
 # ══════════════════════════════════════════════════════════════════════════════
 
 _TOOL_SPECS = (
-    ("crop", "Crop knowledge"),
-    ("weather", "Weather"),
-    ("scheme", "Govt scheme"),
+    ("crop", "tool_crop"),
+    ("weather", "tool_weather"),
+    ("scheme", "tool_scheme"),
 )
 
 
@@ -301,9 +349,13 @@ def _eyebrow(text: str, num: str = "") -> str:
     )
 
 
-def _tool_chip(label: str, active: bool) -> str:
+def _note(text: str) -> str:
+    return f'<div class="ag-field-note">{text}</div>'
+
+
+def _tool_chip(label: str, active: bool, lang: str) -> str:
     state = "on" if active else "off"
-    note = "used" if active else "idle"
+    note = t("chip_used" if active else "chip_idle", lang)
     return (
         f'<span class="ag-chip ag-chip--{state}">'
         f'<i class="ag-chip-dot"></i>'
@@ -312,16 +364,16 @@ def _tool_chip(label: str, active: bool) -> str:
     )
 
 
-def _tools_strip(crop_ok: bool = False, weather_ok: bool = False,
-                 scheme_ok: bool = False, idle: bool = False) -> str:
-    flags = {"crop": crop_ok, "weather": weather_ok, "scheme": scheme_ok}
-    chips = "".join(_tool_chip(label, flags[key]) for key, label in _TOOL_SPECS)
-    if idle:
-        caption = "Standing by"
-    elif any(flags.values()):
-        caption = f"{sum(flags.values())} of 3 sources consulted"
+def _tools_strip(lang: str = DEFAULT_LANG, flags=None) -> str:
+    """Status strip for the three knowledge sources. flags=None → standing by."""
+    used = dict(zip(("crop", "weather", "scheme"), flags or (False, False, False)))
+    chips = "".join(_tool_chip(t(key, lang), used[tool], lang) for tool, key in _TOOL_SPECS)
+    if flags is None:
+        caption = t("tools_idle", lang)
+    elif any(used.values()):
+        caption = t("tools_used", lang, n=sum(used.values()))
     else:
-        caption = "Answered without external sources"
+        caption = t("tools_none", lang)
     return (
         f'<div class="ag-tools">'
         f'<div class="ag-tools-caption">{caption}</div>'
@@ -330,16 +382,16 @@ def _tools_strip(crop_ok: bool = False, weather_ok: bool = False,
     )
 
 
-def _no_tools_html() -> str:
-    return _tools_strip(idle=True)
+def _no_tools_html(lang: str = DEFAULT_LANG) -> str:
+    return _tools_strip(lang, None)
 
 
-def _build_tools_html(state) -> str:
-    """Status strip showing which knowledge sources the orchestrator actually hit."""
-    return _tools_strip(
-        crop_ok=bool(state.crop_data and state.crop_data.get("context")),
-        weather_ok=bool(state.weather_data and state.weather_data.get("context")),
-        scheme_ok=bool(state.scheme_docs and state.scheme_docs[0].get("context")),
+def _tool_flags(state) -> tuple:
+    """Which knowledge sources the agent actually consulted for this answer."""
+    return (
+        bool(state.crop_data and state.crop_data.get("context")),
+        bool(state.weather_data and state.weather_data.get("context")),
+        bool(state.scheme_docs and state.scheme_docs[0].get("context")),
     )
 
 
@@ -353,7 +405,10 @@ def build_theme():
     far more robust than overriding Gradio's internals from CSS alone.
     """
     return gr.themes.Base(
-        font=[gr.themes.GoogleFont("Inter"), "system-ui", "-apple-system",
+        # Inter for Latin; Noto Sans covers Devanagari (Hindi, Marathi) and
+        # Gurmukhi (Punjabi) — the browser picks per glyph.
+        font=[gr.themes.GoogleFont("Inter"), gr.themes.GoogleFont("Noto Sans Devanagari"),
+              gr.themes.GoogleFont("Noto Sans Gurmukhi"), "system-ui", "-apple-system",
               "Segoe UI", "sans-serif"],
         font_mono=[gr.themes.GoogleFont("JetBrains Mono"), "ui-monospace",
                    "Consolas", "monospace"],
@@ -512,13 +567,57 @@ footer { display: none !important; }
   letter-spacing: .19em; text-transform: uppercase;
   color: var(--ag-text);
 }
-.ag-langs {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
-  color: var(--ag-faint);
+/* The top bar is a Gradio Row: stop its children stretching to equal widths */
+.ag-topbar > * { flex: 0 1 auto !important; min-width: 0 !important; width: auto !important; }
+.ag-topbar .block, .ag-topbar .form { padding: 0 !important; border: none !important;
+  background: transparent !important; box-shadow: none !important; }
+
+/* ═══ Language picker — segmented control ═══ */
+.ag-lang { background: transparent !important; }
+.ag-lang .wrap { display: flex !important; flex-wrap: wrap; gap: 6px !important; }
+.ag-lang label {
+  display: inline-flex !important; align-items: center;
+  margin: 0 !important;
+  padding: 7px 13px !important;
+  border: 1px solid var(--ag-line) !important;
+  border-radius: 2px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 13px !important; font-weight: 500 !important;
+  color: var(--ag-dim) !important;
+  cursor: pointer;
+  transition: border-color .16s ease, color .16s ease, background .16s ease;
 }
-.ag-langs span:not(:last-child)::after {
-  content: "·"; margin-left: 10px; color: var(--ag-line-2);
+.ag-lang label:hover { color: var(--ag-text) !important; border-color: var(--ag-line-2) !important; }
+.ag-lang label.selected, .ag-lang label:has(input:checked) {
+  border-color: var(--ag-accent) !important;
+  background: var(--ag-accent-bg) !important;
+  color: var(--ag-text) !important;
+  font-weight: 600 !important;
+}
+/* Hide the radio dot but keep it focusable for keyboard users */
+.ag-lang input[type="radio"] {
+  position: absolute !important; opacity: 0 !important;
+  width: 1px !important; height: 1px !important; margin: 0 !important;
+}
+.ag-lang label:has(input:focus-visible) { outline: 2px solid var(--ag-accent); outline-offset: 2px; }
+.ag-lang label span { margin-left: 0 !important; }
+
+/* ═══ Indic scripts ═══
+   The design's wide tracking and uppercase are Latin-only devices: tracking
+   pulls Devanagari/Gurmukhi letters off their headline bar. The page carries
+   lang="hi|mr|pa" once a language is picked, so relax them there. */
+html:is([lang="hi"], [lang="mr"], [lang="pa"]) :is(
+  .ag-brand-name, .ag-hero-eyebrow, .ag-eyebrow-text, .ag-tools-caption,
+  .ag-chip-note, .ag-footer, .ag-phrase-lang, .ag-panel label > span,
+  .ag-ask button, button.ag-ask, .ag-diag .label-wrap
+) {
+  letter-spacing: .01em !important;
+  text-transform: none !important;
+}
+html:is([lang="hi"], [lang="mr"], [lang="pa"]) .ag-hero h1 {
+  letter-spacing: 0;
+  line-height: 1.3;
 }
 
 /* ═══ Hero ═══ */
@@ -798,9 +897,9 @@ button.ag-example:hover::before { background: var(--ag-accent); width: 12px; }
 """
 
 # ── Example prompts ───────────────────────────────────────────────────────────
-# Typed input is treated as English by the pipeline, so only the English set is
-# clickable. The regional phrases below are a spoken-input reference — filling
-# one into the text box would have it mislabelled as English and skip translation.
+# Typed questions are English, so the clickable examples are English in every
+# UI language. The spoken prompts under "Or say it aloud" follow the language
+# picked on the page (app/ui/i18n.py → SPOKEN_EXAMPLES).
 _TYPED_EXAMPLES = [
     "My wheat is 40 days old, which fertiliser should I apply?",
     "Will it rain in Nashik tomorrow? Should I irrigate my paddy?",
@@ -808,86 +907,111 @@ _TYPED_EXAMPLES = [
     "The leaves on my tomato plants are turning yellow.",
 ]
 
-_EXAMPLES = {
-    "Hindi": [
-        "मेरी गेहूं 40 दिन की है, क्या खाद डालूं?",
-        "पुणे में कल बारिश होगी क्या? धान की सिंचाई करूं?",
-        "PM किसान योजना के लिए कैसे आवेदन करें?",
-        "मेरे टमाटर की पत्तियां पीली हो रही हैं, क्या करूं?",
-    ],
-    "Marathi": [
-        "माझ्या कापसाला 40 दिवस झाले, कोणते खत द्यावे?",
-        "नाशिकमध्ये उद्या पाऊस येईल का?",
-        "पीएम किसान योजनेसाठी कोणती कागदपत्रे लागतात?",
-        "माझ्या कांद्याची पाने पिवळी पडत आहेत.",
-    ],
-    "Punjabi": [
-        "ਮੇਰੀ ਕਣਕ 40 ਦਿਨ ਦੀ ਹੈ, ਕਿਹੜੀ ਖਾਦ ਪਾਵਾਂ?",
-        "ਲੁਧਿਆਣਾ ਵਿੱਚ ਕੱਲ੍ਹ ਮੀਂਹ ਪਵੇਗਾ ਕੀ?",
-        "ਕਿਸਾਨ ਕ੍ਰੈਡਿਟ ਕਾਰਡ ਲਈ ਕਿਵੇਂ ਅਪਲਾਈ ਕਰਨਾ ਹੈ?",
-        "ਮੇਰੇ ਝੋਨੇ ਵਿੱਚ ਕੀੜੇ ਲੱਗ ਗਏ ਹਨ।",
-    ],
-}
+
+def _phrases_html(lang: str) -> str:
+    lines = "".join(f'<div class="ag-phrase">{p}</div>'
+                    for p in SPOKEN_EXAMPLES[normalize_lang(lang)])
+    return f'<div class="ag-phrases"><div class="ag-phrase-group">{lines}</div></div>'
 
 
-def _phrases_html() -> str:
-    groups = []
-    for lang, phrases in _EXAMPLES.items():
-        lines = "".join(f'<div class="ag-phrase">{p}</div>' for p in phrases)
-        groups.append(
-            f'<div class="ag-phrase-group">'
-            f'<div class="ag-phrase-lang">{lang}</div>{lines}</div>'
-        )
-    return f'<div class="ag-phrases">{"".join(groups)}</div>'
+# ── Localised fragments ───────────────────────────────────────────────────────
 
-
-# ── UI builder ────────────────────────────────────────────────────────────────
-
-def build_ui() -> gr.Blocks:
+def _mode_info() -> str:
+    """Technical build line under the hero (kept in English — it's diagnostic)."""
     if USE_STUB_LLM:
         llm_mode = "rule-based"
     elif USE_HF_INFERENCE_API:
         llm_mode = "HF Inference API"
     else:
         llm_mode = f"local ({LOCAL_LLM_MODEL_ID})"
-
     if LITE_MODE:
-        mode_info = "lite · typed input · keyword scheme search · rule-based answers · gTTS"
-    else:
-        mode_info = (
-            f"stt {WHISPER_MODEL_ID} · "
+        return (f"lite · typed input · keyword scheme search · {AGENT_BACKEND} agent · "
+                f"rule-based answers · gTTS")
+    return (f"stt {WHISPER_MODEL_ID} · "
             f"mt {'stub' if USE_STUB_TRANSLATION else 'indictrans2'} · "
-            f"llm {llm_mode} · rag {RAG_BACKEND} · tts {TTS_ENGINE}"
-        )
+            f"agent {AGENT_BACKEND} · llm {llm_mode} · rag {RAG_BACKEND} · tts {TTS_ENGINE}")
+
+
+def _brand_html(lang: str) -> str:
+    return ('<div class="ag-brand"><span class="ag-brand-mark"></span>'
+            f'<span class="ag-brand-name">{t("brand", lang)}</span></div>')
+
+
+def _hero_html(lang: str) -> str:
+    body = t("hero_body_lite" if LITE_MODE else "hero_body_full", lang)
+    return (f'<div class="ag-hero">'
+            f'<div class="ag-hero-eyebrow">{t("hero_eyebrow", lang)}</div>'
+            f'<h1>{t("hero_title", lang)}</h1><p>{body}</p>'
+            f'<div class="ag-mode">{_mode_info()}</div></div>')
+
+
+def _footer_html(lang: str) -> str:
+    return (f'<div class="ag-footer"><span>{t("footer_left", lang)}</span>'
+            f'<span>Whisper · LangChain · FAISS · gTTS</span></div>')
+
+
+def _localized(lang, detected_key=None, tools_flags=None) -> list:
+    """An update for every language-dependent component, in the same order as
+    the `localized` list in build_ui(). Runs whenever the language changes."""
+    lang = normalize_lang(lang)
+    return [
+        gr.update(value=_brand_html(lang)),
+        gr.update(value=_hero_html(lang)),
+        gr.update(value=_eyebrow(t("eyebrow_speak", lang), "01")),
+        gr.update(value=_note(t("mic_note", lang, language=lang_name(lang, lang)))),
+        gr.update(value=_eyebrow(t("eyebrow_or_type", lang), "02")),
+        gr.update(value=_eyebrow(t("eyebrow_question", lang), "01")),
+        gr.update(value=_note(t("lite_note", lang))),
+        gr.update(placeholder=t("text_placeholder", lang)),
+        gr.update(value=_eyebrow(t("eyebrow_location", lang), "02" if LITE_MODE else "03")),
+        gr.update(value=_note(t("location_note", lang))),
+        gr.update(placeholder=t("location_placeholder", lang)),
+        gr.update(value=t("ask_button", lang)),
+        gr.update(value=_eyebrow(t("eyebrow_detected", lang))),
+        gr.update(value=_detected_text(lang, detected_key)),
+        gr.update(value=_eyebrow(t("eyebrow_try", lang))),
+        gr.update(value=_eyebrow(t("eyebrow_response", lang))),
+        gr.update(value=_note(t("answer_note", lang)),
+                  visible=lang != "en" and not _MT_READY),
+        gr.update(value=_tools_strip(lang, tools_flags)),
+        gr.update(placeholder=t("answer_placeholder", lang)),
+        gr.update(label=t("audio_label", lang)),
+        gr.update(value=_eyebrow(t("eyebrow_say_aloud", lang))),
+        gr.update(value=_phrases_html(lang)),
+        gr.update(label=t("diag", lang)),
+        gr.update(label=t("heard_label", lang), placeholder=t("heard_placeholder", lang)),
+        gr.update(label=t("english_label", lang), placeholder=t("english_placeholder", lang)),
+        gr.update(label=t("intent_label", lang)),
+        gr.update(label=t("trace_label", lang)),
+        gr.update(value=_footer_html(lang)),
+    ]
+
+
+# ── UI builder ────────────────────────────────────────────────────────────────
+
+def build_ui() -> gr.Blocks:
+    lang = DEFAULT_LANG
 
     with gr.Blocks(title="Agri Assistant", fill_width=True) as demo:
+        # Remembered so a language switch can re-render the last result's
+        # language readout and tool chips in the new language.
+        detected_state = gr.State(None)
+        tools_state = gr.State(None)
 
-        # ── Top bar ───────────────────────────────────────────────────────────
-        gr.HTML(
-            '<div class="ag-topbar">'
-            '  <div class="ag-brand">'
-            '    <span class="ag-brand-mark"></span>'
-            '    <span class="ag-brand-name">Agri Assistant</span>'
-            '  </div>'
-            '  <div class="ag-langs">'
-            '    <span>Hindi</span><span>Marathi</span>'
-            '    <span>Punjabi</span><span>English</span>'
-            '  </div>'
-            '</div>'
-        )
+        # ── Top bar: brand + language picker ──────────────────────────────────
+        with gr.Row(equal_height=True, elem_classes=["ag-topbar"]):
+            brand_html = gr.HTML(_brand_html(lang))
+            lang_radio = gr.Radio(
+                choices=LANG_CHOICES,
+                value=lang,
+                label=t("lang_picker", lang),
+                show_label=False,
+                container=False,
+                elem_classes=["ag-lang"],
+            )
 
         # ── Hero ──────────────────────────────────────────────────────────────
-        speak_or_type = "Type" if LITE_MODE else "Speak"
-        gr.HTML(
-            '<div class="ag-hero">'
-            '  <div class="ag-hero-eyebrow">For Indian farmers</div>'
-            '  <h1>Ask in your<br><em>own language.</em></h1>'
-            f'  <p>{speak_or_type} a question about your crop, the weather over your '
-            '     field, or a government scheme — and get the answer back in the '
-            '     language you asked it in.</p>'
-            f'  <div class="ag-mode">{mode_info}</div>'
-            '</div>'
-        )
+        hero_html = gr.HTML(_hero_html(lang))
 
         # ── Console ───────────────────────────────────────────────────────────
         with gr.Row(equal_height=False, elem_classes=["ag-console"]):
@@ -895,54 +1019,49 @@ def build_ui() -> gr.Blocks:
             # ── LEFT: the ask ────────────────────────────────────────────────
             with gr.Column(scale=5, min_width=300,
                            elem_classes=["ag-panel", "ag-panel--ask"]):
-
-                if LITE_MODE:
-                    # Voice input needs Whisper (torch) — off on small free hosts.
-                    audio_input = gr.Audio(visible=False)
-                    gr.HTML(_eyebrow("Your question", "01"))
-                    gr.HTML(
-                        '<div class="ag-field-note">Voice input runs in the full '
-                        'version. This lightweight demo takes typed questions in '
-                        'English.</div>'
-                    )
-                    location_step = "02"
-                else:
-                    gr.HTML(_eyebrow("Speak", "01"))
-                    audio_input = gr.Audio(
-                        sources=["microphone"],
-                        type="filepath",
-                        show_label=False,
-                        elem_classes=["ag-mic"],
-                    )
-                    gr.HTML(_eyebrow("Or type", "02"))
-                    location_step = "03"
+                # Voice (full build) — hidden on LITE_MODE hosts (no Whisper).
+                speak_eyebrow = gr.HTML(_eyebrow(t("eyebrow_speak", lang), "01"),
+                                        visible=not LITE_MODE)
+                mic_note = gr.HTML(_note(t("mic_note", lang, language=lang_name(lang, lang))),
+                                   visible=not LITE_MODE)
+                audio_input = gr.Audio(
+                    sources=["microphone"],
+                    type="filepath",
+                    show_label=False,
+                    elem_classes=["ag-mic"],
+                    visible=not LITE_MODE,
+                )
+                or_type_eyebrow = gr.HTML(_eyebrow(t("eyebrow_or_type", lang), "02"),
+                                          visible=not LITE_MODE)
+                # Typed-only (LITE_MODE)
+                question_eyebrow = gr.HTML(_eyebrow(t("eyebrow_question", lang), "01"),
+                                           visible=LITE_MODE)
+                lite_note = gr.HTML(_note(t("lite_note", lang)), visible=LITE_MODE)
 
                 text_input = gr.Textbox(
-                    placeholder="Will it rain in Pune tomorrow? Any scheme for irrigation?",
+                    placeholder=t("text_placeholder", lang),
                     show_label=False,
                     lines=3,
                 )
 
-                gr.HTML(_eyebrow("Location", location_step))
-                gr.HTML(
-                    '<div class="ag-field-note">Used to pull the live forecast over '
-                    'your field.</div>'
-                )
+                location_eyebrow = gr.HTML(
+                    _eyebrow(t("eyebrow_location", lang), "02" if LITE_MODE else "03"))
+                location_note = gr.HTML(_note(t("location_note", lang)))
                 location_input = gr.Textbox(
-                    placeholder="Nashik · Ludhiana · Varanasi",
+                    placeholder=t("location_placeholder", lang),
                     show_label=False,
                 )
 
                 submit_btn = gr.Button(
-                    "Ask the assistant",
+                    t("ask_button", lang),
                     variant="primary",
                     size="lg",
                     elem_classes=["ag-ask"],
                 )
 
-                gr.HTML(_eyebrow("Detected language"))
+                detected_eyebrow = gr.HTML(_eyebrow(t("eyebrow_detected", lang)))
                 detected_lang_output = gr.Textbox(
-                    value=_LANG_PENDING,
+                    value=t("pending", lang),
                     show_label=False,
                     container=False,
                     interactive=False,
@@ -951,7 +1070,7 @@ def build_ui() -> gr.Blocks:
                     elem_classes=["ag-detected"],
                 )
 
-                gr.HTML(_eyebrow("Try one"))
+                try_eyebrow = gr.HTML(_eyebrow(t("eyebrow_try", lang)))
                 with gr.Column(elem_classes=["ag-examples"]):
                     for example in _TYPED_EXAMPLES:
                         gr.Button(
@@ -963,55 +1082,70 @@ def build_ui() -> gr.Blocks:
             with gr.Column(scale=7, min_width=340,
                            elem_classes=["ag-panel", "ag-panel--answer"]):
 
-                gr.HTML(_eyebrow("Response"))
+                response_eyebrow = gr.HTML(_eyebrow(t("eyebrow_response", lang)))
+                answer_note = gr.HTML(_note(t("answer_note", lang)), visible=False)
 
-                tools_html_output = gr.HTML(_no_tools_html())
+                tools_html_output = gr.HTML(_no_tools_html(lang))
 
                 answer_output = gr.Textbox(
                     show_label=False,
                     lines=10,
                     max_lines=26,
                     interactive=False,
-                    placeholder="Your advice will appear here.",
+                    placeholder=t("answer_placeholder", lang),
                     elem_classes=["ag-answer"],
                 )
 
                 audio_output = gr.Audio(
-                    label="Spoken reply",
+                    label=t("audio_label", lang),
                     autoplay=True,
                     interactive=False,
                     elem_classes=["ag-audio"],
                 )
 
-                gr.HTML(_eyebrow("Or say it aloud"))
-                gr.HTML(_phrases_html())
+                say_eyebrow = gr.HTML(_eyebrow(t("eyebrow_say_aloud", lang)),
+                                      visible=not LITE_MODE)
+                phrases_html = gr.HTML(_phrases_html(lang), visible=not LITE_MODE)
 
         # ── Diagnostics ───────────────────────────────────────────────────────
-        with gr.Accordion("Transcript & pipeline", open=False,
-                          elem_classes=["ag-diag"]):
+        with gr.Accordion(t("diag", lang), open=False,
+                          elem_classes=["ag-diag"]) as diag_accordion:
             with gr.Row():
                 transcription_output = gr.Textbox(
-                    label="Heard",
+                    label=t("heard_label", lang),
                     lines=3,
                     interactive=False,
-                    placeholder="Your words, as transcribed.",
+                    placeholder=t("heard_placeholder", lang),
                 )
                 english_output = gr.Textbox(
-                    label="English translation",
+                    label=t("english_label", lang),
                     lines=3,
                     interactive=False,
-                    placeholder="The English the agent reasoned over.",
+                    placeholder=t("english_placeholder", lang),
                 )
-            intent_output = gr.Textbox(label="Intent", lines=6, interactive=False)
-            if DEV_MODE:
-                trace_output = gr.Textbox(label="Trace", lines=14, interactive=False)
-            else:
-                trace_output = gr.Textbox(visible=False)
+            intent_output = gr.Textbox(label=t("intent_label", lang), lines=6,
+                                       interactive=False)
+            trace_output = gr.Textbox(label=t("trace_label", lang), lines=14,
+                                      interactive=False, visible=DEV_MODE)
+
+        # ── Footer ────────────────────────────────────────────────────────────
+        footer_html = gr.HTML(_footer_html(lang))
 
         # ── Wiring ────────────────────────────────────────────────────────────
+        # Order must match _localized().
+        localized = [
+            brand_html, hero_html, speak_eyebrow, mic_note, or_type_eyebrow,
+            question_eyebrow, lite_note, text_input, location_eyebrow, location_note,
+            location_input, submit_btn, detected_eyebrow, detected_lang_output,
+            try_eyebrow, response_eyebrow, answer_note, tools_html_output,
+            answer_output, audio_output, say_eyebrow, phrases_html, diag_accordion,
+            transcription_output, english_output, intent_output, trace_output,
+            footer_html,
+        ]
+
         submit_btn.click(
-            fn=_run_pipeline,
-            inputs=[audio_input, text_input, location_input],
+            fn=_on_ask,
+            inputs=[audio_input, text_input, location_input, lang_radio],
             outputs=[
                 detected_lang_output,
                 transcription_output,
@@ -1021,15 +1155,18 @@ def build_ui() -> gr.Blocks:
                 intent_output,
                 tools_html_output,
                 trace_output,
+                detected_state,
+                tools_state,
             ],
         )
-
-        # ── Footer ────────────────────────────────────────────────────────────
-        gr.HTML(
-            '<div class="ag-footer">'
-            '  <span>Built for Indian farmers</span>'
-            '  <span>Whisper · IndicTrans2 · FAISS</span>'
-            '</div>'
+        lang_radio.change(
+            fn=_localized,
+            inputs=[lang_radio, detected_state, tools_state],
+            outputs=localized,
         )
+        # Tag the page with the language so the CSS can relax the letterspacing
+        # that would otherwise break Devanagari / Gurmukhi letterforms.
+        lang_radio.change(fn=None, inputs=lang_radio,
+                          js="(l) => { document.documentElement.lang = l; }")
 
     return demo

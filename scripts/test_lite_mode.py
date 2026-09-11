@@ -1,29 +1,46 @@
 """Verify LITE_MODE runs the app without any heavy ML dependency.
 
-LITE_MODE is what the free Render deploy uses (512 MB RAM). This checks:
-  1. torch / transformers / faiss / sentence-transformers are never imported.
-  2. The keyword scheme retriever picks the right scheme and refuses off-topic.
-  3. The full typed pipeline (intent -> crop + weather + scheme -> answer -> TTS)
-     runs end to end.
+LITE_MODE is what the free Render deploy uses (512 MB RAM). The heavy ML
+libraries are BLOCKED for this whole test — exactly as they are absent on
+Render — and then:
+  1. The keyword scheme retriever picks the right scheme and refuses off-topic.
+  2. The Lite screen: microphone hidden, typed-only note shown, language picker.
+  3. The full typed pipeline (intent → LangChain agent → crop + weather + scheme
+     → answer → TTS) runs end to end.
 
-Run it with LITE_MODE forced on:
-    LITE_MODE=true python scripts/test_lite_mode.py        (bash)
-    $env:LITE_MODE="true"; python scripts/test_lite_mode.py  (PowerShell)
+(LangChain itself is part of the Lite build — it is pure Python. Its optional
+`transformers` import is simply skipped when transformers is unavailable.)
+
+Run it (LITE_MODE is forced on by the script):
+    python scripts/test_lite_mode.py
+
+Importing this module has no side effects — the Lite host is only simulated
+when it is run as a script, so it can't leak into other test runs.
 """
+import builtins
 import os
 import sys
 from pathlib import Path
 
-os.environ["LITE_MODE"] = "true"
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-from app.utils.logging import enable_utf8_console
-enable_utf8_console()
-
-import logging
-logging.disable(logging.WARNING)
+# Packages that are not installed on the Render host.
+_BLOCKED = {"torch", "torchaudio", "transformers", "sentence_transformers",
+            "faiss", "whisper", "accelerate"}
 
 _fail = 0
+
+
+def _simulate_lite_host() -> None:
+    """Force LITE_MODE and make the heavy ML packages unimportable, as on
+    Render. Must run before anything from `app` is imported."""
+    os.environ["LITE_MODE"] = "true"
+    real_import = builtins.__import__
+
+    def no_heavy_import(name, *args, **kwargs):
+        if name.split(".")[0] in _BLOCKED:
+            raise ImportError(f"{name} is not installed on the LITE host (blocked by test)")
+        return real_import(name, *args, **kwargs)
+
+    builtins.__import__ = no_heavy_import
 
 
 def check(label, ok):
@@ -55,24 +72,34 @@ def run():
         out = get_scheme_context(q)
         check(f"off-topic refused: {q[:34]!r}", "do not contain sufficient" in out)
 
-    # ── Full typed pipeline ─────────────────────────────────────────────────
+    # ── Lite screen ─────────────────────────────────────────────────────────
     from app.ui.gradio_app import build_ui, _run_pipeline
-    build_ui()
+    cfg = build_ui().get_config_file()
+    comps = cfg["components"]
+    mic = next(c for c in comps if "ag-mic" in (c.get("props", {}).get("elem_classes") or []))
+    check("microphone hidden", mic["props"].get("visible") is False)
+    lite_note = next((c for c in comps if c.get("type") == "html"
+                      and "lightweight demo" in str(c["props"].get("value", ""))), None)
+    check("typed-only note shown", lite_note is not None and lite_note["props"].get("visible") is not False)
+    check("language picker present",
+          any("ag-lang" in (c.get("props", {}).get("elem_classes") or []) for c in comps))
+
+    # ── Full typed pipeline (LangChain agent) ─────────────────────────────────
     out = _run_pipeline(
         None,
         "My wheat is 40 days old, will it rain in Pune, and any scheme for irrigation?",
         "Pune",
     )
-    _, _, _, answer, audio, intent_box, _, _ = out
+    _, _, _, answer, audio, intent_box, _, trace = out
     check("all 3 tools routed (crop+weather+scheme)",
           all(t in intent_box for t in ("crop", "weather", "scheme")))
+    check("answered by the LangChain agent", "LangChain ReAct agent" in trace)
     check("answer generated", bool(answer) and len(answer) > 40)
     check("voice audio produced", bool(audio))
 
-    # ── No heavy libs imported ──────────────────────────────────────────────
-    heavy = [m for m in ("torch", "transformers", "sentence_transformers",
-                         "faiss", "whisper", "langchain") if m in sys.modules]
-    check(f"no heavy ML libs imported (found: {heavy or 'none'})", not heavy)
+    # ── Nothing heavy got in ────────────────────────────────────────────────
+    heavy = [m for m in _BLOCKED if m in sys.modules]
+    check(f"ran with heavy ML libs unavailable (loaded: {heavy or 'none'})", not heavy)
 
     print("\n" + "=" * 56)
     print("Result:", "ALL PASSED" if _fail == 0 else f"{_fail} FAILED")
@@ -80,4 +107,13 @@ def run():
 
 
 if __name__ == "__main__":
+    _simulate_lite_host()
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+    from app.utils.logging import enable_utf8_console
+    enable_utf8_console()
+
+    import logging
+    logging.disable(logging.WARNING)
+
     run()

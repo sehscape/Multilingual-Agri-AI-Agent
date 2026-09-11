@@ -162,8 +162,70 @@ class StubLLM(BaseLLM):
     _CROP_TOPIC_KW = (("sowing", "harvest", "yield", "leaf", "leaves",
                        "plant", "seedling", "spacing") + _FERT_KW + _PEST_KW + _IRRIG_KW)
 
+    # ── Hindi / Marathi / Punjabi vocabulary ─────────────────────────────────
+    # Spoken regional questions reach the router as the native Whisper
+    # transcript (Whisper's own speech→English translation is unreliable for
+    # Marathi and Punjabi), so the router also matches these words directly.
+    # Punjabi appears in both Gurmukhi and Devanagari: Whisper often writes
+    # Punjabi speech in Devanagari.
+    _REG_WEATHER_KW = ("बारिश", "बरसात", "वर्षा", "मौसम", "तापमान", "आंधी", "ओले",
+                       # पाऊस + its oblique stem पावस- (पावसात, पावसाळा) and
+                       # Whisper's phonetic spellings of it
+                       "पाऊस", "पाउस", "पावस", "पावुस", "हवामान", "गारपीट",
+                       "ਮੀਂਹ", "ਬਾਰਿਸ਼", "ਮੌਸਮ", "ਤਾਪਮਾਨ", "मींह")
+    _REG_SCHEME_KW = ("योजना", "सब्सिडी", "अनुदान", "ऋण", "कर्ज", "लोन", "बीमा",
+                      "पीएम किसान", "पीएम-किसान", "क्रेडिट",
+                      "ਯੋਜਨਾ", "ਸਕੀਮ", "ਕਰਜ਼ਾ", "ਬੀਮਾ", "ਕ੍ਰੈਡਿਟ")
+    _REG_FERT_KW = ("खाद", "उर्वरक", "यूरिया", "डीएपी", "खत", "युरिया", "ਖਾਦ", "ਯੂਰੀਆ")
+    _REG_PEST_KW = ("कीड़े", "कीट", "रोग", "बीमारी", "पीली", "पीले", "धब्बे",
+                    "कीड", "पिवळी", "डाग", "ਕੀੜੇ", "ਰੋਗ", "ਬਿਮਾਰੀ", "ਪੀਲੇ")
+    _REG_IRRIG_KW = ("सिंचाई", "सिंचन", "पानी", "पाणी", "ਸਿੰਚਾਈ", "ਪਾਣੀ")
+    _REG_CROPS = {
+        "wheat": ("गेहूं", "गेहू", "गहू", "गव्हा", "कणक", "कनक", "ਕਣਕ"),
+        "rice": ("धान", "चावल", "भात", "झोन", "ਝੋਨ", "ਧਾਨ"),  # ਝੋਨ: ਝੋਨਾ / ਝੋਨੇ
+        "onion": ("प्याज", "कांदा", "कांद्", "ਪਿਆਜ਼"),
+        "tomato": ("टमाटर", "टोमॅटो", "ਟਮਾਟਰ"),
+        "cotton": ("कपास", "कापूस", "कापसा", "ਕਪਾਹ"),
+        "maize": ("मक्का", "मकई", "मका", "ਮੱਕੀ"),
+    }
+    _REG_CITIES = {
+        "Pune": ("पुणे", "पूने", "पुने"), "Mumbai": ("मुंबई",), "Nashik": ("नाशिक",),
+        "Nagpur": ("नागपुर", "नागपूर"), "Nanded": ("नांदेड",), "Aurangabad": ("औरंगाबाद",),
+        "Kolhapur": ("कोल्हापुर", "कोल्हापूर"), "Ludhiana": ("लुधियाना", "ਲੁਧਿਆਣਾ"),
+        "Amritsar": ("अमृतसर", "ਅੰਮ੍ਰਿਤਸਰ"), "Jalandhar": ("जालंधर", "ਜਲੰਧਰ"),
+        "Patiala": ("पटियाला", "ਪਟਿਆਲਾ"), "Bathinda": ("बठिंडा", "ਬਠਿੰਡਾ"),
+        "Chandigarh": ("चंडीगढ़", "ਚੰਡੀਗੜ੍ਹ"), "Varanasi": ("वाराणसी",),
+        "Kanpur": ("कानपुर",), "Lucknow": ("लखनऊ",), "Agra": ("आगरा",),
+        "Delhi": ("दिल्ली", "ਦਿੱਲੀ"), "Jaipur": ("जयपुर",), "Bhopal": ("भोपाल",),
+        "Indore": ("इंदौर",), "Patna": ("पटना",),
+    }
+    # Spoken crop ages ("चालीस दिन", "ਚਾਲੀ ਦਿਨ") → digits.
+    _REG_NUMBERS = {
+        "दस": 10, "बीस": 20, "पच्चीस": 25, "तीस": 30, "पैंतीस": 35, "चालीस": 40,
+        "पैंतालीस": 45, "पचास": 50, "साठ": 60, "दहा": 10, "वीस": 20, "पंचवीस": 25,
+        "पस्तीस": 35, "चाळीस": 40, "पंचेचाळीस": 45, "पन्नास": 50, "चाली": 40,
+        "ਦਸ": 10, "ਵੀਹ": 20, "ਪੱਚੀ": 25, "ਤੀਹ": 30, "ਪੈਂਤੀ": 35, "ਚਾਲੀ": 40,
+        "ਪੰਜਤਾਲੀ": 45, "ਪੰਜਾਹ": 50, "ਸੱਠ": 60,
+    }
+    _DAY_WORDS = "(?:days?|दिन|दिवस|ਦਿਨ)"
+    _INDIC_DIGITS = str.maketrans("०१२३४५६७८९੦੧੨੩੪੫੬੭੮੯", "01234567890123456789")
+
+    @classmethod
+    def _normalize(cls, text: str) -> str:
+        """Lower-case, map Devanagari/Gurmukhi digits to ASCII, and rewrite
+        '<number word> दिन' as '<n> day' so crop ages parse in any language."""
+        import re
+
+        t = (text or "").strip().lower().translate(cls._INDIC_DIGITS)
+        words = "|".join(sorted(cls._REG_NUMBERS, key=len, reverse=True))
+        t = re.sub(rf"({words})\s*{cls._DAY_WORDS}",
+                   lambda m: f"{cls._REG_NUMBERS[m.group(1)]} day", t)
+        return re.sub(rf"(\d+)\s*{cls._DAY_WORDS}", r"\1 day", t)
+
     def generate(self, prompt: str) -> str:
         logger.warning("StubLLM: building response from injected context.")
+        if "Action Input:" in prompt and "Final Answer:" in prompt:
+            return self._react_step(prompt)
         if '"intent"' in prompt:
             return self._extract_intent(prompt)
         return self._compose_answer(prompt)
@@ -175,18 +237,87 @@ class StubLLM(BaseLLM):
         # Capture only the rest of the "Query:" line (not the template that follows),
         # so an empty query does not accidentally match the prompt's instructions.
         m = re.search(r"Query:[ \t]*(.*)", prompt)
-        query = (m.group(1).strip() if m else "").lower()
+        c = self._classify(m.group(1) if m else "")
 
-        crop = next((c for c in self._KNOWN_CROPS if c in query), None)
+        crop_json = f'"{c["crop"]}"' if c["crop"] else "null"
+        loc_json = f'"{c["location"]}"' if c["location"] else "null"
+        days_json = str(c["days"]) if c["days"] is not None else "null"
+        return (
+            f'{{"intent": "{c["intent"]}", "crop": {crop_json}, "crop_stage_days": {days_json}, '
+            f'"location": {loc_json}, "needs_weather": {str(c["needs_weather"]).lower()}, '
+            f'"needs_scheme": {str(c["needs_scheme"]).lower()}, '
+            f'"needs_crop_info": {str(c["needs_crop_info"]).lower()}}}'
+        )
+
+    # ── LangChain ReAct policy ────────────────────────────────────────────────
+    def _react_step(self, prompt: str) -> str:
+        """Emit the next ReAct step for the LangChain agent (app/agents/langchain_agent.py).
+
+        A deterministic stand-in for an LLM's reasoning: it reads the farmer's
+        question and the agent scratchpad (tools already called), then picks the
+        next tool from the same rule-based router used for intent extraction —
+        crop → weather → scheme — and finishes once every needed tool has run.
+        It speaks LangChain's exact ReAct text protocol, so the real
+        AgentExecutor parses and executes it; configure a real LLM and the same
+        agent is driven by the model instead.
+        """
+        import re
+
+        begin = prompt.rfind("Begin.")
+        tail = prompt[begin:] if begin != -1 else prompt
+        q_start = tail.find("Question:")
+        tail = tail[q_start + len("Question:"):] if q_start != -1 else ""
+        question, _, scratchpad = tail.partition("\nThought:")
+        question = question.strip()
+        called = set(re.findall(r"^Action:[ \t]*(\w+)", scratchpad, re.M))
+
+        c = self._classify(question)
+        plan = []
+        if c["needs_crop_info"]:
+            plan.append(("crop_knowledge", c["crop"] or "",
+                         "I should look up stage-wise advice for the crop."))
+        if c["needs_weather"]:
+            plan.append(("weather_forecast", c["location"] or "",
+                         "I should check the live weather for the farmer's location."))
+        if c["needs_scheme"]:
+            plan.append(("government_schemes", question,
+                         "I should search the official government scheme documents."))
+
+        for tool, tool_input, thought in plan:
+            if tool not in called:
+                return f" {thought}\nAction: {tool}\nAction Input: {tool_input}"
+        return (" I now have the information I need.\n"
+                "Final Answer: Advice prepared from the tool results.")
+
+    # ── Rule-based classifier (shared by intent extraction + ReAct policy) ────
+    def _classify(self, text: str) -> dict:
+        import re
+
+        query = self._normalize(text)
+        has = lambda kws: any(k in query for k in kws)  # noqa: E731
+
+        # "प्रधान" (as in प्रधानमंत्री, "Prime Minister") contains "धान" (paddy).
+        crop_text = query.replace("प्रधान", "")
+        crop = next((c for c in self._KNOWN_CROPS if c in crop_text), None) or next(
+            (canon for canon, words in self._REG_CROPS.items()
+             if any(w in crop_text for w in words)), None)
 
         days_match = re.search(r"(\d+)\s*day", query)
         days = int(days_match.group(1)) if days_match else None
 
-        location = next((c.title() for c in self._KNOWN_CITIES if c in query), None)
+        location = next((c.title() for c in self._KNOWN_CITIES if c in query), None) or next(
+            (city for city, names in self._REG_CITIES.items()
+             if any(n in query for n in names)), None)
 
-        needs_weather = any(k in query for k in self._WEATHER_KW)
-        needs_scheme = any(k in query for k in self._SCHEME_KW)
-        needs_crop_info = crop is not None or any(k in query for k in self._CROP_TOPIC_KW)
+        needs_weather = has(self._WEATHER_KW) or has(self._REG_WEATHER_KW)
+        needs_scheme = has(self._SCHEME_KW) or has(self._REG_SCHEME_KW)
+        needs_crop_info = crop is not None or has(self._CROP_TOPIC_KW) or has(
+            self._REG_FERT_KW + self._REG_PEST_KW + self._REG_IRRIG_KW)
+        # A place is only ever used for the weather lookup, so a question that
+        # names one but matches nothing else is treated as a weather question —
+        # this rescues short or garbled voice transcripts ("नाशिक ... का?").
+        if location and not (needs_weather or needs_scheme or needs_crop_info):
+            needs_weather = True
 
         # Choose the single best intent label; "multiple" when >1 category applies.
         categories = sum([needs_weather, needs_scheme, needs_crop_info])
@@ -195,11 +326,11 @@ class StubLLM(BaseLLM):
         elif needs_scheme:
             intent = "government_scheme"
         elif needs_crop_info:
-            if any(k in query for k in self._PEST_KW):
+            if has(self._PEST_KW) or has(self._REG_PEST_KW):
                 intent = "pest_or_disease"
-            elif any(k in query for k in self._FERT_KW):
+            elif has(self._FERT_KW) or has(self._REG_FERT_KW):
                 intent = "fertilizer"
-            elif any(k in query for k in self._IRRIG_KW):
+            elif has(self._IRRIG_KW) or has(self._REG_IRRIG_KW):
                 intent = "irrigation"
             else:
                 intent = "crop_advice"
@@ -208,15 +339,11 @@ class StubLLM(BaseLLM):
         else:
             intent = "unknown" if not query else "general_farming"
 
-        crop_json = f'"{crop}"' if crop else "null"
-        loc_json = f'"{location}"' if location else "null"
-        days_json = str(days) if days is not None else "null"
-        return (
-            f'{{"intent": "{intent}", "crop": {crop_json}, "crop_stage_days": {days_json}, '
-            f'"location": {loc_json}, "needs_weather": {str(needs_weather).lower()}, '
-            f'"needs_scheme": {str(needs_scheme).lower()}, '
-            f'"needs_crop_info": {str(needs_crop_info).lower()}}}'
-        )
+        return {
+            "intent": intent, "crop": crop, "days": days, "location": location,
+            "needs_weather": needs_weather, "needs_scheme": needs_scheme,
+            "needs_crop_info": needs_crop_info,
+        }
 
     # ── Answer generation ──────────────────────────────────────────────────────
     def _compose_answer(self, prompt: str) -> str:
