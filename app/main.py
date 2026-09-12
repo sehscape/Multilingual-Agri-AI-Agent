@@ -1,7 +1,8 @@
 """Application entry point – imports and launches the Gradio UI."""
 import os
+import threading
 
-from app.ui.gradio_app import build_ui, build_theme, _CSS
+from app.ui.gradio_app import build_ui, build_theme, warm_up, _CSS
 from app.utils.logging import get_logger, enable_utf8_console
 
 enable_utf8_console()
@@ -16,6 +17,8 @@ _PORT = int(os.getenv("PORT", "7860"))
 
 def main() -> None:
     logger.info("Starting Multilingual Agri Assistant (port=%s, hosted=%s)", _PORT, _ON_HOST)
+    # Load the speech model and the scheme index while the page is coming up.
+    threading.Thread(target=warm_up, name="warm-up", daemon=True).start()
     demo = build_ui()
     # Gradio 6 takes theme/css at launch() rather than on Blocks().
     demo.launch(

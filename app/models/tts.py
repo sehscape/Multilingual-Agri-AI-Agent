@@ -36,30 +36,85 @@ class BaseTTS(ABC):
         """Return a path to an audio file for the text, or None if unavailable."""
 
 
+def _speech_chunks(text: str, limit: int = 100) -> list[str]:
+    """Split text into pieces small enough to be one request each, breaking at
+    sentence ends first, then at commas and spaces."""
+    import re
+
+    pieces, buffer = [], ""
+    for sentence in re.split(r"(?<=[.!?।])\s+|\n+", text.strip()):
+        sentence = sentence.strip()
+        if not sentence:
+            continue
+        while len(sentence) > limit:
+            cut = max(sentence.rfind(",", 0, limit), sentence.rfind(" ", 0, limit))
+            cut = cut if cut > limit // 2 else limit
+            pieces.append(sentence[:cut].strip())
+            sentence = sentence[cut:].strip()
+        if len(buffer) + len(sentence) + 1 <= limit:
+            buffer = f"{buffer} {sentence}".strip()
+        else:
+            if buffer:
+                pieces.append(buffer)
+            buffer = sentence
+    if buffer:
+        pieces.append(buffer)
+    return pieces
+
+
 class GttsTTS(BaseTTS):
     """Lightweight TTS via Google Translate's TTS endpoint (needs internet).
 
-    Ideal for local/CPU development: no multi-GB model download, real
-    Hindi/Marathi/Punjabi speech. Returns an .mp3 path.
+    Ideal for local/CPU development and small hosts: no multi-GB model
+    download, real Hindi/Marathi/Punjabi speech. Returns an .mp3 path.
+
+    The endpoint only accepts ~100 characters per request, so a paragraph
+    becomes several requests. gTTS makes them one after another (11 s for a
+    short answer on a slow line); here they are fetched at the same time and
+    the MP3 parts are joined, which is what a farmer waits on.
     """
 
     _GTTS_LANG = {"hi": "hi", "mr": "mr", "pa": "pa", "en": "en"}
+    _WORKERS = 4
 
     def generate(self, text: str, language: str) -> Optional[str]:
         if not text or not text.strip():
             return None
+        from gtts import gTTS
+        lang = self._GTTS_LANG.get(language, "en")
+        t0 = time.time()
+        path = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False).name
+        chunks = _speech_chunks(text)
         try:
-            from gtts import gTTS
-            lang = self._GTTS_LANG.get(language, "en")
-            t0 = time.time()
-            path = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False).name
-            gTTS(text=text, lang=lang).save(path)
-            logger.info("gTTS | %s | %d chars | %.1fs → %s",
-                        lang, len(text), time.time() - t0, path)
+            if len(chunks) > 1:
+                from concurrent.futures import ThreadPoolExecutor
+                import io
+
+                def say(piece: str) -> bytes:
+                    buf = io.BytesIO()
+                    gTTS(text=piece, lang=lang).write_to_fp(buf)
+                    return buf.getvalue()
+
+                with ThreadPoolExecutor(max_workers=self._WORKERS) as pool:
+                    parts = list(pool.map(say, chunks))
+                with open(path, "wb") as fh:
+                    for part in parts:
+                        fh.write(part)
+            else:
+                gTTS(text=text, lang=lang).save(path)
+            logger.info("gTTS | %s | %d chars in %d chunk(s) | %.1fs → %s",
+                        lang, len(text), len(chunks), time.time() - t0, path)
             return path
         except Exception as exc:
-            logger.error("gTTS failed (%s) — no audio; text answer still shown.", exc)
-            return None
+            logger.warning("gTTS parallel synthesis failed (%s) — retrying in one go.", exc)
+            try:
+                gTTS(text=text, lang=lang).save(path)
+                logger.info("gTTS | %s | %d chars | %.1fs (sequential) → %s",
+                            lang, len(text), time.time() - t0, path)
+                return path
+            except Exception as exc2:
+                logger.error("gTTS failed (%s) — no audio; text answer still shown.", exc2)
+                return None
 
 
 class IndicParlerTTS(BaseTTS):

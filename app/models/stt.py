@@ -23,6 +23,10 @@ from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
+# A farmer's spoken question is a sentence or two; anything longer is the model
+# looping, not the farmer talking.
+_MAX_QUESTION_TOKENS = 96
+
 # Whisper language token names → our ISO 639-1 codes
 _WHISPER_LANG_REVERSE: dict[str, str] = {
     "hindi":   "hi",
@@ -121,8 +125,18 @@ class WhisperSTT(BaseSTT):
         # ── 4. Generate — forced language when given, else auto-detect ─────────
         # Forcing the language the farmer chose avoids Whisper's frequent
         # mis-detections between Hindi and Marathi (and "unknown" on short clips).
+        # On a CPU, whisper-small sometimes falls into a repetition loop on
+        # Indic speech ("अगर अगर अगर …") and generates until the 448-token
+        # limit — half a minute of waiting for nothing. A farmer's question is
+        # one sentence, so cap the length and penalise repeats: bad clips now
+        # fail in seconds instead (and _is_degenerate below catches them).
         forced = _WHISPER_LANG_MAP.get(language) if language else None
-        gen_kwargs = {"task": "transcribe"}
+        gen_kwargs = {
+            "task": "transcribe",
+            "max_new_tokens": _MAX_QUESTION_TOKENS,
+            "no_repeat_ngram_size": 4,
+            "repetition_penalty": 1.15,
+        }
         if forced:
             gen_kwargs["language"] = forced
         with torch.no_grad():
@@ -161,7 +175,11 @@ class WhisperSTT(BaseSTT):
         text = self._processor.batch_decode(
             predicted_ids, skip_special_tokens=True
         )[0].strip()
-        result = {"text": text, "language": iso_lang, "language_name": lang_name}
+        if _is_degenerate(text):
+            logger.warning("STT | discarded a looping transcript: %.60s…", text)
+            text = ""
+        result = {"text": text, "language": iso_lang, "language_name": lang_name,
+                  "no_speech": not text}
 
         # ── 7. Optional speech → English translation (same audio features) ─────
         # Whisper's built-in translate task lets regional speech reach the
@@ -169,7 +187,9 @@ class WhisperSTT(BaseSTT):
         if translate and forced and language != "en":
             with torch.no_grad():
                 trans_ids = self._model.generate(
-                    input_features, language=forced, task="translate"
+                    input_features, language=forced, task="translate",
+                    max_new_tokens=_MAX_QUESTION_TOKENS, no_repeat_ngram_size=4,
+                    repetition_penalty=1.15,
                 )
             result["english_text"] = self._processor.batch_decode(
                 trans_ids, skip_special_tokens=True
@@ -204,6 +224,19 @@ _SILENCE_PHRASES = {
 def _clean_words(text: str) -> list[str]:
     import re
     return re.findall(r"[\wऀ-੿]+", (text or "").lower())
+
+
+def _is_degenerate(text: str) -> bool:
+    """True when the model looped instead of transcribing speech —
+    "अगर बारीश अगी अगर अगर अगर अगर …". Better to ask the farmer to say it
+    again than to answer a question nobody asked."""
+    words = _clean_words(text)
+    if len(words) < 6:
+        return False
+    if len(set(words)) / len(words) < 0.4:
+        return True
+    top = max(words.count(w) for w in set(words))
+    return top / len(words) > 0.35
 
 
 def _is_silence(text: str, no_speech_prob: float, prompt: Optional[str]) -> bool:

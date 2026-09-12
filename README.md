@@ -195,7 +195,9 @@ The farmer hears actionable advice in their own language.
 | **Voice questions in 4 languages** | Tap the mic, speak, tap stop — the question is sent by itself. Whisper listens in the chosen language |
 | **Answers in the farmer's language** | Shown *and* spoken in Hindi / Punjabi / Marathi / English — whichever was chosen |
 | **Asks back when something is missing** | No crop age → "how many days old?"; no village → "where are you?"; impossible age, unknown crop, unclear or off-topic question → a clear spoken message. The farmer can reply with just "40 days" or "Nashik" |
-| **Made for farmers who can't read** | Every message is spoken; the language and village are remembered on the phone; 📍 fills the location from GPS; silence or noise → "please speak again" |
+| **Made for farmers who can't read** | One screen, one job at a time: four big language buttons, one large microphone, the answer. Typing, location and help are folded away. Every message is spoken; the language and village are remembered on the phone; 📍 fills the location from GPS; silence or noise → "please speak again" |
+| **Sample questions that ask themselves** | Four examples in the chosen language — tap one and it is asked immediately |
+| **Answers that arrive quickly** | The words appear as soon as they are ready and the voice follows a moment later (speech is built in parallel); models load at startup, not on the first question |
 | **LangChain agent** | A ReAct `AgentExecutor` decides which tools to call (crop / weather / scheme), with a deterministic fallback |
 | **Crop Knowledge** | Wheat, Rice, Onion, Tomato, Cotton, Maize — stage-specific advice |
 | **Live Weather** | Real forecast via Open-Meteo API — temperature, rain, wind + farming advisories |

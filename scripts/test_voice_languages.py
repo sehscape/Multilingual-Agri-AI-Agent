@@ -377,7 +377,7 @@ def test_page():
     mic = next(c for c in comps.values() if "ag-mic" in (c.get("props", {}).get("elem_classes") or []))
     check("microphone shown", mic["props"].get("visible") is not False)
     lite = next((c for c in comps.values() if c.get("type") == "html"
-                 and "lightweight demo" in str(c["props"].get("value", ""))), None)
+                 and "lightweight version" in str(c["props"].get("value", ""))), None)
     check("'typed English only' note hidden", lite is None or lite["props"].get("visible") is False)
     triggers = {(tgt[0], tgt[1]) for d in cfg["dependencies"] for tgt in d["targets"]}
     check("tapping stop sends the question", (mic["id"], "stop_recording") in triggers)
@@ -388,7 +388,9 @@ def test_page():
           len(dep["outputs"]) == len(ga._localized("hi")))
     check("examples follow the page language",
           ga._examples("pa")[0].startswith("ਮੇਰੀ") and ga._examples("en")[0].startswith("My"))
-    check("GPS button labelled in Marathi", ga._localized("mr")[28]["value"] == "📍 माझे ठिकाण वापरा")
+    marathi = [u.get("value") for u in ga._localized("mr")]
+    check("GPS button and sample questions re-rendered in Marathi",
+          "📍 माझे ठिकाण वापरा" in marathi and ga._examples("mr")[0] in marathi)
     check("'you asked' line escapes the farmer's words",
           "&lt;script&gt;" in ga._heard_html("<script>x</script>", "en"))
 
@@ -505,14 +507,18 @@ def run_journeys():
     r = ga._pipeline(None, "", "", "pa")
     check("nothing asked → prompt in Punjabi", r["answer"] == t("err_no_input", "pa"))
     import gradio as gr
-    out = ga._on_voice(None, "", "hi", None)
+    frames = list(ga._on_voice(None, "", "hi", None))
     check("stop event before the recording arrives changes nothing (Ask still works)",
-          len(out) == 14 and all(o == gr.skip() for o in out))
+          len(frames) == 1 and len(frames[0]) == 14
+          and all(o == gr.skip() for o in frames[0]))
     fake.transcripts["stop.wav"] = "नमस्ते"
-    out = ga._on_voice(make_wav(tmp, "stop.wav"), "", "hi", None)
+    frames = list(ga._on_voice(make_wav(tmp, "stop.wav"), "", "hi", None))
     check("stop event answers, then clears the recorder for the next question",
-          len(out) == 14 and out[-1] is None
-          and out[3] == t("msg_greeting", "hi", example=SPOKEN_EXAMPLES["hi"][0]))
+          len(frames) == 2 and frames[-1][-1] is None
+          and frames[-1][3] == t("msg_greeting", "hi", example=SPOKEN_EXAMPLES["hi"][0]))
+    check("the words are shown before the voice is ready",
+          frames[0][4] is None and frames[0][3] == frames[-1][3]
+          and frames[-1][4] is not None, f"{frames[0][4]!r} → {frames[-1][4]!r}")
 
     section("6. Failure paths")
     fake.stt = "rate_limit"

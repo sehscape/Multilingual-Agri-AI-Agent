@@ -127,15 +127,21 @@ def main(voice: bool) -> None:
     check("change handler updates as many components as _localized() returns",
           len(dep["outputs"]) == len(ga._localized("hi")),
           f"{len(dep['outputs'])} vs {len(ga._localized('hi'))}")
-    button_texts = {lang: ga._localized(lang)[11]["value"] for lang in LANG_CODES}
-    check("ask button differs per language", len(set(button_texts.values())) == 4, str(button_texts))
+    values = {lang: [u.get("value") for u in ga._localized(lang)] for lang in LANG_CODES}
+    check("ask button re-rendered in every language",
+          all(t("ask_button", lang) in values[lang] for lang in LANG_CODES))
+    check("example questions re-rendered in every language",
+          all(ga._examples(lang)[0] in values[lang] for lang in LANG_CODES))
 
     print("\n" + "=" * 64 + "\n4. Messages in the chosen language\n" + "=" * 64)
     for lang in LANG_CODES:
         msg = ga._run_pipeline(None, "", "", lang)[3]
         check(f"no-question message [{lang}]", msg == t("err_no_input", lang), msg)
-    msg = ga._run_pipeline(None, "मेरी गेहूं 40 दिन की है", "", "hi")[3]
-    check("typed Hindi → Hindi 'please type in English'", msg == t("err_type_english", "hi"), msg)
+    # Typed Hindi is understood even in this build (keyword rules); the answer
+    # is English here, and the page says so.
+    out = ga._run_pipeline(None, "मेरी गेहूं 40 दिन की है, क्या खाद डालूं?", "", "hi")
+    check("typed Hindi is answered, not refused",
+          "wheat" in out[5].lower() and "40" in out[5], out[5].replace("\n", " | "))
     detected, *_rest = ga._run_pipeline(None, "My wheat is 40 days old, what fertilizer?", "", "mr")
     check("typed English in Marathi UI → Marathi readout",
           detected == f"{LANG_NAMES['mr']['en']} · {t('mode_typed', 'mr')}", detected)

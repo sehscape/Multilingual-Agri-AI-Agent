@@ -82,7 +82,7 @@ def run():
     mic = next(c for c in comps if "ag-mic" in (c.get("props", {}).get("elem_classes") or []))
     check("microphone hidden", mic["props"].get("visible") is False)
     lite_note = next((c for c in comps if c.get("type") == "html"
-                      and "lightweight demo" in str(c["props"].get("value", ""))), None)
+                      and "lightweight version" in str(c["props"].get("value", ""))), None)
     check("typed-only note shown", lite_note is not None and lite_note["props"].get("visible") is not False)
     check("language picker present",
           any("ag-lang" in (c.get("props", {}).get("elem_classes") or []) for c in comps))

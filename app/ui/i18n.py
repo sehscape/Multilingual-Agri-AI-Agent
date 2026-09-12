@@ -34,90 +34,51 @@ STRINGS: dict[str, dict[str, str]] = {
         "pa": "ਖੇਤੀ ਸਹਾਇਕ", "mr": "कृषी सहाय्यक",
     },
     "lang_picker": {"en": "Language", "hi": "भाषा", "pa": "ਭਾਸ਼ਾ", "mr": "भाषा"},
-    "hero_eyebrow": {
-        "en": "For Indian farmers", "hi": "भारतीय किसानों के लिए",
-        "pa": "ਭਾਰਤੀ ਕਿਸਾਨਾਂ ਲਈ", "mr": "भारतीय शेतकऱ्यांसाठी",
-    },
     "hero_title": {  # HTML — <em> marks the accented phrase
         "en": "Ask in your<br><em>own language.</em>",
         "hi": "पूछिए<br><em>अपनी भाषा में।</em>",
         "pa": "ਪੁੱਛੋ<br><em>ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ।</em>",
         "mr": "विचारा<br><em>तुमच्या भाषेत.</em>",
     },
-    "hero_body_full": {
-        "en": "Ask about your crop, the weather over your field, or a government "
-              "scheme — speak in Hindi, Punjabi, Marathi or English, and get "
-              "practical advice back.",
-        "hi": "अपनी फसल, खेत के मौसम या किसी सरकारी योजना के बारे में पूछिए — "
-              "हिन्दी, पंजाबी, मराठी या अंग्रेज़ी में बोलिए, और काम की सलाह पाइए।",
-        "pa": "ਆਪਣੀ ਫ਼ਸਲ, ਖੇਤ ਦੇ ਮੌਸਮ ਜਾਂ ਕਿਸੇ ਸਰਕਾਰੀ ਯੋਜਨਾ ਬਾਰੇ ਪੁੱਛੋ — "
-              "ਹਿੰਦੀ, ਪੰਜਾਬੀ, ਮਰਾਠੀ ਜਾਂ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ ਬੋਲੋ, ਅਤੇ ਕੰਮ ਦੀ ਸਲਾਹ ਪਾਓ।",
-        "mr": "तुमचे पीक, शेतातील हवामान किंवा एखाद्या सरकारी योजनेबद्दल विचारा — "
-              "हिंदी, पंजाबी, मराठी किंवा इंग्रजीत बोला, आणि उपयुक्त सल्ला मिळवा.",
-    },
-    "hero_body_lite": {
-        "en": "Type a question in English about your crop, the weather over your "
-              "field, or a government scheme — and get practical advice back.",
-        "hi": "अपनी फसल, खेत के मौसम या किसी सरकारी योजना के बारे में अंग्रेज़ी में "
-              "सवाल लिखिए — और काम की सलाह पाइए।",
-        "pa": "ਆਪਣੀ ਫ਼ਸਲ, ਖੇਤ ਦੇ ਮੌਸਮ ਜਾਂ ਕਿਸੇ ਸਰਕਾਰੀ ਯੋਜਨਾ ਬਾਰੇ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ "
-              "ਸਵਾਲ ਲਿਖੋ — ਅਤੇ ਕੰਮ ਦੀ ਸਲਾਹ ਪਾਓ।",
-        "mr": "तुमचे पीक, शेतातील हवामान किंवा एखाद्या सरकारी योजनेबद्दल इंग्रजीत "
-              "प्रश्न लिहा — आणि उपयुक्त सल्ला मिळवा.",
-    },
 
     # ── Ask panel ────────────────────────────────────────────────────────────
-    "eyebrow_speak": {"en": "Speak", "hi": "बोलिए", "pa": "ਬੋਲੋ", "mr": "बोला"},
-    "mic_note": {  # {language} = the chosen language's name
-        "en": "Tap the microphone and ask in {language}.",
-        "hi": "माइक दबाइए और {language} में पूछिए।",
-        "pa": "ਮਾਈਕ ਦਬਾਓ ਅਤੇ {language} ਵਿੱਚ ਪੁੱਛੋ।",
-        "mr": "माइक दाबा आणि {language}मध्ये विचारा.",
+    "lite_note": {  # shown only when this build has no speech engine
+        "en": "This lightweight version takes typed questions and answers in English.",
+        "hi": "इस हल्के संस्करण में सवाल लिखकर पूछिए; जवाब अंग्रेज़ी में मिलेगा।",
+        "pa": "ਇਸ ਹਲਕੇ ਸੰਸਕਰਣ ਵਿੱਚ ਸਵਾਲ ਲਿਖ ਕੇ ਪੁੱਛੋ; ਜਵਾਬ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ ਮਿਲੇਗਾ।",
+        "mr": "या हलक्या आवृत्तीत प्रश्न लिहून विचारा; उत्तर इंग्रजीत मिळेल.",
     },
-    "eyebrow_or_type": {
-        "en": "Or type", "hi": "या लिखिए (अंग्रेज़ी में)",
-        "pa": "ਜਾਂ ਲਿਖੋ (ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ)", "mr": "किंवा लिहा (इंग्रजीत)",
+    "hero_sub": {
+        "en": "Crop care · Weather · Government schemes",
+        "hi": "फसल की देखभाल · मौसम · सरकारी योजनाएँ",
+        "pa": "ਫ਼ਸਲ ਦੀ ਸੰਭਾਲ · ਮੌਸਮ · ਸਰਕਾਰੀ ਸਕੀਮਾਂ",
+        "mr": "पिकाची काळजी · हवामान · सरकारी योजना",
     },
-    "eyebrow_question": {
-        "en": "Your question", "hi": "आपका सवाल (अंग्रेज़ी में)",
-        "pa": "ਤੁਹਾਡਾ ਸਵਾਲ (ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ)", "mr": "तुमचा प्रश्न (इंग्रजीत)",
+    "mic_cta": {
+        "en": "Tap the microphone, speak, then tap stop.",
+        "hi": "माइक दबाइए, बोलिए, फिर रोकिए।",
+        "pa": "ਮਾਈਕ ਦਬਾਓ, ਬੋਲੋ, ਫਿਰ ਰੋਕੋ।",
+        "mr": "माइक दाबा, बोला, मग थांबवा.",
     },
-    "lite_note": {
-        "en": "Voice questions run in the full version. This lightweight demo takes "
-              "typed questions in English.",
-        "hi": "आवाज़ से सवाल पूरे संस्करण में पूछे जा सकते हैं। इस हल्के डेमो में "
-              "सवाल अंग्रेज़ी में लिखकर पूछिए।",
-        "pa": "ਆਵਾਜ਼ ਨਾਲ ਸਵਾਲ ਪੂਰੇ ਸੰਸਕਰਣ ਵਿੱਚ ਪੁੱਛੇ ਜਾ ਸਕਦੇ ਹਨ। ਇਸ ਹਲਕੇ ਡੈਮੋ ਵਿੱਚ "
-              "ਸਵਾਲ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ ਲਿਖ ਕੇ ਪੁੱਛੋ।",
-        "mr": "आवाजाने प्रश्न पूर्ण आवृत्तीत विचारता येतात. या हलक्या डेमोमध्ये "
-              "प्रश्न इंग्रजीत लिहून विचारा.",
+    "examples_label": {
+        "en": "Try asking", "hi": "ये पूछकर देखिए",
+        "pa": "ਇਹ ਪੁੱਛ ਕੇ ਵੇਖੋ", "mr": "हे विचारून पाहा",
     },
-    "text_placeholder": {
-        "en": "Will it rain in Pune tomorrow? Any scheme for irrigation?",
-        "hi": "अंग्रेज़ी में लिखें, जैसे: Will it rain in Pune tomorrow?",
-        "pa": "ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ ਲਿਖੋ, ਜਿਵੇਂ: Will it rain in Pune tomorrow?",
-        "mr": "इंग्रजीत लिहा, उदा.: Will it rain in Pune tomorrow?",
+    "replay_button": {
+        "en": "🔊 Listen again", "hi": "🔊 फिर से सुनिए",
+        "pa": "🔊 ਦੁਬਾਰਾ ਸੁਣੋ", "mr": "🔊 पुन्हा ऐका",
     },
-    "eyebrow_location": {"en": "Location", "hi": "स्थान", "pa": "ਟਿਕਾਣਾ", "mr": "ठिकाण"},
-    "location_note": {
-        "en": "Used to pull the live forecast over your field.",
-        "hi": "आपके खेत के मौसम का ताज़ा पूर्वानुमान लाने के लिए।",
-        "pa": "ਤੁਹਾਡੇ ਖੇਤ ਦੇ ਮੌਸਮ ਦੀ ਤਾਜ਼ਾ ਭਵਿੱਖਬਾਣੀ ਲਿਆਉਣ ਲਈ।",
-        "mr": "तुमच्या शेतावरील हवामानाचा ताजा अंदाज आणण्यासाठी.",
+    "typed_toggle": {
+        "en": "Ask by typing", "hi": "लिखकर पूछिए",
+        "pa": "ਲਿਖ ਕੇ ਪੁੱਛੋ", "mr": "लिहून विचारा",
     },
-    "location_placeholder": {
-        "en": "Nashik · Ludhiana · Varanasi",
-        "hi": "अंग्रेज़ी में, जैसे: Nashik · Ludhiana",
-        "pa": "ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ, ਜਿਵੇਂ: Nashik · Ludhiana",
-        "mr": "इंग्रजीत, उदा.: Nashik · Ludhiana",
+    "place_label": {
+        "en": "📍 My village", "hi": "📍 मेरा गाँव",
+        "pa": "📍 ਮੇਰਾ ਪਿੰਡ", "mr": "📍 माझे गाव",
     },
     "ask_button": {
         "en": "Ask the assistant", "hi": "सहायक से पूछिए",
         "pa": "ਸਹਾਇਕ ਨੂੰ ਪੁੱਛੋ", "mr": "सहाय्यकाला विचारा",
-    },
-    "eyebrow_detected": {
-        "en": "Question language", "hi": "सवाल की भाषा",
-        "pa": "ਸਵਾਲ ਦੀ ਭਾਸ਼ਾ", "mr": "प्रश्नाची भाषा",
     },
     "pending": {
         "en": "Awaiting your question", "hi": "आपके सवाल का इंतज़ार",
@@ -125,9 +86,6 @@ STRINGS: dict[str, dict[str, str]] = {
     },
     "mode_typed": {"en": "typed", "hi": "लिखकर", "pa": "ਲਿਖ ਕੇ", "mr": "लिहून"},
     "mode_voice": {"en": "voice", "hi": "आवाज़ से", "pa": "ਆਵਾਜ਼ ਨਾਲ", "mr": "आवाजाने"},
-    "eyebrow_try": {
-        "en": "Try one", "hi": "एक आज़माइए", "pa": "ਇੱਕ ਅਜ਼ਮਾਓ", "mr": "एक वापरून पाहा",
-    },
 
     # ── Answer panel ─────────────────────────────────────────────────────────
     "eyebrow_response": {"en": "Response", "hi": "जवाब", "pa": "ਜਵਾਬ", "mr": "उत्तर"},
@@ -145,24 +103,10 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Spoken reply", "hi": "सुनाई गई सलाह",
         "pa": "ਸੁਣਾਈ ਗਈ ਸਲਾਹ", "mr": "ऐकवलेला सल्ला",
     },
-    "eyebrow_say_aloud": {
-        "en": "Or say it aloud", "hi": "या बोलकर पूछिए",
-        "pa": "ਜਾਂ ਬੋਲ ਕੇ ਪੁੱਛੋ", "mr": "किंवा बोलून विचारा",
-    },
-    "tools_idle": {"en": "Standing by", "hi": "तैयार", "pa": "ਤਿਆਰ", "mr": "तयार"},
-    "tools_used": {  # {n} = number of sources used
-        "en": "{n} of 3 sources consulted", "hi": "3 में से {n} स्रोत देखे गए",
-        "pa": "3 ਵਿੱਚੋਂ {n} ਸਰੋਤ ਵੇਖੇ ਗਏ", "mr": "3 पैकी {n} स्रोत तपासले",
-    },
-    "tools_none": {
-        "en": "Answered without external sources", "hi": "बाहरी स्रोतों के बिना जवाब दिया",
-        "pa": "ਬਾਹਰੀ ਸਰੋਤਾਂ ਤੋਂ ਬਿਨਾਂ ਜਵਾਬ ਦਿੱਤਾ", "mr": "बाह्य स्रोतांशिवाय उत्तर दिले",
-    },
     "tool_crop": {"en": "Crop knowledge", "hi": "फसल जानकारी", "pa": "ਫ਼ਸਲ ਜਾਣਕਾਰੀ", "mr": "पीक माहिती"},
     "tool_weather": {"en": "Weather", "hi": "मौसम", "pa": "ਮੌਸਮ", "mr": "हवामान"},
     "tool_scheme": {"en": "Govt scheme", "hi": "सरकारी योजना", "pa": "ਸਰਕਾਰੀ ਯੋਜਨਾ", "mr": "सरकारी योजना"},
     "chip_used": {"en": "used", "hi": "उपयोग हुआ", "pa": "ਵਰਤਿਆ", "mr": "वापरले"},
-    "chip_idle": {"en": "idle", "hi": "उपयोग नहीं", "pa": "ਵਰਤਿਆ ਨਹੀਂ", "mr": "वापरले नाही"},
 
     # ── Diagnostics & footer ─────────────────────────────────────────────────
     "diag": {
@@ -170,19 +114,9 @@ STRINGS: dict[str, dict[str, str]] = {
         "pa": "ਲਿਖਤ ਅਤੇ ਪ੍ਰਕਿਰਿਆ", "mr": "प्रतिलेख आणि प्रक्रिया",
     },
     "heard_label": {"en": "Heard", "hi": "सुना गया", "pa": "ਸੁਣਿਆ ਗਿਆ", "mr": "ऐकलेले"},
-    "heard_placeholder": {
-        "en": "Your words, as transcribed.", "hi": "आपके शब्द, जैसे लिखे गए।",
-        "pa": "ਤੁਹਾਡੇ ਸ਼ਬਦ, ਜਿਵੇਂ ਲਿਖੇ ਗਏ।", "mr": "तुमचे शब्द, जसे लिहिले गेले.",
-    },
     "english_label": {
         "en": "English translation", "hi": "अंग्रेज़ी अनुवाद",
         "pa": "ਅੰਗਰੇਜ਼ੀ ਅਨੁਵਾਦ", "mr": "इंग्रजी भाषांतर",
-    },
-    "english_placeholder": {
-        "en": "The English the agent reasoned over.",
-        "hi": "वह अंग्रेज़ी पाठ जिस पर सहायक ने विचार किया।",
-        "pa": "ਉਹ ਅੰਗਰੇਜ਼ੀ ਪਾਠ ਜਿਸ ਉੱਤੇ ਸਹਾਇਕ ਨੇ ਵਿਚਾਰ ਕੀਤਾ।",
-        "mr": "सहाय्यकाने ज्या इंग्रजी मजकुरावर विचार केला तो.",
     },
     "intent_label": {"en": "Intent", "hi": "सवाल का प्रकार", "pa": "ਸਵਾਲ ਦੀ ਕਿਸਮ", "mr": "प्रश्नाचा प्रकार"},
     "trace_label": {"en": "Trace", "hi": "प्रक्रिया लॉग", "pa": "ਪ੍ਰਕਿਰਿਆ ਲੌਗ", "mr": "प्रक्रिया लॉग"},
@@ -208,54 +142,15 @@ STRINGS: dict[str, dict[str, str]] = {
         "pa": "ਆਵਾਜ਼ ਪਛਾਣਨ ਵਿੱਚ ਦਿੱਕਤ ਆਈ: {err}",
         "mr": "आवाज ओळखण्यात अडचण आली: {err}",
     },
-    "err_type_english": {
-        "en": "Please type in English — or choose your language above and ask with the microphone.",
-        "hi": "कृपया अंग्रेज़ी में लिखिए — या ऊपर अपनी भाषा चुनकर माइक से पूछिए।",
-        "pa": "ਕਿਰਪਾ ਕਰਕੇ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ ਲਿਖੋ — ਜਾਂ ਉੱਪਰ ਆਪਣੀ ਭਾਸ਼ਾ ਚੁਣ ਕੇ ਮਾਈਕ ਨਾਲ ਪੁੱਛੋ।",
-        "mr": "कृपया इंग्रजीत लिहा — किंवा वर तुमची भाषा निवडून माइकने विचारा.",
-    },
-    "err_type_english_lite": {
-        "en": "Please type your question in English.",
-        "hi": "कृपया अपना सवाल अंग्रेज़ी में लिखिए।",
-        "pa": "ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ ਸਵਾਲ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ ਲਿਖੋ।",
-        "mr": "कृपया तुमचा प्रश्न इंग्रजीत लिहा.",
-    },
 
     # ══ Voice + regional build (Groq, or IndicTrans2) ════════════════════════
     # Used instead of the "in English" wording above when the app can hear and
     # answer every language.
-    "hero_body_voice": {
-        "en": "Tap the microphone and ask about your crop, the weather over your field, "
-              "or a government scheme — in Hindi, Punjabi, Marathi or English. The answer "
-              "is spoken back in your language.",
-        "hi": "माइक दबाइए और अपनी फसल, खेत के मौसम या किसी सरकारी योजना के बारे में "
-              "पूछिए — हिन्दी, पंजाबी, मराठी या अंग्रेज़ी में। जवाब आपकी भाषा में बोलकर "
-              "सुनाया जाएगा।",
-        "pa": "ਮਾਈਕ ਦਬਾਓ ਅਤੇ ਆਪਣੀ ਫ਼ਸਲ, ਖੇਤ ਦੇ ਮੌਸਮ ਜਾਂ ਕਿਸੇ ਸਰਕਾਰੀ ਸਕੀਮ ਬਾਰੇ ਪੁੱਛੋ — "
-              "ਹਿੰਦੀ, ਪੰਜਾਬੀ, ਮਰਾਠੀ ਜਾਂ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ। ਜਵਾਬ ਤੁਹਾਡੀ ਭਾਸ਼ਾ ਵਿੱਚ ਬੋਲ ਕੇ "
-              "ਸੁਣਾਇਆ ਜਾਵੇਗਾ।",
-        "mr": "माइक दाबा आणि तुमचे पीक, शेतातील हवामान किंवा एखाद्या सरकारी योजनेबद्दल "
-              "विचारा — हिंदी, पंजाबी, मराठी किंवा इंग्रजीत. उत्तर तुमच्या भाषेत बोलून "
-              "ऐकवले जाईल.",
-    },
-    "mic_note_auto": {  # {language} = the chosen language's name
-        "en": "Tap the microphone, ask in {language}, then tap stop. The answer plays by itself.",
-        "hi": "माइक दबाइए, {language} में पूछिए, फिर रोकिए। जवाब अपने-आप सुनाई देगा।",
-        "pa": "ਮਾਈਕ ਦਬਾਓ, {language} ਵਿੱਚ ਪੁੱਛੋ, ਫਿਰ ਰੋਕੋ। ਜਵਾਬ ਆਪਣੇ-ਆਪ ਸੁਣਾਈ ਦੇਵੇਗਾ।",
-        "mr": "माइक दाबा, {language}मध्ये विचारा, मग थांबवा. उत्तर आपोआप ऐकू येईल.",
-    },
-    "eyebrow_or_type_any": {"en": "Or type", "hi": "या लिखिए", "pa": "ਜਾਂ ਲਿਖੋ", "mr": "किंवा लिहा"},
     "text_placeholder_native": {
         "en": "Will it rain in Pune tomorrow? Any scheme for irrigation?",
         "hi": "यहाँ लिखिए, जैसे: क्या कल पुणे में बारिश होगी?",
         "pa": "ਇੱਥੇ ਲਿਖੋ, ਜਿਵੇਂ: ਕੀ ਕੱਲ੍ਹ ਲੁਧਿਆਣਾ ਵਿੱਚ ਮੀਂਹ ਪਵੇਗਾ?",
         "mr": "येथे लिहा, उदा.: उद्या नाशिकमध्ये पाऊस येईल का?",
-    },
-    "location_note_voice": {
-        "en": "Say your village in the question, type it here, or tap 📍 once — it is remembered.",
-        "hi": "सवाल में अपने गाँव का नाम बोलिए, यहाँ लिखिए, या एक बार 📍 दबाइए — याद रखा जाएगा।",
-        "pa": "ਸਵਾਲ ਵਿੱਚ ਆਪਣੇ ਪਿੰਡ ਦਾ ਨਾਮ ਬੋਲੋ, ਇੱਥੇ ਲਿਖੋ, ਜਾਂ ਇੱਕ ਵਾਰ 📍 ਦਬਾਓ — ਯਾਦ ਰੱਖਿਆ ਜਾਵੇਗਾ।",
-        "mr": "प्रश्नात तुमच्या गावाचे नाव सांगा, येथे लिहा, किंवा एकदा 📍 दाबा — लक्षात ठेवले जाईल.",
     },
     "location_placeholder_native": {
         "en": "Your village or town", "hi": "आपका गाँव या शहर",
