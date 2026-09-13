@@ -305,10 +305,11 @@ def _pipeline_iter(audio, text_query, location, lang, pending=None):
     # ── 1. The farmer's words ────────────────────────────────────────────────
     english_hint = None
     if text_query:
-        # Typed Hindi/Punjabi/Marathi is understood in every build — by the LLM
-        # when there is one, by the keyword rules otherwise (the answer is then
-        # English, and the page says so).
         mode, q_lang, heard = "typed", _typed_language(text_query, lang), text_query
+        if q_lang != "en" and not REGIONAL_READY:
+            key = "err_type_english_lite" if LITE_MODE else "err_type_english"
+            yield from reply_only(t(key, lang), keep=pending)
+            return
         trace.append(f"[Input] typed ({q_lang}): '{heard}'")
     elif audio is None:
         yield from reply_only(t("err_no_input" if VOICE_READY else "err_no_input_lite", lang),
@@ -521,16 +522,12 @@ def _heard_html(heard: "str | None", lang: str) -> str:
 # ══════════════════════════════════════════════════════════════════════════════
 # Presentation layer
 #
-# One column, one job per screenful, almost no text to read. A farmer who
-# cannot read should be able to: see their language, tap the microphone, talk,
-# and hear the answer. Everything else (typing, location, what-I-can-help-with,
-# diagnostics) is folded away behind a single line each.
-#
-# Design language: dark-first editorial. A near-black canvas, hairline rules,
-# one restrained accent (wheat gold). A full light palette ships alongside —
-# Gradio puts `dark` on <body> and follows the viewer's system setting, so every
-# colour below is a token defined for both. Append `?__theme=dark` (or `light`)
-# to the URL to pin one.
+# Design language: dark-first editorial. A near-black canvas, hairline rules
+# instead of boxes, thin letterspaced eyebrow labels, one restrained accent
+# (wheat gold), and large tight display type. A full light palette ships
+# alongside it — Gradio puts `dark` on <body> and follows the viewer's system
+# setting, so every colour below is a token defined for both. Append
+# `?__theme=dark` (or `light`) to the URL to pin one.
 #
 # Rule: never hardcode a colour in generated HTML — only token-backed classes,
 # or it inverts badly in the other theme.
@@ -543,22 +540,51 @@ _TOOL_SPECS = (
 )
 
 
+def _eyebrow(text: str, num: str = "") -> str:
+    """A thin letterspaced section marker with a hairline running off to the right."""
+    index = f'<span class="ag-eyebrow-num">{num}</span>' if num else ""
+    return (
+        f'<div class="ag-eyebrow">{index}'
+        f'<span class="ag-eyebrow-text">{text}</span>'
+        f'<span class="ag-eyebrow-rule"></span></div>'
+    )
+
+
 def _note(text: str) -> str:
     return f'<div class="ag-field-note">{text}</div>'
 
 
+def _tool_chip(label: str, active: bool, lang: str) -> str:
+    state = "on" if active else "off"
+    note = t("chip_used" if active else "chip_idle", lang)
+    return (
+        f'<span class="ag-chip ag-chip--{state}">'
+        f'<i class="ag-chip-dot"></i>'
+        f'<span class="ag-chip-label">{label}</span>'
+        f'<span class="ag-chip-note">{note}</span></span>'
+    )
+
+
 def _tools_strip(lang: str = DEFAULT_LANG, flags=None) -> str:
-    """One quiet line naming the sources behind the answer. Nothing before the
-    first question, and nothing when no source was needed."""
-    if not flags or not any(flags):
-        return ""
-    used = " · ".join(t(key, lang) for (_tool, key), on in zip(_TOOL_SPECS, flags) if on)
-    return (f'<div class="ag-src"><span class="ag-src-dot"></span><span>{used}</span>'
-            f'<span class="ag-src-note">{t("chip_used", lang)}</span></div>')
+    """Status strip for the three knowledge sources. flags=None → standing by."""
+    used = dict(zip(("crop", "weather", "scheme"), flags or (False, False, False)))
+    chips = "".join(_tool_chip(t(key, lang), used[tool], lang) for tool, key in _TOOL_SPECS)
+    if flags is None:
+        caption = t("tools_idle", lang)
+    elif any(used.values()):
+        caption = t("tools_used", lang, n=sum(used.values()))
+    else:
+        caption = t("tools_none", lang)
+    return (
+        f'<div class="ag-tools">'
+        f'<div class="ag-tools-caption">{caption}</div>'
+        f'<div class="ag-tools-row">{chips}</div>'
+        f'</div>'
+    )
 
 
 def _no_tools_html(lang: str = DEFAULT_LANG) -> str:
-    return ""
+    return _tools_strip(lang, None)
 
 
 def _tool_flags(state) -> tuple:
@@ -588,7 +614,7 @@ def build_theme():
         font_mono=[gr.themes.GoogleFont("JetBrains Mono"), "ui-monospace",
                    "Consolas", "monospace"],
         radius_size=gr.themes.sizes.radius_sm,
-        text_size=gr.themes.sizes.text_lg,
+        text_size=gr.themes.sizes.text_md,
     ).set(
         # Canvas
         body_background_fill="#F6F5F1",
@@ -708,167 +734,75 @@ body.dark {
   --ag-shade:     rgba(255,255,255,.02);
 }
 
-/* ═══ Shell — one narrow column, nothing else ═══ */
+/* ═══ Shell ═══ */
+/* Gradio's page template paints <body> off prefers-color-scheme alone, which
+   leaves a mismatched band below the app when the viewer pins a theme by hand
+   (?__theme=…) against their OS setting. Repaint it from our own tokens. */
 body { background: var(--ag-bg) !important; color: var(--ag-text); }
+
 .gradio-container {
-  max-width: 680px !important;
+  max-width: 1180px !important;
   margin: 0 auto !important;
-  padding: 0 20px 64px !important;
+  padding: 0 28px 72px !important;
   background: var(--ag-bg);
   color: var(--ag-text);
 }
+.gradio-container .prose :is(h1,h2,h3,h4) { color: var(--ag-text); }
 footer { display: none !important; }
-.gradio-container .block { padding: 0 !important; }
 
-/* ═══ Top bar: brand + the four languages, always reachable ═══ */
-.ag-top {
-  position: sticky; top: 0; z-index: 20;
-  background: var(--ag-bg);
-  padding: 14px 0 12px;
+/* ═══ Top bar ═══ */
+.ag-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap;
+  padding: 22px 0 20px;
   border-bottom: 1px solid var(--ag-line);
-  gap: 10px !important;
 }
-.ag-brand { display: flex; align-items: center; gap: 9px; padding-bottom: 2px; }
-.ag-brand-mark { width: 8px; height: 8px; flex: none; background: var(--ag-accent); transform: rotate(45deg); }
-.ag-brand-name { font-size: 12px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--ag-dim); }
+.ag-brand { display: flex; align-items: center; gap: 11px; }
+.ag-brand-mark {
+  width: 9px; height: 9px; flex: none;
+  background: var(--ag-accent);
+  transform: rotate(45deg);
+}
+.ag-brand-name {
+  font-size: 12px; font-weight: 600;
+  letter-spacing: .19em; text-transform: uppercase;
+  color: var(--ag-text);
+}
+/* The top bar is a Gradio Row: stop its children stretching to equal widths */
+.ag-topbar > * { flex: 0 1 auto !important; min-width: 0 !important; width: auto !important; }
+.ag-topbar .block, .ag-topbar .form { padding: 0 !important; border: none !important;
+  background: transparent !important; box-shadow: none !important; }
 
-/* Language picker — four big taps, no labels to read */
+/* ═══ Language picker — segmented control ═══ */
 .ag-lang { background: transparent !important; }
-.ag-lang .wrap { display: grid !important; grid-template-columns: repeat(4, 1fr); gap: 6px !important; }
+.ag-lang .wrap { display: flex !important; flex-wrap: wrap; gap: 6px !important; }
 .ag-lang label {
-  display: flex !important; align-items: center; justify-content: center;
-  margin: 0 !important; padding: 12px 4px !important;
-  border: 1px solid var(--ag-line) !important; border-radius: 3px !important;
-  background: transparent !important; box-shadow: none !important;
-  font-size: 15px !important; font-weight: 500 !important;
-  color: var(--ag-dim) !important; text-align: center; line-height: 1.25;
-  cursor: pointer; transition: border-color .16s ease, color .16s ease, background .16s ease;
+  display: inline-flex !important; align-items: center;
+  margin: 0 !important;
+  padding: 7px 13px !important;
+  border: 1px solid var(--ag-line) !important;
+  border-radius: 2px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 13px !important; font-weight: 500 !important;
+  color: var(--ag-dim) !important;
+  cursor: pointer;
+  transition: border-color .16s ease, color .16s ease, background .16s ease;
 }
 .ag-lang label:hover { color: var(--ag-text) !important; border-color: var(--ag-line-2) !important; }
 .ag-lang label.selected, .ag-lang label:has(input:checked) {
-  border-color: var(--ag-accent) !important; background: var(--ag-accent-bg) !important;
-  color: var(--ag-text) !important; font-weight: 600 !important;
+  border-color: var(--ag-accent) !important;
+  background: var(--ag-accent-bg) !important;
+  color: var(--ag-text) !important;
+  font-weight: 600 !important;
 }
-.ag-lang input[type="radio"] { position: absolute !important; opacity: 0 !important; width: 1px !important; height: 1px !important; }
+/* Hide the radio dot but keep it focusable for keyboard users */
+.ag-lang input[type="radio"] {
+  position: absolute !important; opacity: 0 !important;
+  width: 1px !important; height: 1px !important; margin: 0 !important;
+}
 .ag-lang label:has(input:focus-visible) { outline: 2px solid var(--ag-accent); outline-offset: 2px; }
 .ag-lang label span { margin-left: 0 !important; }
-
-/* ═══ Hero — one line, then straight to the microphone ═══ */
-.ag-hero { padding: 30px 0 20px; text-align: center; }
-.ag-hero h1 {
-  font-size: clamp(1.7rem, 6.4vw, 2.3rem); line-height: 1.18;
-  letter-spacing: -.02em; font-weight: 600; margin: 0 0 10px; color: var(--ag-text);
-}
-.ag-hero h1 em { font-style: normal; color: var(--ag-accent); }
-.ag-hero p { font-size: 15px; line-height: 1.6; color: var(--ag-dim); margin: 0; }
-
-/* ═══ The microphone — the main action ═══ */
-.ag-mic {
-  border: 2px solid var(--ag-accent) !important;
-  border-radius: 4px !important;
-  background: var(--ag-accent-bg) !important;
-  min-height: 148px;
-  display: flex; align-items: center; justify-content: center;
-}
-.ag-mic .record, .ag-mic .record-button, .ag-mic button.record { font-size: 17px !important; }
-.ag-mic button {
-  font-size: 17px !important; font-weight: 600 !important;
-  padding: 14px 22px !important; border-radius: 3px !important;
-}
-.ag-mic .icon, .ag-mic svg { width: 22px !important; height: 22px !important; }
-.ag-cta {
-  text-align: center; font-size: 15px; line-height: 1.6;
-  color: var(--ag-dim); margin: 12px 0 4px;
-}
-.ag-field-note { font-size: 13px; line-height: 1.6; color: var(--ag-faint); margin: 2px 0 10px; }
-
-/* ═══ Answer ═══ */
-.ag-section {
-  display: flex; align-items: center; gap: 12px; margin: 30px 0 14px;
-  font-size: 11px; font-weight: 600; letter-spacing: .19em; text-transform: uppercase;
-  color: var(--ag-faint);
-}
-.ag-section::after { content: ""; flex: 1; height: 1px; background: var(--ag-line); }
-.ag-heard { font-size: 15px; line-height: 1.6; color: var(--ag-dim); margin: 0 0 12px; }
-.ag-heard-label {
-  font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--ag-faint); margin-right: 8px;
-}
-.ag-answer textarea {
-  font-size: 18px !important; line-height: 1.75 !important;
-  background: var(--ag-surface) !important;
-  border: 1px solid var(--ag-line) !important;
-  border-left: 3px solid var(--ag-accent) !important;
-  border-radius: 3px !important;
-  padding: 20px 22px !important; color: var(--ag-text) !important;
-}
-.ag-audio { margin-top: 12px !important; }
-button.ag-replay {
-  width: 100%; margin-top: 10px !important;
-  font-size: 15px !important; padding: 13px 16px !important; border-radius: 3px !important;
-}
-.ag-src {
-  display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
-  margin-top: 12px; font-size: 13px; color: var(--ag-dim);
-}
-.ag-src-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ag-accent); flex: none; }
-.ag-src-note { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ag-faint); }
-
-/* ═══ Sample questions — tap one and it is asked ═══ */
-.ag-examples .gap, .ag-examples .form { gap: 8px !important; }
-button.ag-example {
-  width: 100%; justify-content: flex-start !important; text-align: left !important;
-  font-size: 15px !important; font-weight: 400 !important; line-height: 1.5 !important;
-  padding: 15px 16px 15px 44px !important;
-  border: 1px solid var(--ag-line) !important; border-radius: 3px !important;
-  background: var(--ag-surface) !important; color: var(--ag-text) !important;
-  white-space: normal !important; height: auto !important; position: relative;
-  transition: border-color .16s ease, background .16s ease;
-}
-button.ag-example::before {
-  position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 17px;
-}
-.ag-examples > *:nth-child(1) button.ag-example::before { content: "🌾"; }
-.ag-examples > *:nth-child(2) button.ag-example::before { content: "🌦"; }
-.ag-examples > *:nth-child(3) button.ag-example::before { content: "🏛"; }
-.ag-examples > *:nth-child(4) button.ag-example::before { content: "🌱"; }
-button.ag-example:hover { border-color: var(--ag-accent) !important; background: var(--ag-accent-bg) !important; }
-
-/* ═══ Folded-away extras ═══ */
-.ag-fold { margin-top: 10px !important; border-top: 1px solid var(--ag-line) !important; }
-.ag-fold .label-wrap {
-  padding: 16px 2px !important; font-size: 14px !important; font-weight: 500 !important;
-  color: var(--ag-dim) !important;
-}
-.ag-fold .label-wrap:hover { color: var(--ag-text) !important; }
-.ag-fold textarea, .ag-fold input[type="text"] { font-size: 16px !important; padding: 12px 13px !important; }
-.ag-place { gap: 8px !important; align-items: stretch !important; flex-wrap: nowrap !important; margin-top: 4px; }
-.ag-place > * { min-width: 0 !important; }
-button.ag-gps, button.ag-ask {
-  white-space: nowrap !important; font-size: 15px !important;
-  border-radius: 3px !important; padding: 12px 14px !important;
-}
-button.ag-ask { width: 100%; font-weight: 600 !important; margin-top: 8px !important; }
-.ag-help-line { font-size: 15px; line-height: 1.65; color: var(--ag-dim); padding: 11px 0; border-bottom: 1px solid var(--ag-line); }
-.ag-help-line:last-child { border-bottom: none; }
-.ag-diag textarea {
-  font-family: var(--font-mono) !important; font-size: 12px !important; line-height: 1.6 !important;
-  background: var(--ag-sunk) !important; border: 1px solid var(--ag-line) !important;
-  border-radius: 2px !important; color: var(--ag-dim) !important;
-}
-.ag-mode {
-  display: block; margin-top: 10px; padding: 8px 10px;
-  border: 1px solid var(--ag-line); border-radius: 2px; background: var(--ag-shade);
-  font-size: 11px; letter-spacing: .04em; color: var(--ag-faint);
-  font-family: var(--font-mono); word-break: break-word;
-}
-
-/* ═══ Footer ═══ */
-.ag-footer {
-  margin-top: 34px; padding-top: 20px; border-top: 1px solid var(--ag-line);
-  display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap;
-  font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ag-faint);
-}
 
 /* ═══ Indic scripts ═══
    The design's wide tracking and uppercase are Latin-only devices: tracking
@@ -878,24 +812,329 @@ button.ag-ask { width: 100%; font-weight: 600 !important; margin-top: 8px !impor
    prefix, which outranks a plain html[lang] selector; `:not(#ag-none)` adds
    ID-level weight so these overrides still win. */
 html:is([lang="hi"], [lang="mr"], [lang="pa"]):not(#ag-none) :is(
-  .ag-brand-name, .ag-section, .ag-heard-label, .ag-src-note, .ag-footer,
-  .ag-fold .label-wrap, button.ag-ask, .ag-hero h1
+  .ag-brand-name, .ag-hero-eyebrow, .ag-eyebrow-text, .ag-tools-caption,
+  .ag-chip-note, .ag-footer, .ag-phrase-lang, .ag-panel label > span,
+  .ag-ask button, button.ag-ask, .ag-diag .label-wrap, .ag-heard-label
 ) {
   letter-spacing: .01em !important;
   text-transform: none !important;
 }
-html:is([lang="hi"], [lang="mr"], [lang="pa"]):not(#ag-none) .ag-hero h1 { line-height: 1.3; }
+html:is([lang="hi"], [lang="mr"], [lang="pa"]):not(#ag-none) .ag-hero h1 {
+  letter-spacing: 0;
+  line-height: 1.3;
+}
 
-@media (max-width: 480px) {
-  .gradio-container { padding: 0 14px 48px !important; }
-  .ag-lang label { font-size: 14px !important; padding: 11px 2px !important; }
-  .ag-hero { padding: 22px 0 16px; }
+/* ═══ Hero ═══ */
+.ag-hero { padding: 68px 0 60px; max-width: 720px; }
+.ag-hero-eyebrow {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .21em; text-transform: uppercase;
+  color: var(--ag-accent);
+  margin-bottom: 24px;
+}
+.ag-hero h1 {
+  font-size: clamp(2.5rem, 6vw, 4.15rem);
+  line-height: 1.02;
+  letter-spacing: -.035em;
+  font-weight: 600;
+  margin: 0 0 26px;
+  color: var(--ag-text);
+}
+.ag-hero h1 em { font-style: normal; color: var(--ag-accent); }
+.ag-hero p {
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--ag-dim);
+  margin: 0;
+  max-width: 46ch;
+}
+.ag-mode {
+  display: inline-block;
+  margin-top: 30px;
+  padding: 6px 12px;
+  border: 1px solid var(--ag-line);
+  border-radius: 2px;
+  background: var(--ag-shade);
+  font-size: 11px;
+  letter-spacing: .04em;
+  color: var(--ag-faint);
+  font-family: var(--font-mono);
+  word-break: break-word;
+}
+
+/* ═══ Eyebrow section markers ═══ */
+.ag-eyebrow {
+  display: flex; align-items: center; gap: 12px;
+  margin: 0 0 18px;
+}
+.ag-eyebrow-num {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: .1em;
+  color: var(--ag-accent);
+  font-family: var(--font-mono);
+}
+.ag-eyebrow-text {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .19em; text-transform: uppercase;
+  color: var(--ag-dim);
+  white-space: nowrap;
+}
+.ag-eyebrow-rule { flex: 1; height: 1px; background: var(--ag-line); }
+
+/* ═══ Console panels ═══ */
+.ag-console { gap: 0 !important; align-items: stretch !important; }
+.ag-panel { padding: 34px 0 40px !important; min-width: 0 !important; }
+.ag-panel--ask { padding-right: 40px !important; }
+.ag-panel--answer {
+  padding-left: 40px !important;
+  border-left: 1px solid var(--ag-line);
+}
+@media (max-width: 860px) {
+  .ag-console { flex-direction: column !important; flex-wrap: nowrap !important; }
+  .ag-console > .ag-panel {
+    width: 100% !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+  .ag-panel { padding: 26px 0 30px !important; }
+  .ag-panel--ask { padding-right: 0 !important; }
+  .ag-panel--answer {
+    padding-left: 0 !important;
+    border-left: none;
+    border-top: 1px solid var(--ag-line);
+  }
+  .gradio-container { padding: 0 18px 56px !important; }
+  .ag-hero { padding: 44px 0 40px; }
+  .ag-detected input, .ag-detected textarea { font-size: 16px !important; }
+}
+
+/* Tighten Gradio's default block chrome inside the panels */
+.ag-panel .block { padding: 0 !important; }
+.ag-panel .gap { gap: 14px !important; }
+.ag-panel label > span { letter-spacing: .1em; text-transform: uppercase; }
+
+/* ═══ Inputs ═══ */
+.ag-panel textarea, .ag-panel input[type="text"] {
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+  padding: 13px 14px !important;
+  border-radius: 2px !important;
+  transition: border-color .16s ease;
+}
+.ag-field-note {
+  font-size: 12px; line-height: 1.6;
+  color: var(--ag-faint);
+  margin: -4px 0 14px;
+}
+.ag-mic { border: 1px solid var(--ag-line) !important; border-radius: 2px !important; }
+
+/* ═══ Ask button ═══ */
+.ag-ask button, button.ag-ask {
+  width: 100%;
+  border-radius: 2px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: .15em !important;
+  text-transform: uppercase;
+  padding: 17px 20px !important;
+  transition: transform .12s ease, background .16s ease;
+}
+.ag-ask button:active { transform: translateY(1px); }
+
+/* ═══ Detected-language readout ═══ */
+/* Gradio wraps the field in label.container.show_textbox_border, and that
+   wrapper — not the input — draws the box. Strip every layer back to a rule. */
+.ag-detected { min-width: 0 !important; }
+.ag-detected,
+.ag-detected label,
+.ag-detected .input-container {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+.ag-detected { margin-top: -4px !important; }
+.ag-detected input, .ag-detected textarea {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  font-size: 18px !important;
+  letter-spacing: -.01em !important;
+  font-weight: 600 !important;
+  color: var(--ag-accent) !important;
+  resize: none !important;
+  cursor: default;
+  text-overflow: ellipsis;
+}
+
+/* ═══ Tool status strip ═══ */
+.ag-tools { margin: 0 0 26px; }
+.ag-tools-caption {
+  font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
+  color: var(--ag-faint);
+  margin-bottom: 12px;
+}
+.ag-tools-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.ag-chip {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 8px 13px;
+  border: 1px solid var(--ag-line);
+  border-radius: 2px;
+  font-size: 12px;
+  line-height: 1;
+  transition: border-color .2s ease, background .2s ease;
+}
+.ag-chip-dot {
+  width: 6px; height: 6px; flex: none;
+  border-radius: 50%;
+  background: var(--ag-line-2);
+}
+.ag-chip-label { color: var(--ag-faint); font-weight: 500; }
+.ag-chip-note {
+  font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ag-line-2);
+}
+.ag-chip--on { border-color: var(--ag-accent); background: var(--ag-accent-bg); }
+.ag-chip--on .ag-chip-dot   { background: var(--ag-accent); }
+.ag-chip--on .ag-chip-label { color: var(--ag-text); font-weight: 600; }
+.ag-chip--on .ag-chip-note  { color: var(--ag-accent); }
+
+/* ═══ Answer ═══ */
+.ag-answer textarea {
+  font-size: 16px !important;
+  line-height: 1.78 !important;
+  background: var(--ag-surface) !important;
+  border: 1px solid var(--ag-line) !important;
+  border-left: 2px solid var(--ag-accent) !important;
+  border-radius: 2px !important;
+  padding: 24px 26px !important;
+  color: var(--ag-text) !important;
+}
+.ag-audio { margin-top: 18px !important; }
+
+/* ═══ Example prompts ═══ */
+.ag-examples { margin-top: 8px; }
+.ag-examples .gap { gap: 8px !important; }
+.ag-examples .gap, .ag-examples .form { gap: 0 !important; }
+button.ag-example {
+  justify-content: flex-start !important;
+  text-align: left !important;
+  font-size: 13.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.55 !important;
+  padding: 13px 0 13px 18px !important;
+  border: none !important;
+  border-bottom: 1px solid var(--ag-line) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--ag-dim) !important;
+  white-space: normal !important;
+  height: auto !important;
+  position: relative;
+  transition: color .16s ease, padding-left .16s ease;
+}
+button.ag-example::before {
+  content: ""; position: absolute; left: 0; top: 1.42em;
+  width: 6px; height: 1px; background: var(--ag-line-2);
+  transition: background .16s ease, width .16s ease;
+}
+button.ag-example:hover {
+  color: var(--ag-text) !important;
+  padding-left: 24px !important;
+  background: transparent !important;
+}
+button.ag-example:hover::before { background: var(--ag-accent); width: 12px; }
+
+/* Spoken-phrase reference list */
+.ag-phrases { margin-top: 0; }
+.ag-panel--answer .ag-eyebrow { margin-top: 34px; }
+.ag-panel--answer .ag-eyebrow:first-child { margin-top: 0; }
+.ag-panel--ask .ag-examples { margin-top: 0; }
+.ag-phrase-group { border-top: 1px solid var(--ag-line); padding: 16px 0; }
+.ag-phrase-group:first-child { border-top: none; padding-top: 0; }
+.ag-phrase-lang {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: .19em; text-transform: uppercase;
+  color: var(--ag-faint);
+  margin-bottom: 10px;
+}
+.ag-phrase {
+  font-size: 14px; line-height: 1.75;
+  color: var(--ag-dim);
+  padding-left: 16px;
+  position: relative;
+}
+.ag-phrase::before {
+  content: ""; position: absolute; left: 0; top: .72em;
+  width: 5px; height: 1px; background: var(--ag-accent);
+}
+
+/* ═══ Voice-first additions ═══ */
+/* The microphone is the main way in: give it room and a clear edge. */
+.ag-mic { min-height: 132px; border-width: 2px !important; border-color: var(--ag-accent) !important; }
+.ag-mic button { font-size: 15px !important; }
+/* Location field + 📍 button on one line */
+.ag-place { gap: 8px !important; align-items: stretch !important; flex-wrap: nowrap !important; }
+.ag-place > * { min-width: 0 !important; }
+button.ag-gps {
+  white-space: nowrap !important;
+  font-size: 13px !important;
+  border-radius: 2px !important;
+  padding: 0 12px !important;
+}
+/* "You asked: …" above the answer */
+.ag-heard { font-size: 15px; line-height: 1.6; color: var(--ag-dim); margin: 0 0 14px; }
+.ag-heard-label {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ag-faint);
+  margin-right: 10px;
+}
+.ag-answer textarea { font-size: 17px !important; }
+/* What I can help with */
+.ag-help-line {
+  font-size: 14px; line-height: 1.7;
+  color: var(--ag-dim);
+  padding: 11px 0;
+  border-bottom: 1px solid var(--ag-line);
+}
+.ag-help-line:last-child { border-bottom: none; }
+
+/* ═══ Diagnostics accordion ═══ */
+.ag-diag { margin-top: 8px !important; border-top: 1px solid var(--ag-line) !important; }
+.ag-diag .label-wrap {
+  padding: 22px 0 !important;
+  font-size: 11px !important; font-weight: 600 !important;
+  letter-spacing: .19em !important; text-transform: uppercase;
+  color: var(--ag-faint) !important;
+}
+.ag-diag .label-wrap:hover { color: var(--ag-text) !important; }
+.ag-diag textarea {
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  line-height: 1.65 !important;
+  background: var(--ag-sunk) !important;
+  border: 1px solid var(--ag-line) !important;
+  border-radius: 2px !important;
+  color: var(--ag-dim) !important;
+}
+
+/* ═══ Footer ═══ */
+.ag-footer {
+  margin-top: 40px; padding-top: 24px;
+  border-top: 1px solid var(--ag-line);
+  display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  font-size: 11px; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--ag-faint);
 }
 """
 
-# ── Example questions ─────────────────────────────────────────────────────────
-# Tapping one asks it immediately. They follow the page language — a farmer who
-# reads a little can recognise a question in their own script.
+# ── Example prompts ───────────────────────────────────────────────────────────
+# Tapping one asks it straight away. They follow the page language when the
+# app can take questions in every language; otherwise typed questions are
+# English, so the examples are too.
 _TYPED_EXAMPLES = [
     "My wheat is 40 days old, which fertiliser should I apply?",
     "Will it rain in Nashik tomorrow? Should I irrigate my paddy?",
@@ -906,7 +1145,9 @@ _TYPED_EXAMPLES = [
 
 def _examples(lang: str) -> list[str]:
     lang = normalize_lang(lang)
-    return list(SPOKEN_EXAMPLES[lang]) if lang != "en" else list(_TYPED_EXAMPLES)
+    if REGIONAL_READY and lang != "en":
+        return list(SPOKEN_EXAMPLES[lang])
+    return list(_TYPED_EXAMPLES)
 
 
 def _help_html(lang: str) -> str:
@@ -919,7 +1160,7 @@ def _help_html(lang: str) -> str:
 # ── Localised fragments ───────────────────────────────────────────────────────
 
 def _mode_info() -> str:
-    """Technical build line (English — it's diagnostic), inside the fold."""
+    """Technical build line under the hero (kept in English — it's diagnostic)."""
     if USE_GROQ:
         llm_mode = f"groq {GROQ_LLM_MODELS[0] if GROQ_LLM_MODELS else '?'}"
     elif USE_STUB_LLM:
@@ -939,13 +1180,17 @@ def _brand_html(lang: str) -> str:
             f'<span class="ag-brand-name">{t("brand", lang)}</span></div>')
 
 
+def _hero_body_key() -> str:
+    if VOICE_READY and REGIONAL_READY:
+        return "hero_body_voice"
+    return "hero_body_full" if VOICE_READY else "hero_body_lite"
+
+
 def _hero_html(lang: str) -> str:
-    return (f'<div class="ag-hero"><h1>{t("hero_title", lang)}</h1>'
-            f'<p>{t("hero_sub", lang)}</p></div>')
-
-
-def _section(text: str) -> str:
-    return f'<div class="ag-section">{text}</div>'
+    return (f'<div class="ag-hero">'
+            f'<div class="ag-hero-eyebrow">{t("hero_eyebrow", lang)}</div>'
+            f'<h1>{t("hero_title", lang)}</h1><p>{t(_hero_body_key(), lang)}</p>'
+            f'<div class="ag-mode">{_mode_info()}</div></div>')
 
 
 def _footer_html(lang: str) -> str:
@@ -954,39 +1199,52 @@ def _footer_html(lang: str) -> str:
             f'<span>{stack}</span></div>')
 
 
+def _mic_note(lang: str) -> str:
+    return _note(t("mic_note_auto", lang, language=lang_name(lang, lang)))
+
+
 def _localized(lang, detected_key=None, tools_flags=None, heard=None) -> list:
     """An update for every language-dependent component, in the same order as
     the `localized` list in build_ui(). Runs whenever the language changes."""
     lang = normalize_lang(lang)
+    regional = REGIONAL_READY
     return [
         gr.update(value=_brand_html(lang)),
         gr.update(value=_hero_html(lang)),
-        gr.update(value=f'<div class="ag-cta">{t("mic_cta", lang)}</div>'),
+        gr.update(value=_eyebrow(t("eyebrow_speak", lang), "01")),
+        gr.update(value=_mic_note(lang)),
+        gr.update(value=_eyebrow(t("eyebrow_or_type_any" if regional else "eyebrow_or_type",
+                                   lang), "02")),
+        gr.update(value=_eyebrow(t("eyebrow_question", lang), "01")),
         gr.update(value=_note(t("lite_note", lang))),
-        gr.update(value=_section(t("eyebrow_response", lang))),
-        gr.update(value=_note(t("answer_note", lang)), visible=lang != "en" and not REGIONAL_READY),
-        gr.update(value=_heard_html(heard, lang)),
+        gr.update(placeholder=t("text_placeholder_native" if regional else "text_placeholder",
+                                lang)),
+        gr.update(value=_eyebrow(t("eyebrow_location", lang), "03" if VOICE_READY else "02")),
+        gr.update(value=_note(t("location_note_voice" if VOICE_READY else "location_note",
+                                lang))),
+        gr.update(placeholder=t("location_placeholder_native" if regional
+                                else "location_placeholder", lang)),
+        gr.update(value=t("ask_button", lang)),
+        gr.update(value=_eyebrow(t("eyebrow_detected", lang))),
+        gr.update(value=_detected_text(lang, detected_key)),
+        gr.update(value=_eyebrow(t("eyebrow_try", lang))),
+        gr.update(value=_eyebrow(t("eyebrow_response", lang))),
+        gr.update(value=_note(t("answer_note", lang)),
+                  visible=lang != "en" and not regional),
+        gr.update(value=_tools_strip(lang, tools_flags)),
         gr.update(placeholder=t("answer_placeholder", lang)),
         gr.update(label=t("audio_label", lang)),
-        gr.update(value=t("replay_button", lang)),
-        gr.update(value=_tools_strip(lang, tools_flags)),
-        gr.update(value=_section(t("examples_label", lang))),
-        *[gr.update(value=e) for e in _examples(lang)],
-        gr.update(label=t("typed_toggle", lang)),
-        gr.update(placeholder=t("text_placeholder_native", lang)),
-        gr.update(value=t("ask_button", lang)),
-        gr.update(label=t("place_label", lang)),
-        gr.update(placeholder=t("location_placeholder_native", lang)),
-        gr.update(value=t("gps_button", lang)),
-        gr.update(label=t("eyebrow_can_help", lang)),
+        gr.update(value=_eyebrow(t("eyebrow_can_help", lang))),
         gr.update(value=_help_html(lang)),
         gr.update(label=t("diag", lang)),
-        gr.update(label=t("lang_picker", lang), value=_detected_text(lang, detected_key)),
-        gr.update(label=t("heard_label", lang)),
-        gr.update(label=t("english_label", lang)),
+        gr.update(label=t("heard_label", lang), placeholder=t("heard_placeholder", lang)),
+        gr.update(label=t("english_label", lang), placeholder=t("english_placeholder", lang)),
         gr.update(label=t("intent_label", lang)),
         gr.update(label=t("trace_label", lang)),
         gr.update(value=_footer_html(lang)),
+        gr.update(value=t("gps_button", lang)),
+        gr.update(value=_heard_html(heard, lang)),
+        *[gr.update(value=e) for e in _examples(lang)],
     ]
 
 
@@ -1024,129 +1282,172 @@ async (current) => {
   } catch (e) { return current; }
 }
 """
-# Play the spoken answer again — one big button, instead of hunting for the
-# little play control. The player draws its own waveform (there is no plain
-# <audio> to drive), so this presses its button: once when it has finished
-# (which restarts it), pause-then-play while it is still speaking.
-_REPLAY_JS = """
-() => {
-  const box = document.querySelector(".ag-audio");
-  const btn = box && box.querySelector("button.play-pause-button");
-  if (!btn) { return; }
-  const playing = (btn.getAttribute("aria-label") || "").toLowerCase().includes("pause");
-  btn.click();
-  if (playing) { setTimeout(() => btn.click(), 120); }
-}
-"""
-# After a question is answered, bring the answer into view — on a phone it sits
-# below the microphone.
-_SCROLL_JS = """
-() => { const el = document.querySelector(".ag-answer");
-        if (el) { el.scrollIntoView({behavior: "smooth", block: "center"}); } }
-"""
 
 
 # ── UI builder ────────────────────────────────────────────────────────────────
 
 def build_ui() -> gr.Blocks:
     lang = DEFAULT_LANG
+    regional = REGIONAL_READY
 
     with gr.Blocks(title="Agri Assistant", fill_width=True) as demo:
         # Remembered so a language switch can re-render the last result's
-        # readout, sources and "you asked" line in the new language.
+        # language readout, tool chips and "you asked" line in the new language.
         detected_state = gr.State(None)
         tools_state = gr.State(None)
         heard_state = gr.State(None)
         # The question waiting on a detail the farmer was asked for.
         pending_state = gr.State(None)
 
-        # ── Top bar: brand + the four languages ──────────────────────────────
-        with gr.Column(elem_classes=["ag-top"]):
+        # ── Top bar: brand + language picker ──────────────────────────────────
+        with gr.Row(equal_height=True, elem_classes=["ag-topbar"]):
             brand_html = gr.HTML(_brand_html(lang))
             lang_radio = gr.Radio(
-                choices=LANG_CHOICES, value=lang, label=t("lang_picker", lang),
-                show_label=False, container=False, elem_classes=["ag-lang"],
+                choices=LANG_CHOICES,
+                value=lang,
+                label=t("lang_picker", lang),
+                show_label=False,
+                container=False,
+                elem_classes=["ag-lang"],
             )
 
-        # ── Ask ──────────────────────────────────────────────────────────────
+        # ── Hero ──────────────────────────────────────────────────────────────
         hero_html = gr.HTML(_hero_html(lang))
-        audio_input = gr.Audio(
-            sources=["microphone"], type="filepath", show_label=False,
-            editable=False, elem_classes=["ag-mic"], visible=VOICE_READY,
-        )
-        mic_cta = gr.HTML(f'<div class="ag-cta">{t("mic_cta", lang)}</div>',
-                          visible=VOICE_READY)
-        lite_note = gr.HTML(_note(t("lite_note", lang)), visible=not VOICE_READY)
 
-        # ── Answer ───────────────────────────────────────────────────────────
-        answer_section = gr.HTML(_section(t("eyebrow_response", lang)))
-        answer_note = gr.HTML(_note(t("answer_note", lang)), visible=False)
-        heard_html = gr.HTML("")
-        answer_output = gr.Textbox(
-            show_label=False, lines=7, max_lines=24, interactive=False,
-            placeholder=t("answer_placeholder", lang), elem_classes=["ag-answer"],
-        )
-        audio_output = gr.Audio(label=t("audio_label", lang), autoplay=True,
-                                interactive=False, elem_classes=["ag-audio"])
-        replay_btn = gr.Button(t("replay_button", lang), size="lg",
-                               elem_classes=["ag-replay"])
-        tools_html_output = gr.HTML("")
+        # ── Console ───────────────────────────────────────────────────────────
+        with gr.Row(equal_height=False, elem_classes=["ag-console"]):
 
-        # ── Sample questions — tap one and it is asked ───────────────────────
-        examples_section = gr.HTML(_section(t("examples_label", lang)))
-        with gr.Column(elem_classes=["ag-examples"]):
-            example_btns = [gr.Button(e, size="lg", elem_classes=["ag-example"])
-                            for e in _examples(lang)]
-
-        # ── Folded away: typing, location, help, diagnostics ─────────────────
-        with gr.Accordion(t("typed_toggle", lang), open=not VOICE_READY,
-                          elem_classes=["ag-fold"]) as typed_fold:
-            text_input = gr.Textbox(placeholder=t("text_placeholder_native", lang),
-                                    show_label=False, lines=2)
-            submit_btn = gr.Button(t("ask_button", lang), variant="primary",
-                                   size="lg", elem_classes=["ag-ask"])
-
-        with gr.Accordion(t("place_label", lang), open=False,
-                          elem_classes=["ag-fold"]) as place_fold:
-            with gr.Row(equal_height=True, elem_classes=["ag-place"]):
-                location_input = gr.Textbox(
-                    placeholder=t("location_placeholder_native", lang),
-                    show_label=False, scale=3,
+            # ── LEFT: the ask ────────────────────────────────────────────────
+            with gr.Column(scale=5, min_width=300,
+                           elem_classes=["ag-panel", "ag-panel--ask"]):
+                # Voice — whenever a speech-to-text engine is available.
+                speak_eyebrow = gr.HTML(_eyebrow(t("eyebrow_speak", lang), "01"),
+                                        visible=VOICE_READY)
+                mic_note = gr.HTML(_mic_note(lang), visible=VOICE_READY)
+                audio_input = gr.Audio(
+                    sources=["microphone"],
+                    type="filepath",
+                    show_label=False,
+                    editable=False,
+                    elem_classes=["ag-mic"],
+                    visible=VOICE_READY,
                 )
-                gps_btn = gr.Button(t("gps_button", lang), size="lg", scale=2,
-                                    elem_classes=["ag-gps"])
+                or_type_eyebrow = gr.HTML(
+                    _eyebrow(t("eyebrow_or_type_any" if regional else "eyebrow_or_type",
+                               lang), "02"),
+                    visible=VOICE_READY)
+                # Typed-only build (LITE without a Groq key)
+                question_eyebrow = gr.HTML(_eyebrow(t("eyebrow_question", lang), "01"),
+                                           visible=not VOICE_READY)
+                lite_note = gr.HTML(_note(t("lite_note", lang)), visible=not VOICE_READY)
 
-        with gr.Accordion(t("eyebrow_can_help", lang), open=False,
-                          elem_classes=["ag-fold"]) as help_fold:
-            help_html = gr.HTML(_help_html(lang))
+                text_input = gr.Textbox(
+                    placeholder=t("text_placeholder_native" if regional
+                                  else "text_placeholder", lang),
+                    show_label=False,
+                    lines=3,
+                )
 
+                location_eyebrow = gr.HTML(
+                    _eyebrow(t("eyebrow_location", lang), "03" if VOICE_READY else "02"))
+                location_note = gr.HTML(_note(t("location_note_voice" if VOICE_READY
+                                                else "location_note", lang)))
+                with gr.Row(equal_height=True, elem_classes=["ag-place"]):
+                    location_input = gr.Textbox(
+                        placeholder=t("location_placeholder_native" if regional
+                                      else "location_placeholder", lang),
+                        show_label=False,
+                        scale=3,
+                    )
+                    gps_btn = gr.Button(t("gps_button", lang), size="sm", scale=2,
+                                        elem_classes=["ag-gps"])
+
+                submit_btn = gr.Button(
+                    t("ask_button", lang),
+                    variant="primary",
+                    size="lg",
+                    elem_classes=["ag-ask"],
+                )
+
+                detected_eyebrow = gr.HTML(_eyebrow(t("eyebrow_detected", lang)))
+                detected_lang_output = gr.Textbox(
+                    value=t("pending", lang),
+                    show_label=False,
+                    container=False,
+                    interactive=False,
+                    lines=1,
+                    max_lines=1,
+                    elem_classes=["ag-detected"],
+                )
+
+                try_eyebrow = gr.HTML(_eyebrow(t("eyebrow_try", lang)))
+                with gr.Column(elem_classes=["ag-examples"]):
+                    example_btns = [gr.Button(e, size="sm", elem_classes=["ag-example"])
+                                    for e in _examples(lang)]
+
+            # ── RIGHT: the answer ────────────────────────────────────────────
+            with gr.Column(scale=7, min_width=340,
+                           elem_classes=["ag-panel", "ag-panel--answer"]):
+
+                response_eyebrow = gr.HTML(_eyebrow(t("eyebrow_response", lang)))
+                answer_note = gr.HTML(_note(t("answer_note", lang)), visible=False)
+
+                tools_html_output = gr.HTML(_no_tools_html(lang))
+                heard_html = gr.HTML("")
+
+                answer_output = gr.Textbox(
+                    show_label=False,
+                    lines=10,
+                    max_lines=26,
+                    interactive=False,
+                    placeholder=t("answer_placeholder", lang),
+                    elem_classes=["ag-answer"],
+                )
+
+                audio_output = gr.Audio(
+                    label=t("audio_label", lang),
+                    autoplay=True,
+                    interactive=False,
+                    elem_classes=["ag-audio"],
+                )
+
+                help_eyebrow = gr.HTML(_eyebrow(t("eyebrow_can_help", lang)))
+                help_html = gr.HTML(_help_html(lang))
+
+        # ── Diagnostics ───────────────────────────────────────────────────────
         with gr.Accordion(t("diag", lang), open=False,
-                          elem_classes=["ag-fold", "ag-diag"]) as diag_accordion:
-            detected_lang_output = gr.Textbox(
-                value=t("pending", lang), label=t("lang_picker", lang),
-                interactive=False, lines=1, max_lines=1,
-            )
-            transcription_output = gr.Textbox(label=t("heard_label", lang), lines=2,
-                                              interactive=False)
-            english_output = gr.Textbox(label=t("english_label", lang), lines=2,
-                                        interactive=False)
+                          elem_classes=["ag-diag"]) as diag_accordion:
+            with gr.Row():
+                transcription_output = gr.Textbox(
+                    label=t("heard_label", lang),
+                    lines=3,
+                    interactive=False,
+                    placeholder=t("heard_placeholder", lang),
+                )
+                english_output = gr.Textbox(
+                    label=t("english_label", lang),
+                    lines=3,
+                    interactive=False,
+                    placeholder=t("english_placeholder", lang),
+                )
             intent_output = gr.Textbox(label=t("intent_label", lang), lines=7,
                                        interactive=False)
             trace_output = gr.Textbox(label=t("trace_label", lang), lines=14,
                                       interactive=False, visible=DEV_MODE)
-            gr.HTML(f'<div class="ag-mode">{_mode_info()}</div>')
 
+        # ── Footer ────────────────────────────────────────────────────────────
         footer_html = gr.HTML(_footer_html(lang))
 
         # ── Wiring ────────────────────────────────────────────────────────────
         # Order must match _localized().
         localized = [
-            brand_html, hero_html, mic_cta, lite_note, answer_section, answer_note,
-            heard_html, answer_output, audio_output, replay_btn, tools_html_output,
-            examples_section, *example_btns, typed_fold, text_input, submit_btn,
-            place_fold, location_input, gps_btn, help_fold, help_html,
-            diag_accordion, detected_lang_output, transcription_output,
-            english_output, intent_output, trace_output, footer_html,
+            brand_html, hero_html, speak_eyebrow, mic_note, or_type_eyebrow,
+            question_eyebrow, lite_note, text_input, location_eyebrow, location_note,
+            location_input, submit_btn, detected_eyebrow, detected_lang_output,
+            try_eyebrow, response_eyebrow, answer_note, tools_html_output,
+            answer_output, audio_output, help_eyebrow, help_html, diag_accordion,
+            transcription_output, english_output, intent_output, trace_output,
+            footer_html, gps_btn, heard_html, *example_btns,
         ]
         # Order must match _outputs().
         results = [
@@ -1155,28 +1456,22 @@ def build_ui() -> gr.Blocks:
             detected_state, tools_state, pending_state, heard_state,
         ]
 
+        submit_btn.click(
+            fn=_on_ask,
+            inputs=[audio_input, text_input, location_input, lang_radio, pending_state],
+            outputs=results,
+        )
         # Voice-first: tapping stop sends the question — no extra button to find.
         # The recorder is then cleared, ready for the next question.
         audio_input.stop_recording(
             fn=_on_voice,
             inputs=[audio_input, location_input, lang_radio, pending_state],
             outputs=results + [audio_input],
-        ).then(fn=None, js=_SCROLL_JS)
-        submit_btn.click(
-            fn=_on_ask,
-            inputs=[audio_input, text_input, location_input, lang_radio, pending_state],
-            outputs=results,
-        ).then(fn=None, js=_SCROLL_JS)
-        text_input.submit(
-            fn=_on_ask,
-            inputs=[audio_input, text_input, location_input, lang_radio, pending_state],
-            outputs=results,
-        ).then(fn=None, js=_SCROLL_JS)
+        )
         for btn in example_btns:
-            btn.click(fn=_on_example, inputs=[btn, location_input, lang_radio],
-                      outputs=results).then(fn=None, js=_SCROLL_JS)
+            btn.click(fn=lambda e: e, inputs=btn, outputs=text_input).then(
+                fn=_on_example, inputs=[btn, location_input, lang_radio], outputs=results)
 
-        replay_btn.click(fn=None, inputs=None, outputs=None, js=_REPLAY_JS)
         gps_btn.click(fn=None, inputs=location_input, outputs=location_input, js=_GPS_JS)
         location_input.change(fn=None, inputs=location_input, js=_SAVE_PLACE_JS)
 

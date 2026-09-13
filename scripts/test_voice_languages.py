@@ -377,7 +377,7 @@ def test_page():
     mic = next(c for c in comps.values() if "ag-mic" in (c.get("props", {}).get("elem_classes") or []))
     check("microphone shown", mic["props"].get("visible") is not False)
     lite = next((c for c in comps.values() if c.get("type") == "html"
-                 and "lightweight version" in str(c["props"].get("value", ""))), None)
+                 and "lightweight demo" in str(c["props"].get("value", ""))), None)
     check("'typed English only' note hidden", lite is None or lite["props"].get("visible") is False)
     triggers = {(tgt[0], tgt[1]) for d in cfg["dependencies"] for tgt in d["targets"]}
     check("tapping stop sends the question", (mic["id"], "stop_recording") in triggers)
