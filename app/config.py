@@ -25,7 +25,15 @@ TRANSLATION_MODEL_EN_INDIC: str = os.getenv(
     "TRANSLATION_MODEL_EN_INDIC", "ai4bharat/indictrans2-en-indic-1B"
 )
 
-# IndicTrans2 uses Flores-200 language codes
+# Which local translator turns the English answer into Hindi / Marathi / Punjabi
+# (and a typed regional question into English) when no Groq key is set:
+#   "nllb"        → facebook/nllb-200-distilled-600M — ungated, runs on a CPU (default)
+#   "indictrans2" → the AI4Bharat checkpoints above — gated on Hugging Face, best on a GPU
+# USE_STUB_TRANSLATION=true turns local translation off altogether.
+TRANSLATION_ENGINE: str = os.getenv("TRANSLATION_ENGINE", "nllb").lower()
+NLLB_MODEL_ID: str = os.getenv("NLLB_MODEL_ID", "facebook/nllb-200-distilled-600M")
+
+# IndicTrans2 and NLLB both use Flores-200 language codes
 INDICTRANS2_LANG_CODES: dict[str, str] = {
     "hi": "hin_Deva",   # Hindi  – Devanagari
     "mr": "mar_Deva",   # Marathi – Devanagari

@@ -135,7 +135,10 @@ def main(voice: bool) -> None:
         msg = ga._run_pipeline(None, "", "", lang)[3]
         check(f"no-question message [{lang}]", msg == t("err_no_input", lang), msg)
     msg = ga._run_pipeline(None, "मेरी गेहूं 40 दिन की है", "", "hi")[3]
-    check("typed Hindi → Hindi 'please type in English'", msg == t("err_type_english", "hi"), msg)
+    if ga.REGIONAL_READY:  # a local translator is configured: it answers in Hindi
+        check("typed Hindi → answer in Hindi", ga._has_indic(msg) and msg != t("err_type_english", "hi"), msg)
+    else:
+        check("typed Hindi → Hindi 'please type in English'", msg == t("err_type_english", "hi"), msg)
     detected, *_rest = ga._run_pipeline(None, "My wheat is 40 days old, what fertilizer?", "", "mr")
     check("typed English in Marathi UI → Marathi readout",
           detected == f"{LANG_NAMES['mr']['en']} · {t('mode_typed', 'mr')}", detected)

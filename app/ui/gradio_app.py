@@ -135,6 +135,12 @@ def warm_up() -> None:
         from app.tools.scheme_tool import _get_rag
         _get_rag()
         _get_orchestrator()
+        if _MT_READY and not USE_GROQ:
+            # Without Groq, every non-English answer goes through the local
+            # translator: load it now rather than on the first question.
+            translator = _get_translator()
+            if hasattr(translator, "_load"):
+                translator._load()
         logger.info("Warm-up done in %.1fs (stt=%s)", time.time() - t0, STT_ENGINE)
     except Exception as exc:
         logger.warning("Warm-up skipped: %s", exc)
@@ -157,7 +163,11 @@ def _get_tts():
 def _spoken_text(text: str) -> str:
     """What to read aloud: the advice itself, without the standing cautions and
     source lines the rule-based answer ends with. Shorter speech = less waiting."""
-    for marker in ("\nImportant:", "\nSource:", "\nसूचना:"):
+    from app.models.agri_glossary import HEADINGS
+    labels = ["Important", "Source"]
+    markers = [f"\n{label}:" for label in labels] + ["\nसूचना:"]
+    markers += [f"\n{HEADINGS[label][code]}:" for label in labels for code in ("hi", "mr", "pa")]
+    for marker in markers:
         cut = text.find(marker)
         if cut > 120:
             text = text[:cut]
@@ -378,8 +388,10 @@ def _pipeline_iter(audio, text_query, location, lang, pending=None):
         return
 
     # ── 3. Agent: the tools the question needs ───────────────────────────────
-    state = AgentState(source_language=q_lang, original_text=heard,
-                       english_text=u.english, location=plan.location)
+    state = AgentState(source_language=q_lang, response_language=lang,
+                       original_text=heard, english_text=u.english, location=plan.location)
+    if q_lang != lang:
+        trace.append(f"[Language] asked in {q_lang}, answering in the chosen {lang}")
     state.intent = _intent_label(u)
     state.crop, state.crop_stage_days = plan.crop, plan.days
     state.needs_crop_info, state.needs_weather = plan.run_crop, plan.run_weather

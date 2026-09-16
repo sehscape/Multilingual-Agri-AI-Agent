@@ -31,7 +31,7 @@ _BLOCK_LIMIT = 2200   # characters of each fact block sent to the model
 _SYSTEM_PROMPT = """You are Kisan Mitra, a kind farm advisor for Indian farmers. Many farmers cannot read, so your reply will be read aloud to them.
 
 Rules:
-- Reply ONLY in {language}, written in {script} script. Common farm product names like urea or DAP are fine.
+- Reply ONLY in {language}, written in {script} script — the language the farmer chose — even when the question itself is in another language. Common farm product names like urea or DAP are fine.
 - Use ONLY the facts given. Never add a dose, amount, price, date, eligibility rule or weather number that is not in the facts. If the facts do not cover something the farmer asked, say so simply and suggest the local Krishi Vigyan Kendra (KVK) or agriculture officer.
 - First answer exactly what the farmer asked in one or two sentences. Then give at most 4 short, practical steps.
 - Short, simple, spoken sentences. No markdown, no bullet symbols, no emojis, no headings.
@@ -74,7 +74,7 @@ def write_reply(client, state, lang: str, max_words: int = 110) -> str:
     system = _SYSTEM_PROMPT.format(language=name, script=script, max_words=max_words,
                                    today=date.today().strftime("%A %d %B %Y"))
     asked = state.original_text or state.english_text
-    user = (f"The farmer asked (in {name}): \"{asked}\"\n"
+    user = (f"The farmer asked: \"{asked}\"\n"
             f"In English: \"{state.english_text}\"\n\n"
             f"FACTS\n{_facts(state)}\n\n"
             f"Write the reply in {name} ({script} script).")

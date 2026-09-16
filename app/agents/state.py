@@ -13,7 +13,10 @@ from typing import Optional, List
 @dataclass
 class AgentState:
     # ── Input boundary (regional language) ────────────────────────────────────
-    source_language: str = "hi"          # ISO 639-1 code: "hi" | "mr" | "pa"
+    source_language: str = "hi"          # language the question came in: "en" | "hi" | "mr" | "pa"
+    # The language chosen on the page. Every reply is written and spoken in it,
+    # whatever language the question itself was asked in.
+    response_language: str = "hi"
     original_text: str = ""              # Raw STT output in regional language
     english_text: str = ""               # IndicTrans2 → English
 

@@ -214,7 +214,7 @@ The farmer hears actionable advice in their own language.
 | Agent | [LangChain](https://python.langchain.com) ReAct `AgentExecutor` with tool-calling |
 | Speech-to-Text | [OpenAI Whisper](https://github.com/openai/whisper) — large-v3 via [Groq](https://console.groq.com) (free API) or small locally; language-forced |
 | Understanding + regional answers | Open-weight LLM via Groq — [gpt-oss-120b](https://huggingface.co/openai/gpt-oss-120b) (Apache-2.0), falls back to gpt-oss-20b / Llama 3.3 70B |
-| Translation (GPU build) | [IndicTrans2](https://github.com/AI4Bharat/IndicTrans2) (AI4Bharat) |
+| Translation (local build, no Groq) | [NLLB-200 distilled 600M](https://huggingface.co/facebook/nllb-200-distilled-600M) on CPU, with a hand-written glossary for growth stages and headings · [IndicTrans2](https://github.com/AI4Bharat/IndicTrans2) on a GPU |
 | LLM (GPU build) | [Llama 3.1 8B](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct) via HF Inference API |
 | Embeddings | [paraphrase-multilingual-MiniLM](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2) (dev) / [BGE-M3](https://huggingface.co/BAAI/bge-m3) (prod) |
 | Vector Store | [FAISS](https://github.com/facebookresearch/faiss) |
@@ -461,9 +461,12 @@ The app auto-detects the GPU — no code change.
 
 ## Limitations
 
-- **Regional answers need a Groq key (or IndicTrans2 on a GPU).** Without
-  `GROQ_API_KEY`, the Lite build takes typed English only, and the local build
-  answers in English. With the key, Groq's free plan allows about 2,000 voice
+- **Answers always follow the chosen language.** Pick Hindi, Marathi, Punjabi
+  or English and every reply, ask-back and spoken answer uses it, whatever
+  language the question came in. Without `GROQ_API_KEY`, the local build
+  translates the answer with NLLB-200 on the CPU (~2.5 GB download once, about
+  6–8 s per answer; pest names are sometimes translated too literally), and the
+  Lite build takes typed English only. With the key, Groq's free plan allows about 2,000 voice
   questions a day and a few hundred thousand LLM tokens (roughly 50–60 full
   answers a day on gpt-oss-120b before it moves to the next model). Over the
   limit, the farmer hears "please wait a minute" in their language.
