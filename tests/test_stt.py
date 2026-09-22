@@ -84,8 +84,11 @@ def test_get_stt_stub():
     assert isinstance(stt, StubSTT)
 
 def test_get_stt_whisper_returns_instance():
+    # With GROQ_API_KEY set, speech goes to Groq's Whisper; otherwise local Whisper.
+    from app.config import STT_ENGINE
+    from app.models.stt import GroqWhisperSTT
     stt = get_stt(use_stub=False)
-    assert isinstance(stt, WhisperSTT)
+    assert isinstance(stt, GroqWhisperSTT if STT_ENGINE == "groq" else WhisperSTT)
 
 def test_whisper_not_loaded_before_first_call():
     stt = WhisperSTT()
