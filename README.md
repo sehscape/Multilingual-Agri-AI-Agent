@@ -489,7 +489,7 @@ CPU + float32 otherwise — no code change.
 - Check every dose and number in the answer against the source facts before speaking it.
 - Expand the crop and scheme knowledge bases; ingest real government PDFs with page-level citations.
 - Add pest and disease names to the translation glossary.
-- An Android app on the same backend (started, not built yet).
+- An Android app on the same backend.
 - Self-host Whisper and an open LLM on a GPU so no question leaves the server, with a more natural Indic voice.
 - Accept `?lang=hi` links to share a pre-set language with farmers.
 
