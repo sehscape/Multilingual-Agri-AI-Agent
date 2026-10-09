@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <b>A voice-first farm advisor for Indian farmers.</b><br>
+  <b>A voice-enabled farming assistant powered by RAG, LLMs and real-time weather intelligence.</b><br>
   Pick a language, tap the mic, ask about your crop, the weather over your field or a government scheme —<br>
   and hear a short, grounded answer back in <b>English, हिन्दी, ਪੰਜਾਬੀ or मराठी</b>.
 </p>
