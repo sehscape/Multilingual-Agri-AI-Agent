@@ -9,8 +9,8 @@ Two ways to show this project running:
 
 **Currently live:** https://farmer-advisory-voice-agent.onrender.com (option B).
 After a push to `main`, redeploy it from the Render dashboard with
-**Manual Deploy → Deploy latest commit** (this service clones the public repo
-without Render's GitHub app, so pushes don't trigger deploys on their own).
+**Manual Deploy → Deploy latest commit** (unless Render's GitHub app is
+connected, pushes don't trigger deploys on their own).
 
 > **Why not the full app on a free 24/7 host?** As of mid-2026, Hugging Face
 > Spaces requires a paid plan for Gradio apps, and Render's free tier gives only
@@ -36,12 +36,26 @@ The link dies when you close the tab. Re-run the last cell to get a new one.
 
 ## B. Render — free "Lite" 24/7 deploy
 
-### One-time setup
+### Fastest: one click
 
-1. Push this repo to GitHub (already done: `github.com/sehscape/Farmer-Advisory-Voice-Agent`).
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/sehscape/Multilingual-Agri-AI-Agent)
+
+Render reads `render.yaml`, asks for `GROQ_API_KEY` (section C), and builds.
+
+### Already have the service? Point it at this repo
+
+1. **https://dashboard.render.com** → the **farmer-advisory-voice-agent** web service.
+2. **Settings → Build & Deploy → Repository** → change it to
+   `https://github.com/sehscape/Multilingual-Agri-AI-Agent` (branch `main`) → **Save**.
+3. **Environment** → check `GROQ_API_KEY` holds your current key (section C).
+4. **Manual Deploy → Deploy latest commit**. The URL stays the same.
+
+### One-time setup, by hand
+
+1. Push this repo to GitHub (`github.com/sehscape/Multilingual-Agri-AI-Agent`).
 2. Go to **https://render.com** → sign up (free, "Hobby" plan) — you can sign in with GitHub.
 3. Click **New +** → **Web Service**.
-4. Connect your GitHub and pick the **Farmer-Advisory-Voice-Agent** repo.
+4. Connect your GitHub and pick the **Multilingual-Agri-AI-Agent** repo.
 5. Render reads **`render.yaml`** automatically and fills in everything:
    - Runtime: **Python 3**
    - Build command: `pip install --upgrade pip setuptools wheel && pip install -r requirements-lite.txt`
