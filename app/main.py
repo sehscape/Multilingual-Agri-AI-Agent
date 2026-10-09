@@ -2,7 +2,7 @@
 import os
 import threading
 
-from app.ui.gradio_app import build_ui, build_theme, warm_up, _CSS
+from app.ui.gradio_app import build_ui, build_theme, warm_up, _CSS, _HEAD
 from app.utils.logging import get_logger, enable_utf8_console
 
 enable_utf8_console()
@@ -27,6 +27,7 @@ def main() -> None:
         share=not _ON_HOST,
         theme=build_theme(),
         css=_CSS,
+        head=_HEAD,
     )
 
 

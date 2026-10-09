@@ -274,12 +274,14 @@ def _intent_summary(u, plan) -> str:
             f"Asked back    : {', '.join(plan.missing) or '—'}")
 
 
-def _pipeline_iter(audio, text_query, location, lang, pending=None):
+def _pipeline_iter(audio, text_query, location, lang, pending=None, speak=True):
     """Full pipeline: (typed text OR voice) → understanding → agent → answer → voice.
 
     Yields the reply twice: first the words, then the same reply with its
     recording attached. Making the speech takes a few seconds, and the farmer
-    should not stare at an empty screen while it happens.
+    should not stare at an empty screen while it happens. With speak=False it
+    stops after the words; result["speech"] holds (text, language) for the
+    page to voice separately.
 
     `lang` is the language chosen on the page. It controls every message the
     farmer sees and hears, the language the microphone listens for, and the
@@ -306,8 +308,11 @@ def _pipeline_iter(audio, text_query, location, lang, pending=None):
                   "english": english, "answer": message, "audio": None,
                   "intent": intent, "tools_html": _no_tools_html(lang),
                   "trace": "\n".join(trace), "detected_key": detected_key,
-                  "tools_flags": None, "pending": keep, "heard": heard}
+                  "tools_flags": None, "pending": keep, "heard": heard,
+                  "speech": (message, lang)}
         yield result
+        if not speak:
+            return
         audio_path = _speak(message, lang, trace)
         trace.append(f"[Total] response time: {time.time()-started:.1f}s")
         yield {**result, "audio": audio_path, "trace": "\n".join(trace)}
@@ -454,9 +459,12 @@ def _pipeline_iter(audio, text_query, location, lang, pending=None):
               "english": u.english, "answer": text, "audio": None,
               "intent": intent, "tools_html": _tools_strip(lang, flags),
               "trace": "\n".join(trace), "detected_key": detected_key, "tools_flags": flags,
-              "pending": _pending(u, plan), "heard": heard}
+              "pending": _pending(u, plan), "heard": heard,
+              "speech": (speech, speech_lang)}
     trace.append(f"[Answer] shown after {time.time()-started:.1f}s; now speaking")
-    yield result
+    yield {**result, "trace": "\n".join(trace)}
+    if not speak:
+        return
 
     audio_path = _speak(speech, speech_lang, trace)
     total = time.time() - started
@@ -481,38 +489,142 @@ def _run_pipeline(audio, text_query, location, lang_code=DEFAULT_LANG, pending=N
             r["intent"], r["tools_html"], r["trace"])
 
 
-def _outputs(r: dict, lang: str) -> tuple:
-    """Values for the page, in the order of the handlers' `outputs` lists."""
-    return (r["detected"], r["transcription"], r["english"], r["answer"], r["audio"],
-            r["intent"], r["tools_html"], r["trace"], _heard_html(r["heard"], lang),
-            r["detected_key"], r["tools_flags"], r["pending"], r["heard"])
+# ── Conversation thread ───────────────────────────────────────────────────────
+# The answer pane is a chat: the farmer on the right, the assistant on the
+# left. While a reply is being worked out the assistant shows a typing bubble,
+# so the page never piles loading spinners on top of the answer.
+
+_TYPING = '<span class="ag-typing" aria-label="…"><i></i><i></i><i></i></span>'
+_N_RESULTS = 13  # length of the `results` list in build_ui()
 
 
-# The handlers stream: the words reach the page as soon as they exist, the
-# recording follows a few seconds later.
-
-def _on_ask(audio, text_query, location, lang_code, pending=None):
-    """Ask button: the typed question if there is one, else the recording."""
-    for r in _pipeline_iter(audio, text_query, location, lang_code, pending):
-        yield _outputs(r, lang_code)
+def _farmer_turn(words: str, mode: str) -> dict:
+    """The farmer's bubble. Their words are escaped: shown, never rendered."""
+    mic = "🎙 " if mode == "voice" else ""
+    return {"role": "user", "content": mic + html.escape(words)}
 
 
-def _on_voice(audio, location, lang_code, pending=None):
+def _assistant_turn(text: str) -> dict:
+    return {"role": "assistant", "content": text}
+
+
+def _exchange(history, question, mode, lang, frames):
+    """Stream one exchange into the thread.
+
+    Yields (pipeline result, thread): first (None, question + typing bubble) at
+    once, then one frame per pipeline step. A voice question shows as a mic
+    bubble until Whisper has written down the words.
+    """
+    thread = list(history or [])
+    if mode == "typed":
+        thread.append(_farmer_turn(question, "typed"))
+    elif mode == "voice":
+        thread.append(_farmer_turn(t("voice_question", lang), "voice"))
+    yield None, thread + [_assistant_turn(_TYPING)]
+    for r in frames:
+        turn = list(thread)
+        if mode == "voice" and r["heard"]:
+            turn[-1] = _farmer_turn(r["heard"], "voice")
+        yield r, turn + [_assistant_turn(r["answer"])]
+
+
+def _working(thread: list) -> tuple:
+    """The frame shown while the assistant thinks: only the thread changes
+    (and the last reply's recording is cleared so it stops playing). Nothing
+    is left to speak until the new reply is in."""
+    out = [gr.skip()] * _N_RESULTS
+    out[3], out[4], out[12] = thread, None, None
+    return tuple(out)
+
+
+def _outputs(r: dict, thread: list, ticket: int) -> tuple:
+    """Values for the page, in the order of the `results` list in build_ui()."""
+    return (r["detected"], r["transcription"], r["english"], thread, r["audio"],
+            r["intent"], r["tools_html"], r["trace"],
+            r["detected_key"], r["tools_flags"], r["pending"], thread,
+            (*r["speech"], ticket))
+
+
+# A reply reaches the page in two events. The question handlers below stream
+# the question, a typing bubble and then the words — and finish there, so the
+# farmer can ask a follow-up straight away. _on_speak then makes the recording
+# (a few seconds) from the `speech` the question handler left behind.
+#
+# Every question takes a ticket, numbered per browser session. A recording
+# that finishes after a newer question was asked is dropped: it belongs to a
+# reply the farmer has moved on from, and would play over the new one.
+_latest_ticket: dict = {}
+
+
+def _take_ticket(request) -> int:
+    key = getattr(request, "session_hash", None)
+    if len(_latest_ticket) > 5000:  # forget long-gone sessions
+        _latest_ticket.clear()
+    _latest_ticket[key] = _latest_ticket.get(key, 0) + 1
+    return _latest_ticket[key]
+
+
+def _on_ask(audio, text_query, location, lang_code, pending=None, history=None,
+            request: gr.Request = None):
+    """Ask button: the typed question if there is one, else the recording.
+    The text box is emptied as the question goes out — only then, so a
+    follow-up typed while the reply streams in is left alone."""
+    ticket = _take_ticket(request)
+    question = (text_query or "").strip()
+    mode = "typed" if question else ("voice" if audio is not None else None)
+    frames = _pipeline_iter(audio, question, location, lang_code, pending, speak=False)
+    for r, thread in _exchange(history, question, mode, lang_code, frames):
+        if r is None:
+            yield _working(thread) + ("",)
+        else:
+            yield _outputs(r, thread, ticket) + (gr.skip(),)
+
+
+def _on_voice(audio, location, lang_code, pending=None, history=None,
+              request: gr.Request = None):
     """The farmer tapped stop — answer the recording straight away. If the
     recording hasn't reached the server, change nothing: the Ask button still
     sends it."""
     if audio is None:
-        yield tuple(gr.skip() for _ in range(14))
+        # Clear only the speech, so the follow-up voice step stays silent.
+        yield tuple(gr.skip() for _ in range(_N_RESULTS - 1)) + (None, gr.skip())
         return
-    for r in _pipeline_iter(audio, "", location, lang_code, pending):
-        # The last value clears the recorder, ready for the next question.
-        yield _outputs(r, lang_code) + (None,)
+    ticket = _take_ticket(request)
+    frames = _pipeline_iter(audio, "", location, lang_code, pending, speak=False)
+    for r, thread in _exchange(history, "", "voice", lang_code, frames):
+        if r is None:
+            yield _working(thread) + (gr.skip(),)
+        else:
+            # The last value clears the recorder, ready for the next question.
+            yield _outputs(r, thread, ticket) + (None,)
 
 
-def _on_example(example, location, lang_code):
+def _on_example(example, location, lang_code, history=None, request: gr.Request = None):
     """An example question was tapped — ask it as a fresh question."""
-    for r in _pipeline_iter(None, example, location, lang_code, None):
-        yield _outputs(r, lang_code)
+    ticket = _take_ticket(request)
+    frames = _pipeline_iter(None, example, location, lang_code, None, speak=False)
+    for r, thread in _exchange(history, example, "typed", lang_code, frames):
+        yield _working(thread) if r is None else _outputs(r, thread, ticket)
+
+
+def _on_speak(speech, trace_text, request: gr.Request = None):
+    """The recording for the reply now on screen. Returns (audio path, trace)."""
+    if not speech:
+        return gr.skip(), gr.skip()
+    text, lang, ticket = speech
+    trace = (trace_text or "").splitlines()
+    path = _speak(text, lang, trace)
+    if _latest_ticket.get(getattr(request, "session_hash", None), ticket) != ticket:
+        return gr.skip(), gr.skip()  # a newer question is already being answered
+    return path, "\n".join(trace)
+
+
+def _new_conversation(lang_code, request: gr.Request = None):
+    """Start over: empty thread, nothing pending, tools back to standing by.
+    Taking a ticket silences a recording still being made for the old thread."""
+    _take_ticket(request)
+    lang = normalize_lang(lang_code)
+    return ([], [], None, None, None, _no_tools_html(lang), t("pending", lang), None, "")
 
 
 def _detected_text(ui_lang: str, detected_key) -> str:
@@ -521,14 +633,6 @@ def _detected_text(ui_lang: str, detected_key) -> str:
         return t("pending", ui_lang)
     q_lang, mode = detected_key
     return f"{lang_name(q_lang, ui_lang)} · {t('mode_' + mode, ui_lang)}"
-
-
-def _heard_html(heard: "str | None", lang: str) -> str:
-    """'You asked: “…”' above the answer. The farmer's words are escaped."""
-    if not heard:
-        return ""
-    return (f'<div class="ag-heard"><span class="ag-heard-label">{t("heard_prefix", lang)}</span>'
-            f'“{html.escape(heard)}”</div>')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -826,7 +930,7 @@ footer { display: none !important; }
 html:is([lang="hi"], [lang="mr"], [lang="pa"]):not(#ag-none) :is(
   .ag-brand-name, .ag-hero-eyebrow, .ag-eyebrow-text, .ag-tools-caption,
   .ag-chip-note, .ag-footer, .ag-phrase-lang, .ag-panel label > span,
-  .ag-ask button, button.ag-ask, .ag-diag .label-wrap, .ag-heard-label
+  .ag-ask button, button.ag-ask, .ag-diag .label-wrap
 ) {
   letter-spacing: .01em !important;
   text-transform: none !important;
@@ -915,10 +1019,11 @@ html:is([lang="hi"], [lang="mr"], [lang="pa"]):not(#ag-none) .ag-hero h1 {
     border-left: none;
     border-top: 1px solid var(--ag-line);
   }
-  .gradio-container { padding: 0 18px 56px !important; }
   .ag-hero { padding: 44px 0 40px; }
   .ag-detected input, .ag-detected textarea { font-size: 16px !important; }
 }
+/* (The page gutters for phones live in _HEAD below: Gradio rewrites rules in
+   media queries to sit inside .gradio-container, so they can't reach it.) */
 
 /* Tighten Gradio's default block chrome inside the panels */
 .ag-panel .block { padding: 0 !important; }
@@ -1013,18 +1118,84 @@ html:is([lang="hi"], [lang="mr"], [lang="pa"]):not(#ag-none) .ag-hero h1 {
 .ag-chip--on .ag-chip-label { color: var(--ag-text); font-weight: 600; }
 .ag-chip--on .ag-chip-note  { color: var(--ag-accent); }
 
-/* ═══ Answer ═══ */
-.ag-answer textarea {
-  font-size: 16px !important;
-  line-height: 1.78 !important;
+/* ═══ Conversation thread ═══ */
+.ag-chat {
   background: var(--ag-surface) !important;
   border: 1px solid var(--ag-line) !important;
-  border-left: 2px solid var(--ag-accent) !important;
   border-radius: 2px !important;
-  padding: 24px 26px !important;
+}
+.ag-chat .bubble-wrap { background: transparent !important; padding: 18px 18px 10px !important; }
+/* Gradio's share / clear / copy-all strip: the page has its own "new
+   conversation" button, and a clear here would leave the thread state behind. */
+.ag-chat .top-panel { display: none !important; }
+.ag-chat .placeholder-content, .ag-chat .placeholder {
+  color: var(--ag-faint) !important; font-size: 15px;
+}
+/* Width is capped on the row: the bubble itself shrink-wraps its text, so a
+   percentage on the bubble would squeeze a short reply like "40 days". */
+.ag-chat .message-row { margin: 4px 0 !important; max-width: 86% !important; }
+.ag-chat div.message.user, .ag-chat div.message.bot {
+  border-radius: 14px !important;
+  padding: 11px 15px !important;
+  font-size: 15.5px !important;
+  line-height: 1.7 !important;
+  box-shadow: none !important;
+  max-width: none !important;
+}
+.ag-chat div.message.user {
+  background: var(--ag-accent-bg) !important;
+  border: 1px solid var(--ag-accent) !important;
+  border-bottom-right-radius: 3px !important;
   color: var(--ag-text) !important;
 }
+.ag-chat div.message.bot {
+  background: var(--ag-sunk) !important;
+  border: 1px solid var(--ag-line) !important;
+  border-bottom-left-radius: 3px !important;
+  color: var(--ag-text) !important;
+}
+.ag-chat .message :is(p, li) { color: var(--ag-text) !important; }
+.ag-chat .message p { margin: 0 0 .55em !important; }
+.ag-chat .message p:last-child { margin-bottom: 0 !important; }
+.ag-chat .message :is(ol, ul) { margin: .3em 0 .55em !important; padding-left: 1.3em !important; }
+/* Copy is useful on advice, not on the farmer's own words or a typing bubble */
+.ag-chat .message-buttons-right,
+.ag-chat .message-row:has(.ag-typing) + .message-buttons-left { display: none !important; }
+.ag-chat .message-buttons-left { opacity: .55; transition: opacity .16s ease; }
+.ag-chat .message-buttons-left:hover { opacity: 1; }
+
+/* Typing bubble while the reply is worked out */
+.ag-typing { display: inline-flex; gap: 5px; align-items: center; height: 1.2em; padding: 0 2px; }
+.ag-typing i {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--ag-accent);
+  opacity: .35;
+  animation: ag-typing 1.2s infinite ease-in-out;
+}
+.ag-typing i:nth-child(2) { animation-delay: .15s; }
+.ag-typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes ag-typing {
+  0%, 60%, 100% { opacity: .3; transform: translateY(0); }
+  30%           { opacity: 1;  transform: translateY(-3px); }
+}
+@media (prefers-reduced-motion: reduce) { .ag-typing i { animation: none; opacity: .7; } }
+
 .ag-audio { margin-top: 18px !important; }
+/* The waveform is drawn at a fixed number of pixels per second, so a long
+   reply would otherwise widen the whole page on a phone. Neither the player
+   nor the thread may decide the page width — they fit the column. */
+.ag-audio, .ag-chat { contain: inline-size; min-width: 0 !important; max-width: 100%; }
+.ag-audio .waveform-container, .ag-audio #waveform { overflow-x: hidden !important; }
+button.ag-new-chat {
+  align-self: flex-end !important;
+  width: auto !important; min-width: 0 !important;
+  margin-top: 4px;
+  padding: 7px 14px !important;
+  font-size: 12px !important;
+  border-radius: 2px !important;
+  color: var(--ag-dim) !important;
+}
+button.ag-new-chat:hover { color: var(--ag-text) !important; border-color: var(--ag-line-2) !important; }
 
 /* ═══ Example prompts ═══ */
 .ag-examples { margin-top: 8px; }
@@ -1096,15 +1267,12 @@ button.ag-gps {
   border-radius: 2px !important;
   padding: 0 12px !important;
 }
-/* "You asked: …" above the answer */
-.ag-heard { font-size: 15px; line-height: 1.6; color: var(--ag-dim); margin: 0 0 14px; }
-.ag-heard-label {
-  font-size: 11px; font-weight: 600;
-  letter-spacing: .12em; text-transform: uppercase;
-  color: var(--ag-faint);
-  margin-right: 10px;
+/* Small phones: the 📍 button drops under the field instead of squeezing it */
+@media (max-width: 480px) {
+  .ag-place { flex-wrap: wrap !important; }
+  .ag-place > * { flex: 1 1 100% !important; }
+  button.ag-gps { padding: 11px 12px !important; }
 }
-.ag-answer textarea { font-size: 17px !important; }
 /* What I can help with */
 .ag-help-line {
   font-size: 14px; line-height: 1.7;
@@ -1141,6 +1309,19 @@ button.ag-gps {
   font-size: 11px; letter-spacing: .13em; text-transform: uppercase;
   color: var(--ag-faint);
 }
+"""
+
+# Rules that must reach Gradio's outer wrapper on phones. Gradio only keeps a
+# `.gradio-container …`-prefixed copy of media-query rules from `css`, which
+# can never match the container itself — so these go into <head> untouched.
+# Without them Gradio's own 32px gutters leave a phone ~270px of its 390.
+_HEAD = """
+<style>
+@media (max-width: 860px) {
+  html body .gradio-container { padding: 0 16px 56px !important; }
+  html body .gradio-container > .main { padding-left: 0 !important; padding-right: 0 !important; }
+}
+</style>
 """
 
 # ── Example prompts ───────────────────────────────────────────────────────────
@@ -1215,7 +1396,7 @@ def _mic_note(lang: str) -> str:
     return _note(t("mic_note_auto", lang, language=lang_name(lang, lang)))
 
 
-def _localized(lang, detected_key=None, tools_flags=None, heard=None) -> list:
+def _localized(lang, detected_key=None, tools_flags=None) -> list:
     """An update for every language-dependent component, in the same order as
     the `localized` list in build_ui(). Runs whenever the language changes."""
     lang = normalize_lang(lang)
@@ -1255,7 +1436,7 @@ def _localized(lang, detected_key=None, tools_flags=None, heard=None) -> list:
         gr.update(label=t("trace_label", lang)),
         gr.update(value=_footer_html(lang)),
         gr.update(value=t("gps_button", lang)),
-        gr.update(value=_heard_html(heard, lang)),
+        gr.update(value=t("new_chat", lang)),
         *[gr.update(value=e) for e in _examples(lang)],
     ]
 
@@ -1283,6 +1464,36 @@ _SAVE_LANG_JS = """
 _SAVE_PLACE_JS = """
 (p) => { try { localStorage.setItem("ag_place", p || ""); } catch (e) {} }
 """
+# Keep the newest turn in view. Gradio only follows the thread when the reader
+# is already near the bottom, and a long answer can push them past that — so
+# watch the thread and scroll whenever a bubble arrives or grows.
+_FOLLOW_THREAD_JS = """
+() => {
+  const chat = document.querySelector(".ag-chat");
+  if (!chat || chat.dataset.follow) { return; }
+  chat.dataset.follow = "1";
+  let queued = false;
+  new MutationObserver(() => {
+    if (queued) { return; }
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      // Which box scrolls depends on the layout: the bubble list, or the block.
+      for (const box of [chat, chat.querySelector(".bubble-wrap")]) {
+        if (box) { box.scrollTop = box.scrollHeight; }
+      }
+    });
+  }).observe(chat, {childList: true, subtree: true, characterData: true});
+}
+"""
+# Narrow screens stack the panels, so scroll the conversation into view.
+_SHOW_THREAD_JS = """
+() => {
+  if (window.innerWidth > 860) { return; }
+  const thread = document.querySelector(".ag-panel--answer");
+  if (thread) { setTimeout(() => thread.scrollIntoView({behavior: "smooth", block: "start"}), 60); }
+}
+"""
 # 📍 — the phone's GPS position, as "lat, lon" for the weather lookup.
 _GPS_JS = """
 async (current) => {
@@ -1307,9 +1518,12 @@ def build_ui() -> gr.Blocks:
         # language readout, tool chips and "you asked" line in the new language.
         detected_state = gr.State(None)
         tools_state = gr.State(None)
-        heard_state = gr.State(None)
         # The question waiting on a detail the farmer was asked for.
         pending_state = gr.State(None)
+        # The conversation so far, as {"role", "content"} turns.
+        chat_state = gr.State([])
+        # (text, language) of the latest reply, for the voice step to read out.
+        speech_state = gr.State(None)
 
         # ── Top bar: brand + language picker ──────────────────────────────────
         with gr.Row(equal_height=True, elem_classes=["ag-topbar"]):
@@ -1369,6 +1583,7 @@ def build_ui() -> gr.Blocks:
                         placeholder=t("location_placeholder_native" if regional
                                       else "location_placeholder", lang),
                         show_label=False,
+                        max_lines=1,
                         scale=3,
                     )
                     gps_btn = gr.Button(t("gps_button", lang), size="sm", scale=2,
@@ -1405,15 +1620,18 @@ def build_ui() -> gr.Blocks:
                 answer_note = gr.HTML(_note(t("answer_note", lang)), visible=False)
 
                 tools_html_output = gr.HTML(_no_tools_html(lang))
-                heard_html = gr.HTML("")
 
-                answer_output = gr.Textbox(
+                chatbot = gr.Chatbot(
+                    value=[],
                     show_label=False,
-                    lines=10,
-                    max_lines=26,
-                    interactive=False,
+                    layout="bubble",
+                    height=None,
+                    min_height=340,
+                    max_height=560,
+                    autoscroll=True,
+                    feedback_options=None,
                     placeholder=t("answer_placeholder", lang),
-                    elem_classes=["ag-answer"],
+                    elem_classes=["ag-chat"],
                 )
 
                 audio_output = gr.Audio(
@@ -1422,6 +1640,8 @@ def build_ui() -> gr.Blocks:
                     interactive=False,
                     elem_classes=["ag-audio"],
                 )
+                new_chat_btn = gr.Button(t("new_chat", lang), size="sm",
+                                         elem_classes=["ag-new-chat"])
 
                 help_eyebrow = gr.HTML(_eyebrow(t("eyebrow_can_help", lang)))
                 help_html = gr.HTML(_help_html(lang))
@@ -1457,44 +1677,64 @@ def build_ui() -> gr.Blocks:
             question_eyebrow, lite_note, text_input, location_eyebrow, location_note,
             location_input, submit_btn, detected_eyebrow, detected_lang_output,
             try_eyebrow, response_eyebrow, answer_note, tools_html_output,
-            answer_output, audio_output, help_eyebrow, help_html, diag_accordion,
+            chatbot, audio_output, help_eyebrow, help_html, diag_accordion,
             transcription_output, english_output, intent_output, trace_output,
-            footer_html, gps_btn, heard_html, *example_btns,
+            footer_html, gps_btn, new_chat_btn, *example_btns,
         ]
         # Order must match _outputs().
         results = [
-            detected_lang_output, transcription_output, english_output, answer_output,
-            audio_output, intent_output, tools_html_output, trace_output, heard_html,
-            detected_state, tools_state, pending_state, heard_state,
+            detected_lang_output, transcription_output, english_output, chatbot,
+            audio_output, intent_output, tools_html_output, trace_output,
+            detected_state, tools_state, pending_state, chat_state, speech_state,
         ]
 
-        submit_btn.click(
-            fn=_on_ask,
-            inputs=[audio_input, text_input, location_input, lang_radio, pending_state],
-            outputs=results,
+        # Each way of asking: (trigger, handler, inputs, extra outputs). The
+        # thread shows its own typing bubble, so Gradio's per-component loading
+        # overlays are switched off.
+        ask_inputs = [audio_input, text_input, location_input, lang_radio, pending_state,
+                      chat_state]
+        routes = [
+            (submit_btn.click, _on_ask, ask_inputs, [text_input]),
+            (text_input.submit, _on_ask, ask_inputs, [text_input]),
+            # Voice-first: tapping stop sends the question — no extra button to
+            # find. The recorder is then cleared, ready for the next question.
+            (audio_input.stop_recording, _on_voice,
+             [audio_input, location_input, lang_radio, pending_state, chat_state],
+             [audio_input]),
+            *[(btn.click, _on_example, [btn, location_input, lang_radio, chat_state], [])
+              for btn in example_btns],
+        ]
+        for trigger, handler, inputs, extra in routes:
+            # always_last: a question asked while a reply is still streaming is
+            # answered next, instead of being dropped.
+            asked = trigger(fn=handler, inputs=inputs, outputs=results + extra,
+                            show_progress="hidden", trigger_mode="always_last")
+            asked.then(fn=_on_speak, inputs=[speech_state, trace_output],
+                       outputs=[audio_output, trace_output], show_progress="hidden")
+            # On a phone the thread sits below the question panel: bring it
+            # into view, so the reply isn't missed.
+            trigger(fn=None, js=_SHOW_THREAD_JS)
+
+        new_chat_btn.click(
+            fn=_new_conversation,
+            inputs=lang_radio,
+            outputs=[chatbot, chat_state, pending_state, detected_state, tools_state,
+                     tools_html_output, detected_lang_output, audio_output, text_input],
+            show_progress="hidden",
         )
-        # Voice-first: tapping stop sends the question — no extra button to find.
-        # The recorder is then cleared, ready for the next question.
-        audio_input.stop_recording(
-            fn=_on_voice,
-            inputs=[audio_input, location_input, lang_radio, pending_state],
-            outputs=results + [audio_input],
-        )
-        for btn in example_btns:
-            btn.click(fn=lambda e: e, inputs=btn, outputs=text_input).then(
-                fn=_on_example, inputs=[btn, location_input, lang_radio], outputs=results)
 
         gps_btn.click(fn=None, inputs=location_input, outputs=location_input, js=_GPS_JS)
         location_input.change(fn=None, inputs=location_input, js=_SAVE_PLACE_JS)
 
         lang_radio.change(
             fn=_localized,
-            inputs=[lang_radio, detected_state, tools_state, heard_state],
+            inputs=[lang_radio, detected_state, tools_state],
             outputs=localized,
         )
         # Tag the page with the language (the CSS relaxes the letterspacing that
         # would break Devanagari / Gurmukhi) and remember it on this phone.
         lang_radio.change(fn=None, inputs=lang_radio, js=_SAVE_LANG_JS)
         demo.load(fn=None, inputs=None, outputs=[lang_radio, location_input], js=_RESTORE_JS)
+        demo.load(fn=None, js=_FOLLOW_THREAD_JS)
 
     return demo

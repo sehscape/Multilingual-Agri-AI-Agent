@@ -391,8 +391,8 @@ def test_page():
     marathi = [u.get("value") for u in ga._localized("mr")]
     check("GPS button and sample questions re-rendered in Marathi",
           "📍 माझे ठिकाण वापरा" in marathi and ga._examples("mr")[0] in marathi)
-    check("'you asked' line escapes the farmer's words",
-          "&lt;script&gt;" in ga._heard_html("<script>x</script>", "en"))
+    check("the farmer's bubble escapes their words",
+          "&lt;script&gt;" in ga._farmer_turn("<script>x</script>", "typed")["content"])
 
 
 def run_journeys():
@@ -509,16 +509,28 @@ def run_journeys():
     import gradio as gr
     frames = list(ga._on_voice(None, "", "hi", None))
     check("stop event before the recording arrives changes nothing (Ask still works)",
-          len(frames) == 1 and len(frames[0]) == 14
-          and all(o == gr.skip() for o in frames[0]))
+          len(frames) == 1 and len(frames[0]) == 14 and frames[0][12] is None
+          and all(o == gr.skip() for i, o in enumerate(frames[0]) if i != 12))
     fake.transcripts["stop.wav"] = "नमस्ते"
-    frames = list(ga._on_voice(make_wav(tmp, "stop.wav"), "", "hi", None))
-    check("stop event answers, then clears the recorder for the next question",
+    greeting = t("msg_greeting", "hi", example=SPOKEN_EXAMPLES["hi"][0])
+    frames = list(ga._on_voice(make_wav(tmp, "stop.wav"), "", "hi", None, []))
+    thread = frames[-1][3]
+    check("stop event answers in the thread, then clears the recorder",
           len(frames) == 2 and frames[-1][-1] is None
-          and frames[-1][3] == t("msg_greeting", "hi", example=SPOKEN_EXAMPLES["hi"][0]))
-    check("the words are shown before the voice is ready",
-          frames[0][4] is None and frames[0][3] == frames[-1][3]
-          and frames[-1][4] is not None, f"{frames[0][4]!r} → {frames[-1][4]!r}")
+          and thread[-1] == {"role": "assistant", "content": greeting}, str(thread))
+    check("the farmer's words replace the mic bubble once Whisper has them",
+          thread[0]["role"] == "user" and "नमस्ते" in thread[0]["content"]
+          and t("voice_question", "hi") in frames[0][3][0]["content"])
+    check("a typing bubble shows while the reply is worked out",
+          frames[0][3][-1]["content"] == ga._TYPING and frames[0][4] is None)
+    audio, _trace = ga._on_speak(frames[-1][12], "")
+    check("the words come first; the voice follows as its own step, in Hindi",
+          frames[-1][4] is None and audio is not None and spoken()[1] == "hi",
+          f"{frames[-1][4]!r} → {audio!r}")
+    frames = list(ga._on_ask(None, "  ", "", "hi", None, thread))
+    check("the thread carries on: an empty Ask adds a prompt, keeps earlier turns",
+          frames[-1][3][:2] == thread[:2]
+          and frames[-1][3][-1]["content"] == t("err_no_input", "hi"))
 
     section("6. Failure paths")
     fake.stt = "rate_limit"

@@ -298,7 +298,14 @@ STRINGS: dict[str, dict[str, str]] = {
         "mr": "🏛 सरकारी योजना — पीएम किसान, पीक विमा (PMFBY), किसान क्रेडिट कार्ड, "
               "मृदा आरोग्य पत्रिका",
     },
-    "heard_prefix": {"en": "You asked", "hi": "आपने पूछा", "pa": "ਤੁਸੀਂ ਪੁੱਛਿਆ", "mr": "तुम्ही विचारले"},
+    "voice_question": {
+        "en": "Voice question…", "hi": "आवाज़ में सवाल…",
+        "pa": "ਆਵਾਜ਼ ਵਿੱਚ ਸਵਾਲ…", "mr": "आवाजातील प्रश्न…",
+    },
+    "new_chat": {
+        "en": "↺ New conversation", "hi": "↺ नई बातचीत",
+        "pa": "↺ ਨਵੀਂ ਗੱਲਬਾਤ", "mr": "↺ नवीन संभाषण",
+    },
 
     # ── Questions back to the farmer (shown and spoken) ──────────────────────
     "ask_crop": {
