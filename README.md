@@ -74,9 +74,9 @@ reliable is found, it says so — a wrong dose can cost a farmer a season.
 
 A real exchange, spoken in Hindi:
 
-> 👨‍🌾 *"गेहूं में खाद कब डालें?"* — *When should I put fertilizer on my wheat?*
-> 🔊 *"आपकी गेहूं की फसल कितने दिन की है? कृपया बताइए, जैसे: 40 दिन।"* — *How many days old is your wheat?*
-> 👨‍🌾 *"40 दिन"*
+> 👨‍🌾 *"गेहूं में खाद कब डालें?"* — *When should I put fertilizer on my wheat?*<br>
+> 🔊 *"आपकी गेहूं की फसल कितने दिन की है? कृपया बताइए, जैसे: 40 दिन।"* — *How many days old is your wheat?*<br>
+> 👨‍🌾 *"40 दिन"*<br>
 > 🔊 *"गेहूं की 40 दिन की उम्र पर, दूसरी सिंचाई के साथ दूसरा यूरिया (25 kg/एकड़) डालें…"* — *At 40 days, apply the second urea dose (25 kg/acre) with the second irrigation…*
 
 **The chosen language always wins.** Ask in English with Hindi selected and the
