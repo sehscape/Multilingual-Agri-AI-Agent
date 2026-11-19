@@ -114,8 +114,11 @@ def main(voice: bool) -> None:
 
     print("\n" + "=" * 64 + "\n2. Language picker\n" + "=" * 64)
     labels = [label for label, _ in LANG_CHOICES]
-    check("picker labels exactly as specified",
-          labels == ["🇬🇧 English", "🇮🇳 Hindi", "ਪੰਜਾਬੀ Punjabi", "मराठी Marathi"], str(labels))
+    check("picker labels exactly as specified (own script first, no flag emoji)",
+          labels == ["English", "हिंदी Hindi", "ਪੰਜਾਬੀ Punjabi", "मराठी Marathi"], str(labels))
+    css = __import__("app.ui.gradio_app", fromlist=["_mic_css"])._mic_css()
+    check("mic button labelled in every language",
+          all(t("mic_tap", c) in css and t("mic_stop", c) in css for c in LANG_CODES))
 
     print("\n" + "=" * 64 + "\n3. Switching language re-renders the page\n" + "=" * 64)
     from app.ui import gradio_app as ga

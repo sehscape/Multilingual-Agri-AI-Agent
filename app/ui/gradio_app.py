@@ -28,7 +28,7 @@ from app.config import (
     VOICE_READY, REGIONAL_READY,
 )
 from app.ui.i18n import (
-    DEFAULT_LANG, LANG_CHOICES, SPOKEN_EXAMPLES, lang_name, normalize_lang, t,
+    DEFAULT_LANG, LANG_CHOICES, LANG_CODES, SPOKEN_EXAMPLES, lang_name, normalize_lang, t,
 )
 
 logger = get_logger(__name__)
@@ -638,26 +638,26 @@ def _detected_text(ui_lang: str, detected_key) -> str:
 # ══════════════════════════════════════════════════════════════════════════════
 # Presentation layer
 #
-# Design language: dark-first editorial. A near-black canvas, hairline rules
-# instead of boxes, thin letterspaced eyebrow labels, one restrained accent
-# (wheat gold), and large tight display type. A full light palette ships
-# alongside it — Gradio puts `dark` on <body> and follows the viewer's system
-# setting, so every colour below is a token defined for both. Append
-# `?__theme=dark` (or `light`) to the URL to pin one.
+# Design language: farmer-first. Large type, plain words, numbered steps, one
+# big microphone, and soft cards on a warm field-coloured canvas, with one
+# accent (wheat gold). A full dark palette ships alongside — Gradio puts
+# `dark` on <body> and follows the viewer's system setting, so every colour
+# below is a token defined for both. Append `?__theme=dark` (or `light`) to
+# the URL to pin one.
 #
 # Rule: never hardcode a colour in generated HTML — only token-backed classes,
 # or it inverts badly in the other theme.
 # ══════════════════════════════════════════════════════════════════════════════
 
-_TOOL_SPECS = (
-    ("crop", "tool_crop"),
-    ("weather", "tool_weather"),
-    ("scheme", "tool_scheme"),
+_TOOL_SPECS = (  # (tool, label key, icon)
+    ("crop", "tool_crop", "🌱"),
+    ("weather", "tool_weather", "🌦"),
+    ("scheme", "tool_scheme", "🏛"),
 )
 
 
 def _eyebrow(text: str, num: str = "") -> str:
-    """A thin letterspaced section marker with a hairline running off to the right."""
+    """A section heading: an optional step number in a circle, then the words."""
     index = f'<span class="ag-eyebrow-num">{num}</span>' if num else ""
     return (
         f'<div class="ag-eyebrow">{index}'
@@ -670,12 +670,12 @@ def _note(text: str) -> str:
     return f'<div class="ag-field-note">{text}</div>'
 
 
-def _tool_chip(label: str, active: bool, lang: str) -> str:
+def _tool_chip(label: str, active: bool, lang: str, icon: str = "") -> str:
     state = "on" if active else "off"
     note = t("chip_used" if active else "chip_idle", lang)
     return (
         f'<span class="ag-chip ag-chip--{state}">'
-        f'<i class="ag-chip-dot"></i>'
+        f'<i class="ag-chip-icon">{icon}</i>'
         f'<span class="ag-chip-label">{label}</span>'
         f'<span class="ag-chip-note">{note}</span></span>'
     )
@@ -684,7 +684,8 @@ def _tool_chip(label: str, active: bool, lang: str) -> str:
 def _tools_strip(lang: str = DEFAULT_LANG, flags=None) -> str:
     """Status strip for the three knowledge sources. flags=None → standing by."""
     used = dict(zip(("crop", "weather", "scheme"), flags or (False, False, False)))
-    chips = "".join(_tool_chip(t(key, lang), used[tool], lang) for tool, key in _TOOL_SPECS)
+    chips = "".join(_tool_chip(t(key, lang), used[tool], lang, icon)
+                    for tool, key, icon in _TOOL_SPECS)
     if flags is None:
         caption = t("tools_idle", lang)
     elif any(used.values()):
@@ -732,9 +733,9 @@ def build_theme():
         radius_size=gr.themes.sizes.radius_sm,
         text_size=gr.themes.sizes.text_md,
     ).set(
-        # Canvas
-        body_background_fill="#F6F5F1",
-        body_background_fill_dark="#08090A",
+        # Canvas — the same colours as --ag-bg in the CSS, edge to edge
+        body_background_fill="#F5F3EC",
+        body_background_fill_dark="#0B0C0D",
         body_text_color="#15171A",
         body_text_color_dark="#EDEFF0",
         body_text_color_subdued="#5C6166",
@@ -824,30 +825,34 @@ def build_theme():
 _CSS = """
 /* ═══ Tokens — Gradio puts `dark` on <body>, so both palettes hang off it ═══ */
 body {
-  --ag-bg:        #F6F5F1;
+  --ag-bg:        #F5F3EC;
   --ag-surface:   #FFFFFF;
-  --ag-sunk:      #EFEDE6;
-  --ag-line:      #E2E0D9;
-  --ag-line-2:    #CFCCC2;
-  --ag-text:      #15171A;
-  --ag-dim:       #5C6166;
-  --ag-faint:     #8A9096;
+  --ag-sunk:      #F1EEE4;
+  --ag-line:      #E4DFD2;
+  --ag-line-2:    #CFC8B6;
+  --ag-text:      #1C1D1A;
+  --ag-dim:       #545953;
+  --ag-faint:     #80857F;
   --ag-accent:    #8A6410;
+  --ag-on-accent: #FFFFFF;
   --ag-accent-bg: rgba(138,100,16,.09);
-  --ag-shade:     rgba(0,0,0,.035);
+  --ag-stop:      #B42318;
+  --ag-shadow:    0 1px 2px rgba(28,29,26,.04), 0 10px 28px rgba(28,29,26,.06);
 }
 body.dark {
-  --ag-bg:        #08090A;
-  --ag-surface:   #0F1113;
-  --ag-sunk:      #131619;
-  --ag-line:      #22262A;
-  --ag-line-2:    #2E3439;
+  --ag-bg:        #0B0C0D;
+  --ag-surface:   #131518;
+  --ag-sunk:      #181B1F;
+  --ag-line:      #262A30;
+  --ag-line-2:    #343A42;
   --ag-text:      #EDEFF0;
-  --ag-dim:       #9AA1A6;
-  --ag-faint:     #646C72;
+  --ag-dim:       #A6ADB3;
+  --ag-faint:     #6F777E;
   --ag-accent:    #D9A441;
-  --ag-accent-bg: rgba(217,164,65,.11);
-  --ag-shade:     rgba(255,255,255,.02);
+  --ag-on-accent: #0B0C0D;
+  --ag-accent-bg: rgba(217,164,65,.12);
+  --ag-stop:      #E5533F;
+  --ag-shadow:    none;
 }
 
 /* ═══ Shell ═══ */
@@ -859,29 +864,32 @@ body { background: var(--ag-bg) !important; color: var(--ag-text); }
 .gradio-container {
   max-width: 1180px !important;
   margin: 0 auto !important;
-  padding: 0 28px 72px !important;
+  padding: 0 28px 56px !important;
   background: var(--ag-bg);
   color: var(--ag-text);
 }
 .gradio-container .prose :is(h1,h2,h3,h4) { color: var(--ag-text); }
 footer { display: none !important; }
+/* Gradio pads every HTML block; without it headings and cards line up with
+   the input boxes and buttons around them. */
+.gradio-container .html-container { padding: 0 !important; }
 
 /* ═══ Top bar ═══ */
 .ag-topbar {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 20px; flex-wrap: wrap;
-  padding: 22px 0 20px;
+  gap: 14px; flex-wrap: wrap;
+  padding: 18px 0 16px;
   border-bottom: 1px solid var(--ag-line);
 }
-.ag-brand { display: flex; align-items: center; gap: 11px; }
-.ag-brand-mark {
-  width: 9px; height: 9px; flex: none;
-  background: var(--ag-accent);
-  transform: rotate(45deg);
-}
+.ag-brand { display: flex; align-items: center; gap: 9px; }
+.ag-brand-mark { display: inline-flex; width: 28px; height: 28px; flex: none; color: var(--ag-accent); }
+.ag-brand-mark svg { width: 100%; height: 100%; }
+/* Gradio gives every element inside an HTML block the text colour, so
+   currentColor can't carry the accent down to the SVG — paint it directly. */
+.ag-brand-mark svg g, .ag-brand-mark svg ellipse { fill: var(--ag-accent) !important; }
+.ag-brand-mark svg path { fill: none !important; stroke: var(--ag-accent) !important; }
 .ag-brand-name {
-  font-size: 12px; font-weight: 600;
-  letter-spacing: .19em; text-transform: uppercase;
+  font-size: 18px; font-weight: 700; letter-spacing: -.01em;
   color: var(--ag-text);
 }
 /* The top bar is a Gradio Row: stop its children stretching to equal widths */
@@ -889,18 +897,18 @@ footer { display: none !important; }
 .ag-topbar .block, .ag-topbar .form { padding: 0 !important; border: none !important;
   background: transparent !important; box-shadow: none !important; }
 
-/* ═══ Language picker — segmented control ═══ */
+/* ═══ Language picker — big round buttons, each in its own script ═══ */
 .ag-lang { background: transparent !important; }
-.ag-lang .wrap { display: flex !important; flex-wrap: wrap; gap: 6px !important; }
+.ag-lang .wrap { display: flex !important; flex-wrap: wrap; gap: 8px !important; }
 .ag-lang label {
   display: inline-flex !important; align-items: center;
   margin: 0 !important;
-  padding: 7px 13px !important;
-  border: 1px solid var(--ag-line) !important;
-  border-radius: 2px !important;
-  background: transparent !important;
+  padding: 9px 16px !important;
+  border: 1.5px solid var(--ag-line) !important;
+  border-radius: 999px !important;
+  background: var(--ag-surface) !important;
   box-shadow: none !important;
-  font-size: 13px !important; font-weight: 500 !important;
+  font-size: 15px !important; font-weight: 500 !important;
   color: var(--ag-dim) !important;
   cursor: pointer;
   transition: border-color .16s ease, color .16s ease, background .16s ease;
@@ -910,7 +918,7 @@ footer { display: none !important; }
   border-color: var(--ag-accent) !important;
   background: var(--ag-accent-bg) !important;
   color: var(--ag-text) !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
 }
 /* Hide the radio dot but keep it focusable for keyboard users */
 .ag-lang input[type="radio"] {
@@ -921,237 +929,272 @@ footer { display: none !important; }
 .ag-lang label span { margin-left: 0 !important; }
 
 /* ═══ Indic scripts ═══
-   The design's wide tracking and uppercase are Latin-only devices: tracking
-   pulls Devanagari/Gurmukhi letters off their headline bar. The page carries
-   lang="hi|mr|pa" once a language is picked, so relax them there.
-   Gradio re-emits every rule behind a long `.gradio-container… .contain`
-   prefix, which outranks a plain html[lang] selector; `:not(#ag-none)` adds
-   ID-level weight so these overrides still win. */
-html:is([lang="hi"], [lang="mr"], [lang="pa"]):not(#ag-none) :is(
-  .ag-brand-name, .ag-hero-eyebrow, .ag-eyebrow-text, .ag-tools-caption,
-  .ag-chip-note, .ag-footer, .ag-phrase-lang, .ag-panel label > span,
-  .ag-ask button, button.ag-ask, .ag-diag .label-wrap
-) {
-  letter-spacing: .01em !important;
-  text-transform: none !important;
+   Tight negative tracking pulls Devanagari/Gurmukhi letters off their
+   headline bar, and the scripts need more line height. The page carries
+   lang="hi|mr|pa" once a language is picked. Gradio re-emits every rule
+   behind a long `.gradio-container… .contain` prefix, which outranks a plain
+   html[lang] selector; `:not(#ag-none)` adds ID-level weight so these win. */
+html:is([lang="hi"], [lang="mr"], [lang="pa"]):not(#ag-none) :is(.ag-hero h1, .ag-brand-name) {
+  letter-spacing: 0 !important;
 }
-html:is([lang="hi"], [lang="mr"], [lang="pa"]):not(#ag-none) .ag-hero h1 {
-  letter-spacing: 0;
-  line-height: 1.3;
-}
+html:is([lang="hi"], [lang="mr"], [lang="pa"]):not(#ag-none) .ag-hero h1 { line-height: 1.3; }
 
 /* ═══ Hero ═══ */
-.ag-hero { padding: 68px 0 60px; max-width: 720px; }
+.ag-hero { padding: 38px 0 22px; max-width: 760px; }
 .ag-hero-eyebrow {
-  font-size: 11px; font-weight: 600;
-  letter-spacing: .21em; text-transform: uppercase;
+  display: inline-block;
+  font-size: 13.5px; font-weight: 700;
   color: var(--ag-accent);
-  margin-bottom: 24px;
+  background: var(--ag-accent-bg);
+  padding: 5px 12px;
+  border-radius: 999px;
+  margin-bottom: 16px;
 }
 .ag-hero h1 {
-  font-size: clamp(2.5rem, 6vw, 4.15rem);
-  line-height: 1.02;
-  letter-spacing: -.035em;
-  font-weight: 600;
-  margin: 0 0 26px;
+  font-size: clamp(2.1rem, 4.6vw, 3.4rem);
+  line-height: 1.06;
+  letter-spacing: -.03em;
+  font-weight: 700;
+  margin: 0 0 14px;
   color: var(--ag-text);
 }
 .ag-hero h1 em { font-style: normal; color: var(--ag-accent); }
 .ag-hero p {
-  font-size: 1.0625rem;
-  line-height: 1.65;
+  font-size: 18px;
+  line-height: 1.6;
   color: var(--ag-dim);
   margin: 0;
-  max-width: 46ch;
-}
-.ag-mode {
-  display: inline-block;
-  margin-top: 30px;
-  padding: 6px 12px;
-  border: 1px solid var(--ag-line);
-  border-radius: 2px;
-  background: var(--ag-shade);
-  font-size: 11px;
-  letter-spacing: .04em;
-  color: var(--ag-faint);
-  font-family: var(--font-mono);
-  word-break: break-word;
+  max-width: 56ch;
 }
 
-/* ═══ Eyebrow section markers ═══ */
-.ag-eyebrow {
-  display: flex; align-items: center; gap: 12px;
-  margin: 0 0 18px;
+/* ═══ What I can help with — three cards ═══ */
+.ag-cards {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 2px 0 26px;
 }
+.ag-card {
+  background: var(--ag-surface);
+  border: 1px solid var(--ag-line);
+  border-radius: 16px;
+  padding: 18px 18px 16px;
+  box-shadow: var(--ag-shadow);
+}
+.ag-card-icon { font-size: 28px; line-height: 1; margin-bottom: 10px; }
+.ag-card-title { font-size: 17px; font-weight: 700; color: var(--ag-text); margin-bottom: 4px; }
+.ag-card-body { font-size: 14.5px; line-height: 1.55; color: var(--ag-dim); }
+
+/* ═══ Section headings, with a step number in a circle ═══ */
+.ag-eyebrow { display: flex; align-items: center; gap: 10px; margin: 4px 0 8px; }
 .ag-eyebrow-num {
-  font-size: 10px; font-weight: 600;
-  letter-spacing: .1em;
-  color: var(--ag-accent);
-  font-family: var(--font-mono);
+  width: 26px; height: 26px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: var(--ag-accent); color: var(--ag-on-accent);
+  font-size: 14px; font-weight: 700;
 }
-.ag-eyebrow-text {
-  font-size: 11px; font-weight: 600;
-  letter-spacing: .19em; text-transform: uppercase;
-  color: var(--ag-dim);
-  white-space: nowrap;
-}
+.ag-eyebrow-text { font-size: 17px; font-weight: 700; color: var(--ag-text); white-space: nowrap; }
 .ag-eyebrow-rule { flex: 1; height: 1px; background: var(--ag-line); }
 
-/* ═══ Console panels ═══ */
-.ag-console { gap: 0 !important; align-items: stretch !important; }
-.ag-panel { padding: 34px 0 40px !important; min-width: 0 !important; }
-.ag-panel--ask { padding-right: 40px !important; }
-.ag-panel--answer {
-  padding-left: 40px !important;
-  border-left: 1px solid var(--ag-line);
+/* ═══ Console: the ask card and the answer card ═══ */
+.ag-console { gap: 22px !important; align-items: stretch !important; }
+.ag-panel {
+  background: var(--ag-surface) !important;
+  border: 1px solid var(--ag-line) !important;
+  border-radius: 20px !important;
+  padding: 22px 24px 26px !important;
+  box-shadow: var(--ag-shadow);
+  gap: 12px !important;
+  min-width: 0 !important;
+}
+.ag-panel .block { padding: 0 !important; }
+.ag-panel .gap { gap: 12px !important; }
+/* Desktop: the ask card stays in view while a long conversation scrolls */
+@media (min-width: 861px) {
+  .ag-console { align-items: flex-start !important; }
+  .ag-panel--ask { position: sticky; top: 16px; }
+}
+@media (max-width: 480px) {
+  .ag-lang label { padding: 7px 12px !important; font-size: 14px !important; }
+  .ag-hero h1 { font-size: 2.05rem; }
 }
 @media (max-width: 860px) {
-  .ag-console { flex-direction: column !important; flex-wrap: nowrap !important; }
-  .ag-console > .ag-panel {
-    width: 100% !important;
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
-  }
-  .ag-panel { padding: 26px 0 30px !important; }
-  .ag-panel--ask { padding-right: 0 !important; }
-  .ag-panel--answer {
-    padding-left: 0 !important;
-    border-left: none;
-    border-top: 1px solid var(--ag-line);
-  }
-  .ag-hero { padding: 44px 0 40px; }
+  .ag-console { flex-direction: column !important; flex-wrap: nowrap !important; gap: 16px !important; }
+  .ag-console > .ag-panel { width: 100% !important; flex: 1 1 auto !important; min-width: 0 !important; }
+  .ag-panel { padding: 18px 16px 20px !important; border-radius: 18px !important; }
+  .ag-hero { padding: 24px 0 16px; }
+  .ag-hero p { font-size: 16.5px; }
+  .ag-cards { grid-template-columns: 1fr; gap: 10px; margin: 16px 0 6px; }
+  .ag-card { display: grid; grid-template-columns: 40px 1fr; column-gap: 10px; padding: 14px; }
+  .ag-card-icon { grid-row: span 2; font-size: 26px; margin: 2px 0 0; }
+  /* On a phone the microphone comes first; what-I-can-help-with follows the answer */
+  .ag-help-block { order: 2; }
+  .ag-diag { order: 3; }
+  .ag-footer-block { order: 4; }
+  .ag-examples { grid-template-columns: 1fr !important; }
   .ag-detected input, .ag-detected textarea { font-size: 16px !important; }
 }
 /* (The page gutters for phones live in _HEAD below: Gradio rewrites rules in
    media queries to sit inside .gradio-container, so they can't reach it.) */
 
-/* Tighten Gradio's default block chrome inside the panels */
-.ag-panel .block { padding: 0 !important; }
-.ag-panel .gap { gap: 14px !important; }
-.ag-panel label > span { letter-spacing: .1em; text-transform: uppercase; }
-
 /* ═══ Inputs ═══ */
 .ag-panel textarea, .ag-panel input[type="text"] {
-  font-size: 15px !important;
-  line-height: 1.6 !important;
+  font-size: 16px !important;
+  line-height: 1.55 !important;
   padding: 13px 14px !important;
-  border-radius: 2px !important;
+  border-radius: 12px !important;
+  background: var(--ag-bg) !important;
   transition: border-color .16s ease;
 }
 .ag-field-note {
-  font-size: 12px; line-height: 1.6;
+  font-size: 14px; line-height: 1.55;
   color: var(--ag-faint);
-  margin: -4px 0 14px;
+  margin: -2px 0 8px;
 }
-.ag-mic { border: 1px solid var(--ag-line) !important; border-radius: 2px !important; }
+
+/* ═══ The microphone — one big button ═══ */
+.ag-mic {
+  background: var(--ag-accent-bg) !important;
+  border: 2px dashed var(--ag-accent) !important;
+  border-radius: 18px !important;
+  padding: 14px !important;
+}
+.ag-mic .controls { flex-direction: column !important; align-items: stretch !important; gap: 8px !important; }
+.ag-mic .controls .wrapper { width: 100%; justify-content: center !important; gap: 8px !important; }
+.ag-mic :is(button.record-button, button.stop-button, button.stop-button-paused) {
+  width: 100% !important;
+  min-height: 62px !important;
+  align-items: center !important; justify-content: center !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background: var(--ag-accent) !important;
+  color: var(--ag-on-accent) !important;
+  font-size: 0 !important;            /* Gradio's English label — the words come from ::after */
+  box-shadow: 0 6px 18px rgba(138,100,16,.25);
+  transition: transform .12s ease, filter .16s ease;
+}
+.ag-mic :is(button.record-button, button.stop-button, button.stop-button-paused):hover { filter: brightness(1.06); }
+.ag-mic :is(button.record-button, button.stop-button, button.stop-button-paused):active { transform: scale(.98); }
+.ag-mic :is(button.record-button, button.stop-button, button.stop-button-paused)::after {
+  font-size: 18px; font-weight: 700; letter-spacing: .01em;
+}
+.ag-mic button.record-button::before {
+  content: ""; width: 24px; height: 24px; margin-right: 10px; flex: none;
+  border: none !important; border-radius: 0 !important;
+  background: currentColor !important;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 15a3.5 3.5 0 0 0 3.5-3.5v-6a3.5 3.5 0 1 0-7 0v6A3.5 3.5 0 0 0 12 15zm6-3.5a1 1 0 1 1 2 0 8 8 0 0 1-7 7.94V21h2a1 1 0 1 1 0 2H9a1 1 0 1 1 0-2h2v-1.56A8 8 0 0 1 4 11.5a1 1 0 1 1 2 0 6 6 0 0 0 12 0z'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 15a3.5 3.5 0 0 0 3.5-3.5v-6a3.5 3.5 0 1 0-7 0v6A3.5 3.5 0 0 0 12 15zm6-3.5a1 1 0 1 1 2 0 8 8 0 0 1-7 7.94V21h2a1 1 0 1 1 0 2H9a1 1 0 1 1 0-2h2v-1.56A8 8 0 0 1 4 11.5a1 1 0 1 1 2 0 6 6 0 0 0 12 0z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+/* Recording: the button turns red and breathes, so it's obvious it's listening */
+.ag-mic :is(button.stop-button, button.stop-button-paused) {
+  background: var(--ag-stop) !important; color: #FFFFFF !important;
+  animation: ag-listening 1.6s ease-in-out infinite;
+}
+.ag-mic :is(button.stop-button, button.stop-button-paused)::before {
+  content: ""; width: 16px; height: 16px; margin-right: 12px; flex: none;
+  border: none !important; border-radius: 3px !important; background: currentColor !important;
+}
+@keyframes ag-listening {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(180,35,24,.35); }
+  50%      { box-shadow: 0 0 0 10px rgba(180,35,24,0); }
+}
+@media (prefers-reduced-motion: reduce) { .ag-mic button { animation: none !important; } }
+.ag-mic select.mic-select {
+  align-self: center;
+  max-width: 100%;
+  font-size: 12.5px !important;
+  color: var(--ag-faint) !important;
+  background: transparent !important;
+  border: none !important;
+  text-align: center;
+}
+
+/* ═══ Location + 📍 on one line ═══ */
+.ag-place { gap: 8px !important; align-items: stretch !important; flex-wrap: nowrap !important; }
+.ag-place > * { min-width: 0 !important; }
+button.ag-gps {
+  white-space: nowrap !important;
+  font-size: 14.5px !important;
+  border-radius: 12px !important;
+  padding: 0 14px !important;
+}
+/* Small phones: the 📍 button drops under the field instead of squeezing it */
+@media (max-width: 480px) {
+  .ag-place { flex-wrap: wrap !important; }
+  .ag-place > * { flex: 1 1 100% !important; }
+  button.ag-gps { padding: 12px 14px !important; }
+}
 
 /* ═══ Ask button ═══ */
 .ag-ask button, button.ag-ask {
   width: 100%;
-  border-radius: 2px !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  letter-spacing: .15em !important;
-  text-transform: uppercase;
-  padding: 17px 20px !important;
+  margin-top: 4px;
+  border-radius: 14px !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  letter-spacing: .01em !important;
+  padding: 16px 20px !important;
   transition: transform .12s ease, background .16s ease;
 }
-.ag-ask button:active { transform: translateY(1px); }
+.ag-ask button:active, button.ag-ask:active { transform: scale(.99); }
 
-/* ═══ Detected-language readout ═══ */
-/* Gradio wraps the field in label.container.show_textbox_border, and that
-   wrapper — not the input — draws the box. Strip every layer back to a rule. */
-.ag-detected { min-width: 0 !important; }
-.ag-detected,
-.ag-detected label,
-.ag-detected .input-container {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-.ag-detected { margin-top: -4px !important; }
-.ag-detected input, .ag-detected textarea {
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-  font-size: 18px !important;
-  letter-spacing: -.01em !important;
-  font-weight: 600 !important;
-  color: var(--ag-accent) !important;
-  resize: none !important;
-  cursor: default;
-  text-overflow: ellipsis;
-}
-
-/* ═══ Tool status strip ═══ */
-.ag-tools { margin: 0 0 26px; }
-.ag-tools-caption {
-  font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
-  color: var(--ag-faint);
-  margin-bottom: 12px;
-}
+/* ═══ Where the answer came from ═══ */
+.ag-tools { margin: 0 0 2px; }
+.ag-tools-caption { font-size: 14px; color: var(--ag-faint); margin-bottom: 8px; }
 .ag-tools-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .ag-chip {
-  display: inline-flex; align-items: center; gap: 9px;
-  padding: 8px 13px;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 13px;
   border: 1px solid var(--ag-line);
-  border-radius: 2px;
-  font-size: 12px;
-  line-height: 1;
+  border-radius: 999px;
+  background: var(--ag-bg);
+  font-size: 14px;
+  line-height: 1.2;
   transition: border-color .2s ease, background .2s ease;
 }
-.ag-chip-dot {
-  width: 6px; height: 6px; flex: none;
-  border-radius: 50%;
-  background: var(--ag-line-2);
-}
+.ag-chip-icon { font-style: normal; font-size: 15px; filter: grayscale(1); opacity: .5; }
 .ag-chip-label { color: var(--ag-faint); font-weight: 500; }
-.ag-chip-note {
-  font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--ag-line-2);
-}
+.ag-chip-note { display: none; }
 .ag-chip--on { border-color: var(--ag-accent); background: var(--ag-accent-bg); }
-.ag-chip--on .ag-chip-dot   { background: var(--ag-accent); }
-.ag-chip--on .ag-chip-label { color: var(--ag-text); font-weight: 600; }
-.ag-chip--on .ag-chip-note  { color: var(--ag-accent); }
+.ag-chip--on .ag-chip-icon { filter: none; opacity: 1; }
+.ag-chip--on .ag-chip-label { color: var(--ag-text); font-weight: 700; }
+.ag-chip--on .ag-chip-note { display: inline; font-size: 12.5px; font-weight: 700; color: var(--ag-accent); }
+.ag-chip--on .ag-chip-note::before { content: "✓ "; }
 
 /* ═══ Conversation thread ═══ */
 .ag-chat {
-  background: var(--ag-surface) !important;
+  background: var(--ag-bg) !important;
   border: 1px solid var(--ag-line) !important;
-  border-radius: 2px !important;
+  border-radius: 16px !important;
 }
-.ag-chat .bubble-wrap { background: transparent !important; padding: 18px 18px 10px !important; }
+.ag-chat .bubble-wrap { background: transparent !important; padding: 16px 16px 10px !important; }
 /* Gradio's share / clear / copy-all strip: the page has its own "new
    conversation" button, and a clear here would leave the thread state behind. */
 .ag-chat .top-panel { display: none !important; }
 .ag-chat .placeholder-content, .ag-chat .placeholder {
-  color: var(--ag-faint) !important; font-size: 15px;
+  color: var(--ag-faint) !important; font-size: 16px;
 }
 /* Width is capped on the row: the bubble itself shrink-wraps its text, so a
    percentage on the bubble would squeeze a short reply like "40 days". */
-.ag-chat .message-row { margin: 4px 0 !important; max-width: 86% !important; }
+.ag-chat .message-row { margin: 4px 0 !important; max-width: 88% !important; }
 .ag-chat div.message.user, .ag-chat div.message.bot {
-  border-radius: 14px !important;
+  border-radius: 16px !important;
   padding: 11px 15px !important;
-  font-size: 15.5px !important;
-  line-height: 1.7 !important;
+  font-size: 16px !important;
+  line-height: 1.65 !important;
   box-shadow: none !important;
   max-width: none !important;
 }
 .ag-chat div.message.user {
   background: var(--ag-accent-bg) !important;
   border: 1px solid var(--ag-accent) !important;
-  border-bottom-right-radius: 3px !important;
+  border-bottom-right-radius: 4px !important;
   color: var(--ag-text) !important;
 }
 .ag-chat div.message.bot {
-  background: var(--ag-sunk) !important;
+  background: var(--ag-surface) !important;
   border: 1px solid var(--ag-line) !important;
-  border-bottom-left-radius: 3px !important;
+  border-bottom-left-radius: 4px !important;
   color: var(--ag-text) !important;
 }
 .ag-chat .message :is(p, li) { color: var(--ag-text) !important; }
@@ -1167,7 +1210,7 @@ html:is([lang="hi"], [lang="mr"], [lang="pa"]):not(#ag-none) .ag-hero h1 {
 /* Typing bubble while the reply is worked out */
 .ag-typing { display: inline-flex; gap: 5px; align-items: center; height: 1.2em; padding: 0 2px; }
 .ag-typing i {
-  width: 7px; height: 7px; border-radius: 50%;
+  width: 8px; height: 8px; border-radius: 50%;
   background: var(--ag-accent);
   opacity: .35;
   animation: ag-typing 1.2s infinite ease-in-out;
@@ -1180,7 +1223,8 @@ html:is([lang="hi"], [lang="mr"], [lang="pa"]):not(#ag-none) .ag-hero h1 {
 }
 @media (prefers-reduced-motion: reduce) { .ag-typing i { animation: none; opacity: .7; } }
 
-.ag-audio { margin-top: 18px !important; }
+/* ═══ The spoken answer ═══ */
+.ag-audio { margin-top: 4px !important; }
 /* The waveform is drawn at a fixed number of pixels per second, so a long
    reply would otherwise widen the whole page on a phone. Neither the player
    nor the thread may decide the page width — they fit the column. */
@@ -1189,126 +1233,112 @@ html:is([lang="hi"], [lang="mr"], [lang="pa"]):not(#ag-none) .ag-hero h1 {
 button.ag-new-chat {
   align-self: flex-end !important;
   width: auto !important; min-width: 0 !important;
-  margin-top: 4px;
-  padding: 7px 14px !important;
-  font-size: 12px !important;
-  border-radius: 2px !important;
+  padding: 8px 16px !important;
+  font-size: 14px !important;
+  border-radius: 999px !important;
   color: var(--ag-dim) !important;
 }
 button.ag-new-chat:hover { color: var(--ag-text) !important; border-color: var(--ag-line-2) !important; }
 
-/* ═══ Example prompts ═══ */
-.ag-examples { margin-top: 8px; }
-.ag-examples .gap { gap: 8px !important; }
-.ag-examples .gap, .ag-examples .form { gap: 0 !important; }
+/* ═══ Sample questions — tappable cards ═══ */
+.ag-panel--answer .ag-eyebrow { margin-top: 10px; }
+.ag-examples {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px !important;
+}
 button.ag-example {
   justify-content: flex-start !important;
+  align-items: flex-start !important;
   text-align: left !important;
-  font-size: 13.5px !important;
-  font-weight: 400 !important;
-  line-height: 1.55 !important;
-  padding: 13px 0 13px 18px !important;
-  border: none !important;
-  border-bottom: 1px solid var(--ag-line) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  color: var(--ag-dim) !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: 1.45 !important;
+  min-height: 62px;
+  padding: 13px 14px 13px 46px !important;
+  border: 1px solid var(--ag-line) !important;
+  border-radius: 14px !important;
+  background: var(--ag-bg) !important;
+  color: var(--ag-text) !important;
   white-space: normal !important;
   height: auto !important;
   position: relative;
-  transition: color .16s ease, padding-left .16s ease;
+  transition: border-color .16s ease, transform .12s ease;
 }
-button.ag-example::before {
-  content: ""; position: absolute; left: 0; top: 1.42em;
-  width: 6px; height: 1px; background: var(--ag-line-2);
-  transition: background .16s ease, width .16s ease;
-}
-button.ag-example:hover {
-  color: var(--ag-text) !important;
-  padding-left: 24px !important;
-  background: transparent !important;
-}
-button.ag-example:hover::before { background: var(--ag-accent); width: 12px; }
+button.ag-example::before { content: "🌾"; position: absolute; left: 14px; top: 12px; font-size: 20px; line-height: 1.2; }
+button.ag-example:nth-of-type(2)::before { content: "🌦"; }
+button.ag-example:nth-of-type(3)::before { content: "🏛"; }
+button.ag-example:nth-of-type(4)::before { content: "🍅"; }
+button.ag-example:hover { border-color: var(--ag-accent) !important; transform: translateY(-1px); }
 
-/* Spoken-phrase reference list */
-.ag-phrases { margin-top: 0; }
-.ag-panel--answer .ag-eyebrow { margin-top: 34px; }
-.ag-panel--answer .ag-eyebrow:first-child { margin-top: 0; }
-.ag-panel--ask .ag-examples { margin-top: 0; }
-.ag-phrase-group { border-top: 1px solid var(--ag-line); padding: 16px 0; }
-.ag-phrase-group:first-child { border-top: none; padding-top: 0; }
-.ag-phrase-lang {
-  font-size: 10px; font-weight: 600;
-  letter-spacing: .19em; text-transform: uppercase;
-  color: var(--ag-faint);
-  margin-bottom: 10px;
+/* ═══ How this answer was made ═══ */
+.ag-diag {
+  margin-top: 24px !important;
+  border: 1px solid var(--ag-line) !important;
+  border-radius: 16px !important;
+  background: var(--ag-surface) !important;
+  padding: 0 18px !important;
 }
-.ag-phrase {
-  font-size: 14px; line-height: 1.75;
-  color: var(--ag-dim);
-  padding-left: 16px;
-  position: relative;
-}
-.ag-phrase::before {
-  content: ""; position: absolute; left: 0; top: .72em;
-  width: 5px; height: 1px; background: var(--ag-accent);
-}
-
-/* ═══ Voice-first additions ═══ */
-/* The microphone is the main way in: give it room and a clear edge. */
-.ag-mic { min-height: 132px; border-width: 2px !important; border-color: var(--ag-accent) !important; }
-.ag-mic button { font-size: 15px !important; }
-/* Location field + 📍 button on one line */
-.ag-place { gap: 8px !important; align-items: stretch !important; flex-wrap: nowrap !important; }
-.ag-place > * { min-width: 0 !important; }
-button.ag-gps {
-  white-space: nowrap !important;
-  font-size: 13px !important;
-  border-radius: 2px !important;
-  padding: 0 12px !important;
-}
-/* Small phones: the 📍 button drops under the field instead of squeezing it */
-@media (max-width: 480px) {
-  .ag-place { flex-wrap: wrap !important; }
-  .ag-place > * { flex: 1 1 100% !important; }
-  button.ag-gps { padding: 11px 12px !important; }
-}
-/* What I can help with */
-.ag-help-line {
-  font-size: 14px; line-height: 1.7;
-  color: var(--ag-dim);
-  padding: 11px 0;
-  border-bottom: 1px solid var(--ag-line);
-}
-.ag-help-line:last-child { border-bottom: none; }
-
-/* ═══ Diagnostics accordion ═══ */
-.ag-diag { margin-top: 8px !important; border-top: 1px solid var(--ag-line) !important; }
 .ag-diag .label-wrap {
-  padding: 22px 0 !important;
-  font-size: 11px !important; font-weight: 600 !important;
-  letter-spacing: .19em !important; text-transform: uppercase;
-  color: var(--ag-faint) !important;
+  padding: 16px 0 !important;
+  font-size: 15px !important; font-weight: 600 !important;
+  color: var(--ag-dim) !important;
 }
 .ag-diag .label-wrap:hover { color: var(--ag-text) !important; }
 .ag-diag textarea {
   font-family: var(--font-mono) !important;
-  font-size: 12px !important;
+  font-size: 12.5px !important;
   line-height: 1.65 !important;
   background: var(--ag-sunk) !important;
   border: 1px solid var(--ag-line) !important;
-  border-radius: 2px !important;
+  border-radius: 10px !important;
   color: var(--ag-dim) !important;
 }
 
+/* Question-language readout (inside the drawer). Gradio wraps the field in
+   label.container.show_textbox_border, and that wrapper — not the input —
+   draws the box: strip every layer back to plain text. */
+.ag-detected { min-width: 0 !important; }
+.ag-detected,
+.ag-detected label,
+.ag-detected .input-container {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+.ag-detected input, .ag-detected textarea {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  color: var(--ag-accent) !important;
+  resize: none !important;
+  cursor: default;
+  text-overflow: ellipsis;
+}
+
 /* ═══ Footer ═══ */
-.ag-footer {
-  margin-top: 40px; padding-top: 24px;
+.ag-footer { margin-top: 22px; }
+.ag-footer-note {
+  font-size: 14.5px; line-height: 1.6;
+  color: var(--ag-dim);
+  background: var(--ag-accent-bg);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.ag-footer-row {
+  display: flex; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap;
+  padding-top: 14px;
   border-top: 1px solid var(--ag-line);
-  display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-  font-size: 11px; letter-spacing: .13em; text-transform: uppercase;
+  font-size: 13.5px;
   color: var(--ag-faint);
 }
+.ag-mode { font-family: var(--font-mono); font-size: 11.5px; color: var(--ag-faint); word-break: break-word; }
 """
 
 # Rules that must reach Gradio's outer wrapper on phones. Gradio only keeps a
@@ -1344,16 +1374,23 @@ def _examples(lang: str) -> list[str]:
 
 
 def _help_html(lang: str) -> str:
-    """What the assistant can help with — sets expectations before asking."""
-    lines = "".join(f'<div class="ag-help-line">{t(key, lang)}</div>'
-                    for key in ("help_crop", "help_weather", "help_scheme"))
-    return f'<div class="ag-help">{lines}</div>'
+    """What the assistant can help with, as three cards — sets expectations
+    before the farmer asks. Each message reads "🌾 Title — details"."""
+    cards = []
+    for key in ("help_crop", "help_weather", "help_scheme"):
+        head, _, body = t(key, lang).partition(" — ")
+        icon, _, title = head.partition(" ")
+        body = body[:1].upper() + body[1:]  # "fertilizer, …" → "Fertilizer, …"
+        cards.append(f'<div class="ag-card"><div class="ag-card-icon">{icon}</div>'
+                     f'<div class="ag-card-title">{title}</div>'
+                     f'<div class="ag-card-body">{body}</div></div>')
+    return f'<div class="ag-cards">{"".join(cards)}</div>'
 
 
 # ── Localised fragments ───────────────────────────────────────────────────────
 
 def _mode_info() -> str:
-    """Technical build line under the hero (kept in English — it's diagnostic)."""
+    """Technical build line in the footer (kept in English — it's diagnostic)."""
     if USE_GROQ:
         llm_mode = f"groq {GROQ_LLM_MODELS[0] if GROQ_LLM_MODELS else '?'}"
     elif USE_STUB_LLM:
@@ -1368,8 +1405,23 @@ def _mode_info() -> str:
             f"agent {AGENT_BACKEND} · rag {RAG_BACKEND} · tts {TTS_ENGINE} · {answers}")
 
 
+# A wheat ear: the brand mark, drawn in the accent colour (the span sets the
+# colour; the SVG paints with currentColor).
+_WHEAT_SVG = (
+    '<span class="ag-brand-mark"><svg viewBox="0 0 24 24" aria-hidden="true">'
+    '<path d="M12 22V9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'
+    '<g fill="currentColor">'
+    '<ellipse cx="12" cy="4.6" rx="1.9" ry="3"/>'
+    '<ellipse cx="8.9" cy="9" rx="1.8" ry="3" transform="rotate(-35 8.9 9)"/>'
+    '<ellipse cx="15.1" cy="9" rx="1.8" ry="3" transform="rotate(35 15.1 9)"/>'
+    '<ellipse cx="8.9" cy="14" rx="1.8" ry="3" transform="rotate(-35 8.9 14)"/>'
+    '<ellipse cx="15.1" cy="14" rx="1.8" ry="3" transform="rotate(35 15.1 14)"/>'
+    '</g></svg></span>'
+)
+
+
 def _brand_html(lang: str) -> str:
-    return ('<div class="ag-brand"><span class="ag-brand-mark"></span>'
+    return (f'<div class="ag-brand">{_WHEAT_SVG}'
             f'<span class="ag-brand-name">{t("brand", lang)}</span></div>')
 
 
@@ -1382,18 +1434,41 @@ def _hero_body_key() -> str:
 def _hero_html(lang: str) -> str:
     return (f'<div class="ag-hero">'
             f'<div class="ag-hero-eyebrow">{t("hero_eyebrow", lang)}</div>'
-            f'<h1>{t("hero_title", lang)}</h1><p>{t(_hero_body_key(), lang)}</p>'
-            f'<div class="ag-mode">{_mode_info()}</div></div>')
+            f'<h1>{t("hero_title", lang)}</h1><p>{t(_hero_body_key(), lang)}</p></div>')
 
 
 def _footer_html(lang: str) -> str:
-    stack = "Whisper · Groq · LangChain · gTTS" if USE_GROQ else "Whisper · LangChain · FAISS · gTTS"
-    return (f'<div class="ag-footer"><span>{t("footer_left", lang)}</span>'
-            f'<span>{stack}</span></div>')
+    """The KVK reminder for the farmer; the build line for whoever deploys it."""
+    return (f'<div class="ag-footer">'
+            f'<div class="ag-footer-note">ⓘ {t("kvk_note", lang)}</div>'
+            f'<div class="ag-footer-row"><span>{t("footer_left", lang)}</span>'
+            f'<span class="ag-mode">{_mode_info()}</span></div></div>')
 
 
 def _mic_note(lang: str) -> str:
     return _note(t("mic_note_auto", lang, language=lang_name(lang, lang)))
+
+
+def _mic_css() -> str:
+    """Labels for the big microphone button, in the page's language.
+
+    Gradio's recorder writes "Record" / "Stop" in English, and its buttons
+    can't be relabelled from Python — so the words come from CSS, keyed on the
+    lang attribute the page carries (see _SAVE_LANG_JS), and are generated
+    from the same messages as the rest of the screen."""
+    def quoted(text: str) -> str:
+        return '"' + text.replace('"', r'\"') + '"'
+    rules = []
+    for code in LANG_CODES:
+        page = ":root" if code == DEFAULT_LANG else f'html[lang="{code}"]'
+        rules.append(f"{page} .ag-mic button.record-button::after "
+                     f"{{ content: {quoted(t('mic_tap', code))}; }}")
+        rules.append(f"{page} .ag-mic :is(button.stop-button, button.stop-button-paused)::after "
+                     f"{{ content: {quoted(t('mic_stop', code))}; }}")
+    return "\n".join(rules)
+
+
+_CSS += "\n/* ═══ Microphone labels, one per language (generated) ═══ */\n" + _mic_css() + "\n"
 
 
 def _localized(lang, detected_key=None, tools_flags=None) -> list:
@@ -1404,15 +1479,15 @@ def _localized(lang, detected_key=None, tools_flags=None) -> list:
     return [
         gr.update(value=_brand_html(lang)),
         gr.update(value=_hero_html(lang)),
-        gr.update(value=_eyebrow(t("eyebrow_speak", lang), "01")),
+        gr.update(value=_eyebrow(t("eyebrow_speak", lang), "1")),
         gr.update(value=_mic_note(lang)),
         gr.update(value=_eyebrow(t("eyebrow_or_type_any" if regional else "eyebrow_or_type",
-                                   lang), "02")),
-        gr.update(value=_eyebrow(t("eyebrow_question", lang), "01")),
+                                   lang), "2")),
+        gr.update(value=_eyebrow(t("eyebrow_question", lang), "1")),
         gr.update(value=_note(t("lite_note", lang))),
         gr.update(placeholder=t("text_placeholder_native" if regional else "text_placeholder",
                                 lang)),
-        gr.update(value=_eyebrow(t("eyebrow_location", lang), "03" if VOICE_READY else "02")),
+        gr.update(value=_eyebrow(t("eyebrow_location", lang), "3" if VOICE_READY else "2")),
         gr.update(value=_note(t("location_note_voice" if VOICE_READY else "location_note",
                                 lang))),
         gr.update(placeholder=t("location_placeholder_native" if regional
@@ -1513,7 +1588,7 @@ def build_ui() -> gr.Blocks:
     lang = DEFAULT_LANG
     regional = REGIONAL_READY
 
-    with gr.Blocks(title="Agri Assistant", fill_width=True) as demo:
+    with gr.Blocks(title="Agri Assistant · Multilingual Agri AI Agent", fill_width=True) as demo:
         # Remembered so a language switch can re-render the last result's
         # language readout, tool chips and "you asked" line in the new language.
         detected_state = gr.State(None)
@@ -1537,8 +1612,10 @@ def build_ui() -> gr.Blocks:
                 elem_classes=["ag-lang"],
             )
 
-        # ── Hero ──────────────────────────────────────────────────────────────
+        # ── Hero + what it can help with ──────────────────────────────────────
         hero_html = gr.HTML(_hero_html(lang))
+        help_eyebrow = gr.HTML(_eyebrow(t("eyebrow_can_help", lang)), visible=False)
+        help_html = gr.HTML(_help_html(lang), elem_classes=["ag-help-block"])
 
         # ── Console ───────────────────────────────────────────────────────────
         with gr.Row(equal_height=False, elem_classes=["ag-console"]):
@@ -1547,7 +1624,7 @@ def build_ui() -> gr.Blocks:
             with gr.Column(scale=5, min_width=300,
                            elem_classes=["ag-panel", "ag-panel--ask"]):
                 # Voice — whenever a speech-to-text engine is available.
-                speak_eyebrow = gr.HTML(_eyebrow(t("eyebrow_speak", lang), "01"),
+                speak_eyebrow = gr.HTML(_eyebrow(t("eyebrow_speak", lang), "1"),
                                         visible=VOICE_READY)
                 mic_note = gr.HTML(_mic_note(lang), visible=VOICE_READY)
                 audio_input = gr.Audio(
@@ -1560,10 +1637,10 @@ def build_ui() -> gr.Blocks:
                 )
                 or_type_eyebrow = gr.HTML(
                     _eyebrow(t("eyebrow_or_type_any" if regional else "eyebrow_or_type",
-                               lang), "02"),
+                               lang), "2"),
                     visible=VOICE_READY)
                 # Typed-only build (LITE without a Groq key)
-                question_eyebrow = gr.HTML(_eyebrow(t("eyebrow_question", lang), "01"),
+                question_eyebrow = gr.HTML(_eyebrow(t("eyebrow_question", lang), "1"),
                                            visible=not VOICE_READY)
                 lite_note = gr.HTML(_note(t("lite_note", lang)), visible=not VOICE_READY)
 
@@ -1575,7 +1652,7 @@ def build_ui() -> gr.Blocks:
                 )
 
                 location_eyebrow = gr.HTML(
-                    _eyebrow(t("eyebrow_location", lang), "03" if VOICE_READY else "02"))
+                    _eyebrow(t("eyebrow_location", lang), "3" if VOICE_READY else "2"))
                 location_note = gr.HTML(_note(t("location_note_voice" if VOICE_READY
                                                 else "location_note", lang)))
                 with gr.Row(equal_height=True, elem_classes=["ag-place"]):
@@ -1595,22 +1672,6 @@ def build_ui() -> gr.Blocks:
                     size="lg",
                     elem_classes=["ag-ask"],
                 )
-
-                detected_eyebrow = gr.HTML(_eyebrow(t("eyebrow_detected", lang)))
-                detected_lang_output = gr.Textbox(
-                    value=t("pending", lang),
-                    show_label=False,
-                    container=False,
-                    interactive=False,
-                    lines=1,
-                    max_lines=1,
-                    elem_classes=["ag-detected"],
-                )
-
-                try_eyebrow = gr.HTML(_eyebrow(t("eyebrow_try", lang)))
-                with gr.Column(elem_classes=["ag-examples"]):
-                    example_btns = [gr.Button(e, size="sm", elem_classes=["ag-example"])
-                                    for e in _examples(lang)]
 
             # ── RIGHT: the answer ────────────────────────────────────────────
             with gr.Column(scale=7, min_width=340,
@@ -1643,12 +1704,25 @@ def build_ui() -> gr.Blocks:
                 new_chat_btn = gr.Button(t("new_chat", lang), size="sm",
                                          elem_classes=["ag-new-chat"])
 
-                help_eyebrow = gr.HTML(_eyebrow(t("eyebrow_can_help", lang)))
-                help_html = gr.HTML(_help_html(lang))
+                # Sample questions — tapping one asks it.
+                try_eyebrow = gr.HTML(_eyebrow(t("eyebrow_try", lang)))
+                with gr.Column(elem_classes=["ag-examples"]):
+                    example_btns = [gr.Button(e, size="sm", elem_classes=["ag-example"])
+                                    for e in _examples(lang)]
 
-        # ── Diagnostics ───────────────────────────────────────────────────────
+        # ── How the answer was made (for the curious, and for debugging) ──────
         with gr.Accordion(t("diag", lang), open=False,
                           elem_classes=["ag-diag"]) as diag_accordion:
+            detected_eyebrow = gr.HTML(_eyebrow(t("eyebrow_detected", lang)))
+            detected_lang_output = gr.Textbox(
+                value=t("pending", lang),
+                show_label=False,
+                container=False,
+                interactive=False,
+                lines=1,
+                max_lines=1,
+                elem_classes=["ag-detected"],
+            )
             with gr.Row():
                 transcription_output = gr.Textbox(
                     label=t("heard_label", lang),
@@ -1668,7 +1742,7 @@ def build_ui() -> gr.Blocks:
                                       interactive=False, visible=DEV_MODE)
 
         # ── Footer ────────────────────────────────────────────────────────────
-        footer_html = gr.HTML(_footer_html(lang))
+        footer_html = gr.HTML(_footer_html(lang), elem_classes=["ag-footer-block"])
 
         # ── Wiring ────────────────────────────────────────────────────────────
         # Order must match _localized().

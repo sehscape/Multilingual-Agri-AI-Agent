@@ -10,9 +10,11 @@ Keep every key present in all four languages — scripts/test_i18n.py checks it.
 from __future__ import annotations
 
 # Picker labels — exactly as shown on the page — and their language codes.
+# Each language is written in its own script first, so a farmer finds theirs
+# at a glance. (Flag emoji were dropped: Windows shows them as "GB" / "IN".)
 LANG_CHOICES = [
-    ("🇬🇧 English", "en"),
-    ("🇮🇳 Hindi", "hi"),
+    ("English", "en"),
+    ("हिंदी Hindi", "hi"),
     ("ਪੰਜਾਬੀ Punjabi", "pa"),
     ("मराठी Marathi", "mr"),
 ]
@@ -98,7 +100,9 @@ STRINGS: dict[str, dict[str, str]] = {
         "pa": "ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ ਲਿਖੋ, ਜਿਵੇਂ: Will it rain in Pune tomorrow?",
         "mr": "इंग्रजीत लिहा, उदा.: Will it rain in Pune tomorrow?",
     },
-    "eyebrow_location": {"en": "Location", "hi": "स्थान", "pa": "ਟਿਕਾਣਾ", "mr": "ठिकाण"},
+    "eyebrow_location": {
+        "en": "Your village", "hi": "आपका गाँव", "pa": "ਤੁਹਾਡਾ ਪਿੰਡ", "mr": "तुमचे गाव",
+    },
     "location_note": {
         "en": "Used to pull the live forecast over your field.",
         "hi": "आपके खेत के मौसम का ताज़ा पूर्वानुमान लाने के लिए।",
@@ -126,11 +130,12 @@ STRINGS: dict[str, dict[str, str]] = {
     "mode_typed": {"en": "typed", "hi": "लिखकर", "pa": "ਲਿਖ ਕੇ", "mr": "लिहून"},
     "mode_voice": {"en": "voice", "hi": "आवाज़ से", "pa": "ਆਵਾਜ਼ ਨਾਲ", "mr": "आवाजाने"},
     "eyebrow_try": {
-        "en": "Try one", "hi": "एक आज़माइए", "pa": "ਇੱਕ ਅਜ਼ਮਾਓ", "mr": "एक वापरून पाहा",
+        "en": "Try asking", "hi": "ऐसे पूछ सकते हैं", "pa": "ਇੰਝ ਪੁੱਛ ਸਕਦੇ ਹੋ",
+        "mr": "असे विचारू शकता",
     },
 
     # ── Answer panel ─────────────────────────────────────────────────────────
-    "eyebrow_response": {"en": "Response", "hi": "जवाब", "pa": "ਜਵਾਬ", "mr": "उत्तर"},
+    "eyebrow_response": {"en": "Answer", "hi": "जवाब", "pa": "ਜਵਾਬ", "mr": "उत्तर"},
     "answer_note": {
         "en": "Advice is shown and spoken in English.",
         "hi": "सलाह अंग्रेज़ी में दिखाई और सुनाई जाती है।",
@@ -142,14 +147,19 @@ STRINGS: dict[str, dict[str, str]] = {
         "pa": "ਤੁਹਾਡੀ ਸਲਾਹ ਇੱਥੇ ਦਿਖਾਈ ਦੇਵੇਗੀ।", "mr": "तुमचा सल्ला येथे दिसेल.",
     },
     "audio_label": {
-        "en": "Spoken reply", "hi": "सुनाई गई सलाह",
-        "pa": "ਸੁਣਾਈ ਗਈ ਸਲਾਹ", "mr": "ऐकवलेला सल्ला",
+        "en": "Listen to the answer", "hi": "जवाब सुनिए",
+        "pa": "ਜਵਾਬ ਸੁਣੋ", "mr": "उत्तर ऐका",
     },
     "eyebrow_say_aloud": {
         "en": "Or say it aloud", "hi": "या बोलकर पूछिए",
         "pa": "ਜਾਂ ਬੋਲ ਕੇ ਪੁੱਛੋ", "mr": "किंवा बोलून विचारा",
     },
-    "tools_idle": {"en": "Standing by", "hi": "तैयार", "pa": "ਤਿਆਰ", "mr": "तयार"},
+    "tools_idle": {
+        "en": "Answers come only from these sources",
+        "hi": "जवाब सिर्फ़ इन्हीं स्रोतों से आते हैं",
+        "pa": "ਜਵਾਬ ਸਿਰਫ਼ ਇਨ੍ਹਾਂ ਸਰੋਤਾਂ ਤੋਂ ਆਉਂਦੇ ਹਨ",
+        "mr": "उत्तरे फक्त या स्रोतांमधूनच येतात",
+    },
     "tools_used": {  # {n} = number of sources used
         "en": "{n} of 3 sources consulted", "hi": "3 में से {n} स्रोत देखे गए",
         "pa": "3 ਵਿੱਚੋਂ {n} ਸਰੋਤ ਵੇਖੇ ਗਏ", "mr": "3 पैकी {n} स्रोत तपासले",
@@ -166,8 +176,8 @@ STRINGS: dict[str, dict[str, str]] = {
 
     # ── Diagnostics & footer ─────────────────────────────────────────────────
     "diag": {
-        "en": "Transcript & pipeline", "hi": "प्रतिलेख और प्रक्रिया",
-        "pa": "ਲਿਖਤ ਅਤੇ ਪ੍ਰਕਿਰਿਆ", "mr": "प्रतिलेख आणि प्रक्रिया",
+        "en": "How this answer was made", "hi": "यह जवाब कैसे बना",
+        "pa": "ਇਹ ਜਵਾਬ ਕਿਵੇਂ ਬਣਿਆ", "mr": "हे उत्तर कसे तयार झाले",
     },
     "heard_label": {"en": "Heard", "hi": "सुना गया", "pa": "ਸੁਣਿਆ ਗਿਆ", "mr": "ऐकलेले"},
     "heard_placeholder": {
@@ -305,6 +315,25 @@ STRINGS: dict[str, dict[str, str]] = {
     "new_chat": {
         "en": "↺ New conversation", "hi": "↺ नई बातचीत",
         "pa": "↺ ਨਵੀਂ ਗੱਲਬਾਤ", "mr": "↺ नवीन संभाषण",
+    },
+    # The big microphone button (shown through CSS, see gradio_app._mic_css)
+    "mic_tap": {
+        "en": "Tap to speak", "hi": "बोलने के लिए दबाएँ",
+        "pa": "ਬੋਲਣ ਲਈ ਦਬਾਓ", "mr": "बोलण्यासाठी दाबा",
+    },
+    "mic_stop": {
+        "en": "Tap to stop", "hi": "रोकने के लिए दबाएँ",
+        "pa": "ਰੋਕਣ ਲਈ ਦਬਾਓ", "mr": "थांबवण्यासाठी दाबा",
+    },
+    "kvk_note": {
+        "en": "This advice is general. For exact doses, check with your nearest "
+              "Krishi Vigyan Kendra (KVK).",
+        "hi": "यह सलाह सामान्य है। सही मात्रा के लिए अपने नज़दीकी कृषि विज्ञान केंद्र "
+              "(KVK) से पूछें।",
+        "pa": "ਇਹ ਸਲਾਹ ਆਮ ਹੈ। ਸਹੀ ਮਾਤਰਾ ਲਈ ਆਪਣੇ ਨੇੜਲੇ ਕ੍ਰਿਸ਼ੀ ਵਿਗਿਆਨ ਕੇਂਦਰ (KVK) "
+              "ਤੋਂ ਪੁੱਛੋ।",
+        "mr": "हा सल्ला सर्वसाधारण आहे. नेमक्या मात्रेसाठी जवळच्या कृषी विज्ञान "
+              "केंद्राला (KVK) विचारा.",
     },
 
     # ── Questions back to the farmer (shown and spoken) ──────────────────────
