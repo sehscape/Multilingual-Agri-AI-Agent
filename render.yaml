@@ -1,4 +1,4 @@
-# Render Blueprint — free "Lite" deploy of the Farmer Advisory Voice Agent.
+# Render Blueprint — free "Lite" deploy of the Multilingual Agri AI Agent.
 #
 # Render auto-detects this file. It runs the app in LITE_MODE so it fits the
 # free tier's 512 MB RAM: live weather, crop advice, keyword-based
@@ -12,9 +12,10 @@
 
 services:
   - type: web
-    name: farmer-advisory-voice-agent
+    name: multilingual-agri-ai-agent   # → https://multilingual-agri-ai-agent.onrender.com
     runtime: python
     plan: free
+    autoDeploy: true                   # every push to main redeploys
     region: singapore              # closest Render region to India; change if you prefer
     buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements-lite.txt
     startCommand: python app.py
