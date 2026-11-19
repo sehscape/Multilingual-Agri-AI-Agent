@@ -81,11 +81,12 @@ Render reads `render.yaml`, asks for `GROQ_API_KEY` (section C), and builds.
 
 ### Using it
 
-- Pick a language in the top-right picker — the whole screen switches (and the
-  phone remembers it next time).
-- **With the Groq key (section C):** tap the microphone, ask in that language,
-  tap stop — the answer appears and plays by itself, in that language. Missing
-  details (crop age, village…) are asked for out loud; just answer ("40 days").
+- Pick a language at the top (English · हिंदी · ਪੰਜਾਬੀ · मराठी) — the whole screen
+  switches, and the phone remembers it next time.
+- **With the Groq key (section C):** press the big **Tap to speak** button, ask in
+  that language, press it again to stop — the answer appears and plays by itself,
+  in that language. Missing details (crop age, village…) are asked for out loud;
+  just answer ("40 days").
 - **Without the key:** type a question in English, add a location (e.g. *Pune*),
   press **Ask**.
 - Try: `How do I apply for PM-KISAN?` · `Will it rain in Nashik tomorrow?` ·
@@ -96,9 +97,9 @@ Render reads `render.yaml`, asks for `GROQ_API_KEY` (section C), and builds.
 - The free instance **sleeps after ~15 min** with no visitors; the next visit
   wakes it in ~30–60 s. That's normal for the free tier. **Open the link a couple
   of minutes before a demo.**
-- To redeploy after a code change: `git push`, then in Render click
-  **Manual Deploy → Deploy latest commit**. (Connecting Render's GitHub app
-  under *Settings → Build & Deploy* turns on automatic deploys.)
+- To redeploy after a code change: `git push`. A Blueprint service with
+  `autoDeploy: true` rebuilds by itself; otherwise click
+  **Manual Deploy → Deploy latest commit**.
 - Free tier = 750 instance-hours/month (enough for one always-available service).
 - Memory: the Lite build (with LangChain) uses ~170 MB of the 512 MB limit.
 
@@ -122,13 +123,14 @@ using only the facts the app's tools found. Free plan, no credit card.
 
 ### 2. Give it to Render
 
-1. **https://dashboard.render.com** → click the **farmer-advisory-voice-agent** service.
+1. **https://dashboard.render.com** → click the **multilingual-agri-ai-agent** service.
 2. Left menu → **Environment** → **Add Environment Variable**.
 3. Key: `GROQ_API_KEY` · Value: *paste the key* → **Save Changes**.
 4. Then **Manual Deploy → Deploy latest commit** (loads the newest code with the key).
-5. When the log shows `Running on http://0.0.0.0:10000`, open the site: the
-   microphone is there, and the grey line under the headline says
-   `voice groq whisper-large-v3 · llm groq openai/gpt-oss-120b · … · 4 languages`.
+5. When the log shows `Running on http://0.0.0.0:10000`, open the site: the big
+   **Tap to speak** button is there, and the small status line at the bottom of
+   the page says
+   `lite · voice groq whisper-large-v3 · llm groq openai/gpt-oss-120b · … · 4 languages`.
 
 ### 3. (Optional) Use it on your laptop too
 

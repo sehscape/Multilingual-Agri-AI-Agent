@@ -3,7 +3,7 @@
 <p align="center">
   <a href="https://multilingual-agri-ai-agent.onrender.com"><img alt="Live demo" src="https://img.shields.io/badge/%E2%96%B6%20Live%20demo-Render-D9A441?style=for-the-badge&labelColor=08090A"></a>
   <a href="https://colab.research.google.com/github/sehscape/Multilingual-Agri-AI-Agent/blob/main/notebooks/run_full_app_colab.ipynb"><img alt="Open in Colab" src="https://img.shields.io/badge/Full%20app-Colab-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=white&labelColor=08090A"></a>
-  <a href="#-quality--results"><img alt="Tests" src="https://img.shields.io/badge/checks-191%20passing-2EA44F?style=for-the-badge&labelColor=08090A"></a>
+  <a href="#-quality--results"><img alt="Tests" src="https://img.shields.io/badge/checks-192%20passing-2EA44F?style=for-the-badge&labelColor=08090A"></a>
 </p>
 
 <p align="center">
@@ -17,9 +17,9 @@
 </p>
 
 <p align="center">
-  <b>A voice-enabled farming assistant powered by RAG, LLMs and real-time weather intelligence.</b><br>
-  Pick a language, tap the mic, ask about your crop, the weather over your field or a government scheme —<br>
-  and hear a short, grounded answer back in <b>English, हिन्दी, ਪੰਜਾਬੀ or मराठी</b>.
+  <b>Agri Assistant (कृषि सहायक) — a voice-enabled farming assistant powered by RAG, LLMs and real-time weather intelligence.</b><br>
+  Pick a language, tap the big mic, ask about your crop, the weather over your field or a government scheme —<br>
+  and hear a short, grounded answer back in <b>English, हिंदी, ਪੰਜਾਬੀ or मराठी</b>.
 </p>
 
 <p align="center">
@@ -84,6 +84,22 @@ A real exchange, spoken in Hindi:
 answer comes back in Hindi; the microphone also listens *for* that language
 instead of guessing it.
 
+## 🧑‍🌾 Designed for farmers
+
+Every part of the screen is there for someone who may be using a phone in the
+field, may not read comfortably, and has never used an AI app.
+
+| On the screen | Why it's there |
+|---|---|
+| **Language buttons in their own script** — English · हिंदी · ਪੰਜਾਬੀ · मराठी | A farmer finds their language by sight; the choice is remembered on the phone |
+| **One big "Tap to speak" button** — labelled बोलने के लिए दबाएँ, ਬੋਲਣ ਲਈ ਦਬਾਓ, बोलण्यासाठी दाबा… | Speaking is the main way in; it turns red and pulses while it listens |
+| **Three numbered steps** — ① Speak ② Or type ③ Your village | Plain words instead of form labels; 📍 fills the village from GPS |
+| **Three cards: crop care, weather, schemes** | Says what the assistant can and can't help with *before* the farmer asks |
+| **A chat thread that talks back** | Every reply is spoken automatically; ask-backs ("how many days old?") are answered in one word |
+| **"Answers come only from these sources"** | Shows which source — crop guide, live weather, scheme documents — each answer used |
+| **Example questions as cards** | One tap asks a real question in the chosen language |
+| **A KVK reminder on every page** | "For exact doses, check with your nearest Krishi Vigyan Kendra" — in all four languages |
+
 ## ✨ Highlights
 
 | | |
@@ -94,7 +110,7 @@ instead of guessing it.
 | 📚 **Grounded RAG with refusal** | Scheme answers come from retrieved passages; below a 0.30 relevance score it answers *"the documents don't cover this"* instead of guessing |
 | ❓ **Asks back, never guesses** | Missing crop, missing age, impossible age (*wheat, 300 days*), unknown place, unsupported crop — each gets a clear spoken question |
 | ⚡ **Words first, voice next** | The answer appears in a median **2.5 s**; the recording follows as a separate step, so the farmer can already ask again |
-| 📱 **Made for phones** | Language and village remembered on the device, 📍 GPS for weather, auto-send when you tap stop, dark mode |
+| 📱 **Made for phones** | Mic first on a small screen, language and village remembered on the device, 📍 GPS for weather, auto-send when you tap stop, dark mode |
 | 🆓 **Runs on a free 512 MB host** | A *Lite* build drops PyTorch entirely and hands listening and language work to Groq's free API — ~170 MB RAM |
 
 ## 🧠 How it works
@@ -284,10 +300,10 @@ CPU + float32 otherwise — no code change.
 
 ```mermaid
 pie showData
-    title 191 automated checks, all passing
+    title 192 automated checks, all passing
     "Voice journeys in 4 languages" : 70
     "LangChain agent + fallback" : 34
-    "4-language interface" : 33
+    "4-language interface" : 34
     "Chosen-language answers" : 16
     "End-to-end routing" : 14
     "Speech-to-text unit tests" : 13
@@ -344,7 +360,7 @@ python app.py
 ```
 
 Open <http://127.0.0.1:7860>. Models load in the background on startup (15–35 s).
-The grey line under the headline shows exactly what's switched on, e.g.
+The small status line at the bottom of the page shows exactly what's switched on, e.g.
 `full · voice groq whisper-large-v3 · llm groq openai/gpt-oss-120b · agent langchain · rag faiss · tts gtts · 4 languages`.
 
 <details>
@@ -361,7 +377,7 @@ The grey line under the headline shows exactly what's switched on, e.g.
 | `STT_BACKEND` | `auto` | `auto`, `groq` or `local` |
 | `TRANSLATION_ENGINE` | `nllb` | Offline translator when Groq can't write the answer |
 | `TTS_ENGINE` | `gtts` | `gtts`, `parler` (GPU) or `stub` |
-| `DEV_MODE` | `true` (`false` in Lite) | Shows the full pipeline trace in the *Transcript & pipeline* panel |
+| `DEV_MODE` | `true` (`false` in Lite) | Shows the full pipeline trace in the *How this answer was made* drawer |
 
 On Windows, set `PYTHONUTF8=1` so test scripts print Devanagari and Gurmukhi cleanly.
 </details>
@@ -396,6 +412,7 @@ The problems that took the most thought, and what I did about them:
 | Loading spinners stacked on top of the answer | Gradio draws an overlay on every output of a running event | A chat thread with its own typing bubble; overlays off |
 | The page scrolled sideways on phones | The audio waveform is drawn at fixed pixels per second | `contain: inline-size` on the player and thread; phone gutters set outside Gradio's CSS rewriting |
 | IndicTrans2 tooling wouldn't install on Windows | It needs the MSVC build tools | A pure-Python replacement for the text processor (`indic_processor.py`) |
+| Gradio's recorder only says "Record" / "Stop", in English | Its buttons can't be relabelled from Python | The big mic button's words come from CSS, generated from the same translations as the rest of the screen and keyed on the page's `lang` attribute |
 | Weather worked on my laptop but failed on Render | Open-Meteo rate-limits the outbound IPs that free cloud hosts share | Fall back to MET Norway, reshaped into the same format; cache forecasts for 15 min; a lookup outage is reported as "service down", never "place not found" |
 
 ## 📁 Project structure
