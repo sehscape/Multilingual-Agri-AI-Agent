@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="assets/banner.svg" alt="Multilingual Agri AI Agent — speak a farming question, hear grounded advice back in your language" width="100%">
-</p>
+<h1 align="center">🌾 Multilingual Agri AI Agent</h1>
 
 <p align="center">
   <a href="https://multilingual-agri-ai-agent.onrender.com"><img alt="Live demo" src="https://img.shields.io/badge/%E2%96%B6%20Live%20demo-Render-D9A441?style=for-the-badge&labelColor=08090A"></a>
@@ -34,6 +32,11 @@
   <a href="#-engineering-notes">Engineering notes</a>
 </p>
 
+<p align="center">
+  <a href="https://multilingual-agri-ai-agent.onrender.com"><img src="assets/screenshots/app-light.png" alt="The live app: language picker, 'Ask in your own language.' headline, microphone, and a conversation where the assistant asks the wheat crop's age, the farmer replies '40 days', and the assistant answers with the fertilizer plan and speaks it" width="100%"></a>
+</p>
+<p align="center"><sub>The live app at <a href="https://multilingual-agri-ai-agent.onrender.com">multilingual-agri-ai-agent.onrender.com</a>, unedited. The assistant needs the wheat's age before it can advise on fertilizer, so it asks; the farmer answers “40 days” and the earlier question is completed from memory.</sub></p>
+
 ---
 
 ## 🌾 Why I built this
@@ -56,18 +59,16 @@ reliable is found, it says so — a wrong dose can cost a farmer a season.
 
 ## 📸 See it in action
 
-<p align="center">
-  <img src="assets/screenshots/desktop-conversation.png" alt="Desktop: the assistant asks the wheat crop's age, the farmer replies '40 days', the assistant answers with the tillering-stage fertilizer plan and speaks it" width="92%">
-</p>
-<p align="center"><sub>The assistant needs the crop's age before it can advise on fertilizer, so it asks. The farmer answers “40 days”, and the earlier question is completed from memory.</sub></p>
+Same live site, two more journeys. The page follows the device's light/dark
+setting, and picking a language switches the whole screen — not just the answers.
 
 <table>
   <tr>
-    <td width="58%" align="center"><img src="assets/screenshots/hindi-dark.png" alt="Hindi conversation in dark mode: will it rain in Pune tomorrow, with onion crop advice" width="100%"></td>
-    <td width="42%" align="center"><img src="assets/screenshots/phone-marathi.png" alt="Phone view in Marathi: documents needed for PM-KISAN, answered from the scheme documents" width="78%"></td>
+    <td width="62%" align="center"><img src="assets/screenshots/app-dark-hindi.png" alt="The live app in dark mode with Hindi selected: the whole page is in Hindi; asked whether it will rain in Pune tomorrow, it answers from the live forecast with onion crop care" width="100%"></td>
+    <td width="38%" align="center"><img src="assets/screenshots/phone-marathi.png" alt="The live app on a phone in Marathi: documents needed for PM-KISAN, answered from the scheme documents and spoken" width="82%"></td>
   </tr>
   <tr>
-    <td align="center"><sub><b>Hindi, dark mode</b> — live Pune forecast via Open-Meteo, answered and spoken in Hindi</sub></td>
+    <td align="center"><sub><b>Hindi, dark mode</b> — the whole page switches language; Pune's live forecast, answered and spoken in Hindi</sub></td>
     <td align="center"><sub><b>Marathi, on a phone</b> — PM-KISAN documents, retrieved from the scheme text</sub></td>
   </tr>
 </table>
