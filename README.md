@@ -64,9 +64,9 @@ setting, and picking a language switches the whole screen — not just the answe
 
 <table>
   <tr>
-    <td width="52%" align="center"><img src="assets/screenshots/app-dark-hindi.png" alt="The live app in dark mode with Hindi selected: the whole page is in Hindi, including the big mic button; asked whether it will rain in Pune tomorrow, it answers from the live forecast with onion crop care" width="100%"></td>
-    <td width="24%" align="center"><img src="assets/screenshots/phone-mic.png" alt="The live app on a phone in Marathi: the first screen, with the big gold button reading बोलण्यासाठी दाबा (tap to speak)" width="100%"></td>
-    <td width="24%" align="center"><img src="assets/screenshots/phone-marathi.png" alt="The live app on a phone in Marathi: documents needed for PM-KISAN, answered from the scheme documents and spoken, with sample questions below" width="100%"></td>
+    <td width="52%" align="center" valign="top"><img src="assets/screenshots/app-dark-hindi.png" alt="The live app in dark mode with Hindi selected: the whole page is in Hindi, including the big mic button; asked whether it will rain in Pune tomorrow, it answers from the live forecast with onion crop care" width="100%"></td>
+    <td width="24%" align="center" valign="top"><img src="assets/screenshots/phone-mic.png" alt="The live app on a phone in Marathi: the first screen, with the big gold button reading बोलण्यासाठी दाबा (tap to speak)" width="100%"></td>
+    <td width="24%" align="center" valign="top"><img src="assets/screenshots/phone-marathi.png" alt="The live app on a phone in Marathi: documents needed for PM-KISAN, answered from the scheme documents and spoken, with sample questions below" width="100%"></td>
   </tr>
   <tr>
     <td align="center"><sub><b>Hindi, dark mode</b> — the whole page switches language; Pune's live forecast, answered and spoken in Hindi</sub></td>
