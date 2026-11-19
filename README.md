@@ -33,7 +33,7 @@
 </p>
 
 <p align="center">
-  <a href="https://multilingual-agri-ai-agent.onrender.com"><img src="assets/screenshots/app-light.png" alt="The live app: language picker, 'Ask in your own language.' headline, microphone, and a conversation where the assistant asks the wheat crop's age, the farmer replies '40 days', and the assistant answers with the fertilizer plan and speaks it" width="100%"></a>
+  <a href="https://multilingual-agri-ai-agent.onrender.com"><img src="assets/screenshots/app-light.png" alt="The live app: language buttons, 'Ask in your own language.' headline, three cards (crop care, weather, government schemes), a big 'Tap to speak' button, and a conversation where the assistant asks the wheat crop's age, the farmer replies '40 days', and the assistant answers with the fertilizer plan and speaks it" width="100%"></a>
 </p>
 <p align="center"><sub>The live app at <a href="https://multilingual-agri-ai-agent.onrender.com">multilingual-agri-ai-agent.onrender.com</a>, unedited. The assistant needs the wheat's age before it can advise on fertilizer, so it asks; the farmer answers “40 days” and the earlier question is completed from memory.</sub></p>
 
@@ -64,12 +64,14 @@ setting, and picking a language switches the whole screen — not just the answe
 
 <table>
   <tr>
-    <td width="62%" align="center"><img src="assets/screenshots/app-dark-hindi.png" alt="The live app in dark mode with Hindi selected: the whole page is in Hindi; asked whether it will rain in Pune tomorrow, it answers from the live forecast with onion crop care" width="100%"></td>
-    <td width="38%" align="center"><img src="assets/screenshots/phone-marathi.png" alt="The live app on a phone in Marathi: documents needed for PM-KISAN, answered from the scheme documents and spoken" width="82%"></td>
+    <td width="52%" align="center"><img src="assets/screenshots/app-dark-hindi.png" alt="The live app in dark mode with Hindi selected: the whole page is in Hindi, including the big mic button; asked whether it will rain in Pune tomorrow, it answers from the live forecast with onion crop care" width="100%"></td>
+    <td width="24%" align="center"><img src="assets/screenshots/phone-mic.png" alt="The live app on a phone in Marathi: the first screen, with the big gold button reading बोलण्यासाठी दाबा (tap to speak)" width="100%"></td>
+    <td width="24%" align="center"><img src="assets/screenshots/phone-marathi.png" alt="The live app on a phone in Marathi: documents needed for PM-KISAN, answered from the scheme documents and spoken, with sample questions below" width="100%"></td>
   </tr>
   <tr>
     <td align="center"><sub><b>Hindi, dark mode</b> — the whole page switches language; Pune's live forecast, answered and spoken in Hindi</sub></td>
-    <td align="center"><sub><b>Marathi, on a phone</b> — PM-KISAN documents, retrieved from the scheme text</sub></td>
+    <td align="center"><sub><b>Marathi, phone</b> — the mic comes first: “बोलण्यासाठी दाबा”</sub></td>
+    <td align="center"><sub><b>Marathi, phone</b> — PM-KISAN documents, from the scheme text</sub></td>
   </tr>
 </table>
 
