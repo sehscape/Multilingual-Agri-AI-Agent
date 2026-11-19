@@ -94,6 +94,22 @@ def _find_stage(crop_data: dict, days: Optional[int]) -> Optional[dict]:
     return stages[-1] if stages else None
 
 
+def stage_card(crop_name: Optional[str], days: Optional[int], lang: str = "en") -> Optional[dict]:
+    """Where the crop is in its life, for a progress card on the web app:
+    {crop, days, total_days, stage, stage_en, from, to} — the stage name in
+    `lang` when the glossary has it. None if the crop or age is unknown."""
+    canonical = _resolve_crop_name(crop_name or "")
+    data = _load_crop(canonical) if canonical else None
+    stage = _find_stage(data, days) if data else None
+    if not stage:
+        return None
+    from app.models.agri_glossary import stage_name
+    local = stage_name(stage["name"], lang) if lang != "en" else None
+    lo, hi = stage["days_range"]
+    return {"crop": canonical, "days": days, "total_days": data.get("total_duration_days"),
+            "stage": local or stage["name"], "stage_en": stage["name"], "from": lo, "to": hi}
+
+
 def get_crop_context(crop_name: Optional[str], crop_stage_days: Optional[int]) -> str:
     """
     Main entry point for the crop tool.

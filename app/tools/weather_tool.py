@@ -356,6 +356,38 @@ def _farming_advisories(
     return advisories
 
 
+def forecast_card(raw: dict, summary: str = "") -> dict:
+    """The forecast as plain numbers for a weather card on the web app:
+    {place, gps, source, now: {...}, days: [{date, code, min, max, rain_mm,
+    rain_pct, wind}, ...]} — today first. `summary` supplies the place name."""
+    m = re.search(r"Weather for (.+)", summary or "")
+    place = m.group(1).strip() if m else ""
+    gps = place.startswith("the farmer's location")
+    cur, daily = raw.get("current", {}) or {}, raw.get("daily", {}) or {}
+
+    def col(key: str, i: int):
+        values = daily.get(key) or []
+        return values[i] if i < len(values) else None
+
+    days = [{"date": date, "code": col("weather_code", i),
+             "min": col("temperature_2m_min", i), "max": col("temperature_2m_max", i),
+             "rain_mm": col("precipitation_sum", i),
+             "rain_pct": col("precipitation_probability_max", i),
+             "wind": col("wind_speed_10m_max", i)}
+            for i, date in enumerate((daily.get("time") or [])[:4])]
+    code = cur.get("weather_code", -1)
+    return {
+        "place": "" if gps else place,
+        "gps": gps,
+        "source": raw.get("source", "Open-Meteo"),
+        "now": {"temp": cur.get("temperature_2m"), "feels": cur.get("apparent_temperature"),
+                "humidity": cur.get("relative_humidity_2m"), "wind": cur.get("wind_speed_10m"),
+                "rain_mm": cur.get("precipitation"), "code": code,
+                "desc": _WMO_DESCRIPTIONS.get(code, "")},
+        "days": days,
+    }
+
+
 def get_weather_context(location: Optional[str]) -> tuple[Optional[dict], str]:
     """
     Main entry point for the weather tool.

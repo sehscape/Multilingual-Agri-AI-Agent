@@ -309,7 +309,7 @@ def _pipeline_iter(audio, text_query, location, lang, pending=None, speak=True):
                   "intent": intent, "tools_html": _no_tools_html(lang),
                   "trace": "\n".join(trace), "detected_key": detected_key,
                   "tools_flags": None, "pending": keep, "heard": heard,
-                  "speech": (message, lang)}
+                  "speech": (message, lang), "cards": {}}
         yield result
         if not speak:
             return
@@ -460,7 +460,7 @@ def _pipeline_iter(audio, text_query, location, lang, pending=None, speak=True):
               "intent": intent, "tools_html": _tools_strip(lang, flags),
               "trace": "\n".join(trace), "detected_key": detected_key, "tools_flags": flags,
               "pending": _pending(u, plan), "heard": heard,
-              "speech": (speech, speech_lang)}
+              "speech": (speech, speech_lang), "cards": _cards(state, lang)}
     trace.append(f"[Answer] shown after {time.time()-started:.1f}s; now speaking")
     yield {**result, "trace": "\n".join(trace)}
     if not speak:
@@ -711,6 +711,36 @@ def _tool_flags(state) -> tuple:
         bool(state.weather_data and state.weather_data.get("context")),
         bool(state.scheme_docs and state.scheme_docs[0].get("context")),
     )
+
+
+def _cards(state, lang: str) -> dict:
+    """The facts behind an answer as plain data, for the web app's cards:
+    the forecast, the crop's growth stage, and the scheme documents used."""
+    import re
+    cards = {}
+    weather = state.weather_data or {}
+    if weather.get("raw"):
+        from app.tools.weather_tool import forecast_card
+        cards["weather"] = forecast_card(weather["raw"], weather.get("context", ""))
+    if state.crop_data and state.crop and state.crop_stage_days is not None:
+        from app.tools.crop_tool import stage_card
+        crop = stage_card(state.crop, state.crop_stage_days, lang)
+        if crop:
+            cards["crop"] = crop
+    if state.scheme_docs:
+        names = re.findall(r"Source:\s*(.+?)\s*\(relevance", state.scheme_docs[0].get("context", ""))
+        if names:
+            cards["schemes"] = list(dict.fromkeys(_SCHEME_TITLES.get(n.lower(), n) for n in names))
+    return cards
+
+
+# Scheme document names as people write them (the files are named in plain words)
+_SCHEME_TITLES = {
+    "pm kisan": "PM-KISAN",
+    "pm fasal bima yojana": "PM Fasal Bima Yojana",
+    "kisan credit card": "Kisan Credit Card",
+    "soil health card": "Soil Health Card",
+}
 
 
 # ── Theme ─────────────────────────────────────────────────────────────────────
