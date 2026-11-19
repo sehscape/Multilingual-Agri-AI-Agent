@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <title>Agri Assistant — farm advice in your language</title>
+  <meta name="description" content="Ask about your crop, the weather over your field or a government scheme — in English, Hindi, Punjabi or Marathi — and hear the answer spoken back.">
+  <meta name="theme-color" content="#F6F7F2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#07110C" media="(prefers-color-scheme: dark)">
+  <meta property="og:title" content="Agri Assistant — farm advice in your language">
+  <meta property="og:description" content="Voice-first farm advice in English, हिंदी, ਪੰਜਾਬੀ and मराठी.">
+  <meta property="og:image" content="/static/icon-512.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Gurmukhi:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/static/styles.css?v=2.0">
+  <script>
+    // Theme before first paint, so a dark-mode visitor never sees a white flash.
+    try { const t = localStorage.getItem("ag_theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <script src="/static/app.js?v=2.0" defer></script>
+</head>
+<body>
+  <!-- Icons -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></symbol>
+      <symbol id="i-send" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+      <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2.5" class="fill"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" class="fill"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" class="fill"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"/></symbol>
+      <symbol id="i-share" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.6-5.2A8.5 8.5 0 1 1 21 11.5z"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 13.5A8.5 8.5 0 1 1 10.5 3.5a6.5 6.5 0 0 0 10 10z"/></symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+      <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" class="fill"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8v.2"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+      <symbol id="i-retry" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></symbol>
+      <symbol id="i-sprout" viewBox="0 0 24 24"><path d="M12 21v-9M12 12c0-4 3-7.5 8-7.5 0 5-3 8-8 7.5zM12 14c0-3.5-2.5-6-7-6 0 4 2.5 6.5 7 6z"/></symbol>
+      <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18.5a4.5 4.5 0 1 1 .8-8.9A5.5 5.5 0 0 1 18.4 11 3.8 3.8 0 0 1 17.5 18.5z"/></symbol>
+      <symbol id="i-landmark" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 21h18"/></symbol>
+      <symbol id="i-wheat" viewBox="0 0 24 24"><path d="M12 22V9" stroke-width="1.8"/><g class="fill"><ellipse cx="12" cy="4.6" rx="1.9" ry="3"/><ellipse cx="8.9" cy="9" rx="1.8" ry="3" transform="rotate(-35 8.9 9)"/><ellipse cx="15.1" cy="9" rx="1.8" ry="3" transform="rotate(35 15.1 9)"/><ellipse cx="8.9" cy="14" rx="1.8" ry="3" transform="rotate(-35 8.9 14)"/><ellipse cx="15.1" cy="14" rx="1.8" ry="3" transform="rotate(35 15.1 14)"/></g></symbol>
+    </defs>
+  </svg>
+
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+
+  <header class="appbar">
+    <a class="brand" href="/" aria-label="Agri Assistant">
+      <span class="brand-mark"><svg><use href="#i-wheat"/></svg></span>
+      <span class="brand-name" data-i18n="brand">Agri Assistant</span>
+    </a>
+    <div class="appbar-actions">
+      <button class="pill pill--place" id="placeBtn" type="button">
+        <svg class="ic"><use href="#i-pin"/></svg><span id="placeLabel" data-i18n="web_add_village">Add your village</span>
+      </button>
+      <div class="langs" id="langs" role="radiogroup" aria-label="Language"></div>
+      <button class="pill pill--lang" id="langBtn" type="button" aria-haspopup="dialog">
+        <svg class="ic"><use href="#i-globe"/></svg><span id="langLabel">English</span>
+      </button>
+      <button class="icon-btn" id="newBtn" type="button" hidden data-i18n-aria="new_chat"><svg class="ic"><use href="#i-plus"/></svg></button>
+      <button class="icon-btn" id="themeBtn" type="button" data-i18n-aria="web_theme"><svg class="ic"><use href="#i-moon"/></svg></button>
+      <button class="icon-btn" id="installBtn" type="button" hidden data-i18n-aria="web_install"><svg class="ic"><use href="#i-download"/></svg></button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <section class="welcome" id="welcome">
+      <p class="eyebrow"><svg class="ic"><use href="#i-sprout"/></svg><span data-i18n="hero_eyebrow">For Indian farmers</span></p>
+      <h1 class="headline" data-i18n="web_greeting">Namaste! How can I help your farm today?</h1>
+      <p class="lede" data-i18n="hero_body_voice"></p>
+
+      <button class="orb" id="orbBtn" type="button">
+        <span class="orb-rings" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="orb-core"><svg class="ic"><use href="#i-mic"/></svg></span>
+        <span class="orb-label" data-i18n="mic_tap">Tap to speak</span>
+      </button>
+
+      <div class="bento" id="bento"></div>
+      <div class="suggest">
+        <p class="suggest-title" data-i18n="eyebrow_try">Try asking</p>
+        <div class="chips" id="examples"></div>
+      </div>
+    </section>
+
+    <section class="thread" id="thread" aria-live="polite"></section>
+  </main>
+
+  <footer class="dock" id="dock">
+    <div class="quick" id="quick"></div>
+    <form class="composer" id="composer" autocomplete="off">
+      <button class="mic-btn" id="micBtn" type="button" data-i18n-aria="mic_tap"><svg class="ic"><use href="#i-mic"/></svg></button>
+      <textarea id="input" rows="1" maxlength="600" enterkeyhint="send" data-i18n-placeholder="web_ask_placeholder"></textarea>
+      <button class="send-btn" id="sendBtn" type="submit" disabled data-i18n-aria="web_send"><svg class="ic"><use href="#i-send"/></svg></button>
+    </form>
+    <p class="fineprint"><svg class="ic"><use href="#i-info"/></svg><span data-i18n="kvk_note"></span></p>
+  </footer>
+
+  <!-- Recording -->
+  <div class="recorder" id="recorder" hidden>
+    <div class="recorder-card" role="dialog" aria-modal="true">
+      <p class="rec-status" data-i18n="web_listening">Listening… speak now</p>
+      <canvas class="rec-wave" id="wave" width="640" height="160"></canvas>
+      <p class="rec-time" id="recTime">0:00</p>
+      <div class="rec-actions">
+        <button class="ghost-btn" id="recCancel" type="button" data-i18n="web_cancel">Cancel</button>
+        <button class="stop-btn" id="recStop" type="button"><svg class="ic"><use href="#i-stop"/></svg><span data-i18n="mic_stop">Tap to stop</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- First visit: choose a language -->
+  <dialog class="sheet" id="langDialog">
+    <div class="sheet-body">
+      <span class="sheet-icon"><svg class="ic"><use href="#i-globe"/></svg></span>
+      <h2 class="sheet-title" id="langTitle">Choose your language</h2>
+      <div class="lang-grid" id="langGrid"></div>
+    </div>
+  </dialog>
+
+  <!-- Village -->
+  <dialog class="sheet" id="placeDialog">
+    <form class="sheet-body" id="placeForm" method="dialog">
+      <span class="sheet-icon"><svg class="ic"><use href="#i-pin"/></svg></span>
+      <h2 class="sheet-title" data-i18n="eyebrow_location">Your village</h2>
+      <p class="sheet-note" data-i18n="location_note">Used to pull the live forecast over your field.</p>
+      <input class="field" id="placeInput" maxlength="120" data-i18n-placeholder="location_placeholder_native">
+      <button class="wide-btn wide-btn--soft" id="gpsBtn" type="button"><svg class="ic"><use href="#i-locate"/></svg><span data-i18n="gps_button">Use my location</span></button>
+      <div class="sheet-actions">
+        <button class="ghost-btn" value="cancel" type="button" id="placeCancel" data-i18n="web_cancel">Cancel</button>
+        <button class="wide-btn" id="placeSave" type="submit" data-i18n="web_save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <audio id="player" preload="none"></audio>
+  <noscript><p class="noscript">This app needs JavaScript. The classic version is at <a href="/classic">/classic</a>.</p></noscript>
+</body>
+</html>

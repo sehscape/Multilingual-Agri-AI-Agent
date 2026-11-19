@@ -11,6 +11,9 @@ pydantic>=2.7
 
 # ─── UI ───────────────────────────────────────────────────────────────────────
 gradio==6.26.0
+fastapi
+uvicorn
+python-multipart
 
 # ─── Agent (LangChain ReAct AgentExecutor with tool-calling) ──────────────────
 langchain>=0.3,<0.4

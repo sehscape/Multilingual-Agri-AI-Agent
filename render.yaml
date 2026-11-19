@@ -18,8 +18,8 @@ services:
     autoDeploy: true                   # every push to main redeploys
     region: singapore              # closest Render region to India; change if you prefer
     buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements-lite.txt
-    startCommand: python app.py
-    healthCheckPath: /
+    startCommand: python app.py        # web app + JSON API; Gradio screen at /classic
+    healthCheckPath: /api/health
     envVars:
       - key: LITE_MODE
         value: "true"

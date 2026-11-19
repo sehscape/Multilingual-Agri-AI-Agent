@@ -18,6 +18,10 @@ python-dotenv>=1.0
 requests>=2.31
 numpy>=1.26
 gradio==6.26.0
+# The web app and its JSON API (versions follow gradio's own pins)
+fastapi
+uvicorn
+python-multipart
 gTTS>=2.5
 # LangChain agent (pure Python, ~25 MB RAM; no torch). Its optional
 # `transformers` import is skipped when transformers isn't installed.
