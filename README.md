@@ -3,7 +3,7 @@
 <p align="center">
   <a href="https://multilingual-agri-ai-agent.onrender.com"><img alt="Live demo" src="https://img.shields.io/badge/%E2%96%B6%20Live%20demo-Render-D9A441?style=for-the-badge&labelColor=08090A"></a>
   <a href="https://colab.research.google.com/github/sehscape/Multilingual-Agri-AI-Agent/blob/main/notebooks/run_full_app_colab.ipynb"><img alt="Open in Colab" src="https://img.shields.io/badge/Full%20app-Colab-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=white&labelColor=08090A"></a>
-  <a href="#-quality--results"><img alt="Tests" src="https://img.shields.io/badge/checks-192%20passing-2EA44F?style=for-the-badge&labelColor=08090A"></a>
+  <a href="#-quality--results"><img alt="Tests" src="https://img.shields.io/badge/checks-249%20passing-2EA44F?style=for-the-badge&labelColor=08090A"></a>
 </p>
 
 <p align="center">
@@ -93,13 +93,16 @@ field, may not read comfortably, and has never used an AI app.
 
 | On the screen | Why it's there |
 |---|---|
-| **Language buttons in their own script** — English · हिंदी · ਪੰਜਾਬੀ · मराठी | A farmer finds their language by sight; the choice is remembered on the phone |
-| **One big "Tap to speak" button** — labelled बोलने के लिए दबाएँ, ਬੋਲਣ ਲਈ ਦਬਾਓ, बोलण्यासाठी दाबा… | Speaking is the main way in; it turns red and pulses while it listens |
-| **Three numbered steps** — ① Speak ② Or type ③ Your village | Plain words instead of form labels; 📍 fills the village from GPS |
-| **Three cards: crop care, weather, schemes** | Says what the assistant can and can't help with *before* the farmer asks |
-| **A chat thread that talks back** | Every reply is spoken automatically; ask-backs ("how many days old?") are answered in one word |
-| **"Answers come only from these sources"** | Shows which source — crop guide, live weather, scheme documents — each answer used |
-| **Example questions as cards** | One tap asks a real question in the chosen language |
+| **"Choose your language" on the first visit** — asked in all four scripts at once | Nobody knows the farmer's language yet; the choice is then remembered on the phone |
+| **One big microphone** — labelled बोलने के लिए दबाएँ, ਬੋਲਣ ਲਈ ਦਬਾਓ, बोलण्यासाठी दाबा… | Speaking is the main way in. A full-screen recorder shows a live waveform and a red *Tap to stop* |
+| **Plain-language mic errors** | "Microphone permission is blocked — allow it, or type" instead of a silent, broken button |
+| **Answers that talk back** | Every reply is read aloud by itself; *Listen* plays, pauses and resumes |
+| **One-tap replies to ask-backs** | "How many days old?" → **20 · 40 · 60 · 90 days**; "Which village?" → **📍 Use my location**; "Which crop?" → the six crops |
+| **Weather and crop-stage cards** | The facts behind the words: today's temperature and the next three days; *Tillering · day 40 of 120* |
+| **Sources on every answer** | Crop guide, live weather or the scheme documents (named) — the assistant shows where advice came from |
+| **WhatsApp and Copy on every answer** | Advice is shared the way farmers already share things |
+| **📍 Your village in the top bar** | Typed once or taken from GPS, then used for every weather question |
+| **Installable, opens offline** | *Add to home screen* like an app; the screen opens without signal and says when answers need the internet |
 | **A KVK reminder on every page** | "For exact doses, check with your nearest Krishi Vigyan Kendra" — in all four languages |
 
 ## ✨ Highlights
@@ -108,6 +111,7 @@ field, may not read comfortably, and has never used an AI app.
 |---|---|
 | 🎙️ **Voice-first, 4 languages** | Whisper-large-v3 with the language forced to the farmer's choice; the whole interface (78 messages) switches between English, Hindi, Punjabi and Marathi |
 | 💬 **A real conversation** | Chat thread with a typing indicator; follow-ups like *"40 days"* or *"Nashik"* complete the question that was asked back |
+| 🌐 **A web app and a JSON API** | A hand-built, framework-free web app (installable, offline shell) on a FastAPI backend — `/api/ask`, `/api/voice`, `/api/speak` — so a WhatsApp bot or an Android app can use the same brain |
 | 🧭 **Agentic tool use** | A LangChain ReAct `AgentExecutor` picks only the tools a question needs — crop knowledge, live weather, scheme search — with a deterministic fallback |
 | 📚 **Grounded RAG with refusal** | Scheme answers come from retrieved passages; below a 0.30 relevance score it answers *"the documents don't cover this"* instead of guessing |
 | ❓ **Asks back, never guesses** | Missing crop, missing age, impossible age (*wheat, 300 days*), unknown place, unsupported crop — each gets a clear spoken question |
@@ -125,41 +129,44 @@ picked, which every step respects.
 sequenceDiagram
     autonumber
     actor F as Farmer
-    participant UI as Gradio UI
+    participant W as Web app
+    participant API as FastAPI
     participant STT as Whisper-large-v3
     participant LLM as gpt-oss-120b
     participant AG as ReAct agent
     participant T as Tools
-    participant V as gTTS
-    F->>UI: taps stop (Hindi selected)
-    UI-->>F: 🎙 bubble + typing dots
-    UI->>STT: audio, language = hi
-    STT-->>UI: "मेरी गेहूं 40 दिन की है, क्या खाद डालूं?"
-    UI->>LLM: understand → JSON
-    LLM-->>UI: crop wheat · age 40 · wants fertilizer
-    UI->>AG: tool plan
+    F->>W: taps the mic, speaks, taps stop (Hindi selected)
+    W-->>F: 🎙 bubble + typing dots
+    W->>API: POST /api/voice (audio, lang = hi, place, pending)
+    API->>STT: audio, language = hi
+    STT-->>API: "मेरी गेहूं 40 दिन की है, क्या खाद डालूं?"
+    API->>LLM: understand → JSON
+    LLM-->>API: crop wheat · age 40 · wants fertilizer
+    API->>AG: tool plan
     AG->>T: crop_knowledge(wheat)
     T-->>AG: Tillering stage, urea 25 kg/acre, aphids…
-    AG-->>UI: facts (English)
-    UI->>LLM: write it in Hindi, these facts only
-    LLM-->>UI: Hindi answer
-    UI-->>F: answer bubble — words first
-    Note over UI,V: separate event, so the next question isn't blocked
-    UI->>V: speak(answer, hi)
-    V-->>F: 🔊 plays by itself
+    API->>LLM: write it in Hindi, these facts only
+    LLM-->>API: Hindi answer
+    API-->>W: answer · crop card · sources · what to read aloud
+    W-->>F: answer + "Tillering · day 40 of 120" — words first
+    Note over W,API: the voice is its own request, so the farmer reads while it loads
+    W->>API: POST /api/speak
+    API-->>W: MP3
+    W-->>F: 🔊 plays by itself
 ```
 
 ## 🏗 Architecture
 
 ```mermaid
 flowchart TD
-    subgraph IN["🧑‍🌾 Farmer"]
+    subgraph IN["🧑‍🌾 Farmer · web app (installable, offline shell)"]
         direction LR
         MIC["🎙 Voice"]
         TXT["⌨ Text"]
         GPS["📍 GPS / village"]
     end
 
+    API["⚡ FastAPI<br/>/api/voice · /api/ask · /api/speak<br/>rate-limited · stateless"]
     STT["🎧 Speech-to-text<br/>Whisper-large-v3 on Groq · language forced"]
     U["🧐 Understanding<br/>LLM → JSON · keyword rules as fallback"]
     C{"Anything<br/>missing?"}
@@ -173,16 +180,19 @@ flowchart TD
     end
 
     W["✍ Reply writer<br/>chosen language · facts only"]
+    OUT["📲 Answer + cards<br/>weather · crop stage · sources"]
     V["🔊 gTTS voice → spoken reply"]
 
-    MIC --> STT --> U
-    TXT --> U
-    GPS --> U
+    MIC --> API
+    TXT --> API
+    GPS --> API
+    API -- "audio" --> STT --> U
+    API -- "text" --> U
     U --> C
     C -- "yes" --> ASK
-    ASK -. "farmer replies '40 days'" .-> U
+    ASK -. "one-tap reply: '40 days'" .-> API
     C -- "no: tool plan" --> AGENT
-    AGENT -- "facts (English)" --> W --> V
+    AGENT -- "facts (English)" --> W --> OUT --> V
 ```
 
 **Key design choice:** the tools work in English, and language only matters at
@@ -298,14 +308,17 @@ CPU + float32 otherwise — no code change.
 > The test set is small, so these numbers show the pipeline is wired correctly
 > end to end — they are not a claim about real-world accuracy.
 
-**Automated checks** — every part has its own test script, plus a `pytest` suite:
+**Automated checks** — every part has its own test script, a `pytest` suite, and
+a browser test that presses every button of the web app in a real Chrome:
 
 ```mermaid
 pie showData
-    title 192 automated checks, all passing
+    title 249 automated checks, all passing
     "Voice journeys in 4 languages" : 70
+    "Every button, in a real browser" : 34
     "LangChain agent + fallback" : 34
     "4-language interface" : 34
+    "Web API" : 23
     "Chosen-language answers" : 16
     "End-to-end routing" : 14
     "Speech-to-text unit tests" : 13
@@ -314,6 +327,8 @@ pie showData
 
 | Script | What it proves |
 |---|---|
+| `e2e/buttons.test.js` | Every button pressed in Chrome: language sheet and switch, theme, village sheet + GPS, examples, Send/Enter, one-tap ask-back replies, Listen play/pause/resume, Copy, WhatsApp, details, Retry after a failure, the mic with a **real spoken Hindi question**, Cancel/Esc, New conversation, phone layout, `?lang=` links, offline shell |
+| `test_web_api.py` | The JSON API: ask-backs and `pending`, crop / weather / scheme cards, bad input refused politely, MP3 voice, rate limiting |
 | `test_voice_languages.py` | The Render build with a faked Groq: voice in 4 languages, every ask-back, failure paths, the chat thread |
 | `test_langchain_agent.py` | The agent picks exactly the right tools for 9 intents; the fallback takes over when the agent misbehaves |
 | `test_i18n.py` | Every string exists in all 4 languages; switching language re-renders the page |
@@ -327,7 +342,9 @@ pie showData
 
 | Layer | Technology |
 |---|---|
-| **Interface** | [Gradio](https://gradio.app) 6.26 — chat thread, browser mic, GPS, light/dark themes, 4-language i18n |
+| **Web app** | Hand-written HTML/CSS/JS, no framework (~35 KB): MediaRecorder + Web Audio waveform, service worker (installable PWA, offline shell), light/dark, 4-language i18n from one source |
+| **API** | [FastAPI](https://fastapi.tiangolo.com) + uvicorn — `/api/ask`, `/api/voice`, `/api/speak`, `/api/config`, `/api/health`, OpenAPI docs; per-visitor rate limits |
+| **Classic screen** | [Gradio](https://gradio.app) 6.26, mounted at `/classic` on the same pipeline |
 | **Agent** | [LangChain](https://python.langchain.com) ReAct `AgentExecutor` with 3 tools · deterministic sequential orchestrator as fallback |
 | **Speech-to-text** | [Whisper](https://github.com/openai/whisper) large-v3 via [Groq](https://console.groq.com) · Whisper-small locally |
 | **Understanding + answers** | Open-weight [gpt-oss-120b](https://huggingface.co/openai/gpt-oss-120b) on Groq, falling back to gpt-oss-20b → Llama 3.3 70B · rule-based router offline |
@@ -341,6 +358,28 @@ pie showData
 stages with irrigation, fertilizer, pest and tip notes, crop names recognised in
 all four scripts) and four schemes — PM-KISAN, PM Fasal Bima Yojana, Kisan
 Credit Card and Soil Health Card.
+
+## 🔌 API
+
+The web app is one client of a small JSON API — a WhatsApp bot, an IVR line or
+an Android app can use the same brain. Interactive docs: **`/api/docs`**.
+
+| Endpoint | In | Out |
+|---|---|---|
+| `POST /api/ask` | `{text, lang, location, pending}` | answer, `missing` details, `pending`, sources, cards, what to read aloud |
+| `POST /api/voice` | multipart: `audio` (webm / m4a / ogg / wav) + `lang`, `location`, `pending` | the same, plus `heard` — the words Whisper heard |
+| `POST /api/speak` | `{text, lang}` | MP3 |
+| `GET /api/config` | — | languages, every message in 4 languages, sample questions, crop names |
+| `GET /api/health` | — | status and the engines switched on |
+
+```bash
+curl -s https://multilingual-agri-ai-agent.onrender.com/api/ask \
+  -H "Content-Type: application/json" \
+  -d '{"text": "My wheat is 40 days old, which fertilizer?", "lang": "hi"}'
+```
+
+The server keeps no session: when it asks back ("how many days old?"), the
+question travels to the client as `pending` and returns with the reply.
 
 ## 🚀 Quick start
 
@@ -361,9 +400,18 @@ python scripts/build_scheme_index.py   # one time: builds the FAISS index
 python app.py
 ```
 
-Open <http://127.0.0.1:7860>. Models load in the background on startup (15–35 s).
-The small status line at the bottom of the page shows exactly what's switched on, e.g.
+Open <http://127.0.0.1:7860> — the web app. The classic Gradio screen is at
+`/classic` and the API docs at `/api/docs`. Models load in the background on
+startup (15–35 s); `/api/health` shows exactly what's switched on, e.g.
 `full · voice groq whisper-large-v3 · llm groq openai/gpt-oss-120b · agent langchain · rag faiss · tts gtts · 4 languages`.
+
+Browser tests (Node 18+ and Chrome):
+
+```bash
+npm install
+python scripts/make_voice_sample.py      # a spoken Hindi question for the mic tests
+npm run test:e2e -- http://127.0.0.1:7860/
+```
 
 <details>
 <summary><b>Configuration</b> — every setting is read from <code>.env</code> by <code>app/config.py</code></summary>
@@ -379,7 +427,8 @@ The small status line at the bottom of the page shows exactly what's switched on
 | `STT_BACKEND` | `auto` | `auto`, `groq` or `local` |
 | `TRANSLATION_ENGINE` | `nllb` | Offline translator when Groq can't write the answer |
 | `TTS_ENGINE` | `gtts` | `gtts`, `parler` (GPU) or `stub` |
-| `DEV_MODE` | `true` (`false` in Lite) | Shows the full pipeline trace in the *How this answer was made* drawer |
+| `DEV_MODE` | `true` (`false` in Lite) | Adds the full pipeline trace to each answer's ⓘ details |
+| `UI` | `web` | `web` (web app + API, Gradio at `/classic`) or `classic` (Gradio on its own, with a temporary public link) |
 
 On Windows, set `PYTHONUTF8=1` so test scripts print Devanagari and Gurmukhi cleanly.
 </details>
@@ -415,6 +464,10 @@ The problems that took the most thought, and what I did about them:
 | The page scrolled sideways on phones | The audio waveform is drawn at fixed pixels per second | `contain: inline-size` on the player and thread; phone gutters set outside Gradio's CSS rewriting |
 | IndicTrans2 tooling wouldn't install on Windows | It needs the MSVC build tools | A pure-Python replacement for the text processor (`indic_processor.py`) |
 | Gradio's recorder only says "Record" / "Stop", in English | Its buttons can't be relabelled from Python | The big mic button's words come from CSS, generated from the same translations as the rest of the screen and keyed on the page's `lang` attribute |
+| On a real phone the mic looked broken | Gradio's recorder printed "No microphone found" until permission was granted, and had share/download icons that did nothing useful | A recorder of my own (MediaRecorder + a live Web Audio waveform) that asks for permission on tap and explains a blocked or missing mic in the farmer's language |
+| Phones refused to play the spoken answer | Autoplay rules: the reply arrives seconds after the tap, outside the "user gesture" | Play a 44-byte silent WAV on the first tap, which unlocks the audio element for later answers |
+| WhatsApp shares lost their emoji | `wa.me` redirects through a decode that garbles them | Link to `api.whatsapp.com/send` directly — Hindi, Punjabi and Marathi all survive |
+| The free host sleeps; the first visit looked dead | Render stops idle free instances | A service-worker shell that opens at once, config retried with back-off, and a "waking up" note on a slow first answer |
 | Weather worked on my laptop but failed on Render | Open-Meteo rate-limits the outbound IPs that free cloud hosts share | Fall back to MET Norway, reshaped into the same format; cache forecasts for 15 min; a lookup outage is reported as "service down", never "place not found" |
 
 ## 📁 Project structure
@@ -427,7 +480,10 @@ The problems that took the most thought, and what I did about them:
 │   │                 translation (NLLB / IndicTrans2), farm glossary, embeddings
 │   ├── rag/          FAISS scheme search · BM25 keyword search
 │   ├── tools/        crop, weather and scheme tools
-│   ├── ui/           Gradio screen + every message in 4 languages (i18n.py)
+│   ├── ui/           the question pipeline, the classic Gradio screen,
+│   │                 and every message in 4 languages (i18n.py)
+│   ├── web/          FastAPI server (server.py) and the web app (static/:
+│   │                 index.html, styles.css, app.js, service worker, manifest)
 │   ├── utils/        logging, audio conversion, device detection
 │   ├── config.py     every setting, read from .env
 │   └── main.py       starts the app
@@ -435,7 +491,8 @@ The problems that took the most thought, and what I did about them:
 │   ├── crops/        one JSON file per crop — stages and advice
 │   └── schemes/raw/  government scheme documents
 ├── notebooks/        Colab notebook for the full app
-├── scripts/          test scripts, evaluation, latency benchmark, index builder
+├── scripts/          test scripts, evaluation, latency benchmark, index builder;
+│                     e2e/ — the browser test (npm run test:e2e)
 ├── tests/            pytest unit tests
 ├── assets/           README images
 ├── app.py            entry point
@@ -457,7 +514,8 @@ The problems that took the most thought, and what I did about them:
 - [ ] More crops and schemes, ingested from the official PDFs with page-level citations
 - [ ] Pest and disease names in the translation glossary
 - [ ] Self-hosted Whisper + an open LLM on a GPU, and a more natural Indic voice
-- [ ] Shareable `?lang=hi` links for a pre-set language
+- [ ] A WhatsApp bot on the same `/api/voice` endpoint
+- [x] Shareable `?lang=hi` links that open in a chosen language
 
 ---
 

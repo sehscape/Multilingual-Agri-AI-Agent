@@ -83,10 +83,10 @@ Render reads `render.yaml`, asks for `GROQ_API_KEY` (section C), and builds.
 
 - Pick a language at the top (English · हिंदी · ਪੰਜਾਬੀ · मराठी) — the whole screen
   switches, and the phone remembers it next time.
-- **With the Groq key (section C):** press the big **Tap to speak** button, ask in
-  that language, press it again to stop — the answer appears and plays by itself,
-  in that language. Missing details (crop age, village…) are asked for out loud;
-  just answer ("40 days").
+- **With the Groq key (section C):** tap the big microphone, ask in that
+  language, tap **Tap to stop** — the answer appears and plays by itself, in that
+  language. Missing details (crop age, village…) are asked for out loud, with
+  one-tap answers ("40 days", "📍 Use my location").
 - **Without the key:** type a question in English, add a location (e.g. *Pune*),
   press **Ask**.
 - Try: `How do I apply for PM-KISAN?` · `Will it rain in Nashik tomorrow?` ·
@@ -127,9 +127,8 @@ using only the facts the app's tools found. Free plan, no credit card.
 2. Left menu → **Environment** → **Add Environment Variable**.
 3. Key: `GROQ_API_KEY` · Value: *paste the key* → **Save Changes**.
 4. Then **Manual Deploy → Deploy latest commit** (loads the newest code with the key).
-5. When the log shows `Running on http://0.0.0.0:10000`, open the site: the big
-   **Tap to speak** button is there, and the small status line at the bottom of
-   the page says
+5. When the deploy is live, open the site: the big microphone is there, and
+   `/api/health` on the same address reports
    `lite · voice groq whisper-large-v3 · llm groq openai/gpt-oss-120b · … · 4 languages`.
 
 ### 3. (Optional) Use it on your laptop too
