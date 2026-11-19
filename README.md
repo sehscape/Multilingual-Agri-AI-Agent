@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://farmer-advisory-voice-agent.onrender.com"><img alt="Live demo" src="https://img.shields.io/badge/%E2%96%B6%20Live%20demo-Render-D9A441?style=for-the-badge&labelColor=08090A"></a>
+  <a href="https://multilingual-agri-ai-agent.onrender.com"><img alt="Live demo" src="https://img.shields.io/badge/%E2%96%B6%20Live%20demo-Render-D9A441?style=for-the-badge&labelColor=08090A"></a>
   <a href="https://colab.research.google.com/github/sehscape/Multilingual-Agri-AI-Agent/blob/main/notebooks/run_full_app_colab.ipynb"><img alt="Open in Colab" src="https://img.shields.io/badge/Full%20app-Colab-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=white&labelColor=08090A"></a>
   <a href="#-quality--results"><img alt="Tests" src="https://img.shields.io/badge/checks-191%20passing-2EA44F?style=for-the-badge&labelColor=08090A"></a>
 </p>
@@ -149,7 +149,7 @@ flowchart TD
     subgraph AGENT["🧭 LangChain ReAct agent"]
         direction LR
         T1["🌱 crop_knowledge<br/>6 crops · 37 stages"]
-        T2["🌦 weather_forecast<br/>Open-Meteo + advisories"]
+        T2["🌦 weather_forecast<br/>Open-Meteo · MET Norway fallback"]
         T3["🏛 government_schemes<br/>FAISS or BM25 RAG"]
     end
 
@@ -314,7 +314,7 @@ pie showData
 | **Understanding + answers** | Open-weight [gpt-oss-120b](https://huggingface.co/openai/gpt-oss-120b) on Groq, falling back to gpt-oss-20b → Llama 3.3 70B · rule-based router offline |
 | **Retrieval** | [paraphrase-multilingual-MiniLM-L12-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2) + [FAISS](https://github.com/facebookresearch/faiss) · pure-Python BM25 on the free host |
 | **Translation (offline)** | [NLLB-200 distilled 600M](https://huggingface.co/facebook/nllb-200-distilled-600M) + hand-written glossary · [IndicTrans2](https://github.com/AI4Bharat/IndicTrans2) optional |
-| **Weather** | [Open-Meteo](https://open-meteo.com) geocoding + forecast (free, no key) |
+| **Weather** | [Open-Meteo](https://open-meteo.com) geocoding + forecast, [MET Norway](https://api.met.no) as fallback — both free, no key; forecasts cached 15 min |
 | **Text-to-speech** | [gTTS](https://github.com/pndurette/gTTS), chunks fetched in parallel · [indic-parler-tts](https://huggingface.co/ai4bharat/indic-parler-tts) optional on GPU |
 | **Hosting** | [Render](https://render.com) free tier (Lite build) · Google Colab (full build) |
 
@@ -395,6 +395,7 @@ The problems that took the most thought, and what I did about them:
 | Loading spinners stacked on top of the answer | Gradio draws an overlay on every output of a running event | A chat thread with its own typing bubble; overlays off |
 | The page scrolled sideways on phones | The audio waveform is drawn at fixed pixels per second | `contain: inline-size` on the player and thread; phone gutters set outside Gradio's CSS rewriting |
 | IndicTrans2 tooling wouldn't install on Windows | It needs the MSVC build tools | A pure-Python replacement for the text processor (`indic_processor.py`) |
+| Weather worked on my laptop but failed on Render | Open-Meteo rate-limits the outbound IPs that free cloud hosts share | Fall back to MET Norway, reshaped into the same format; cache forecasts for 15 min; a lookup outage is reported as "service down", never "place not found" |
 
 ## 📁 Project structure
 

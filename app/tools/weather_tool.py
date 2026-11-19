@@ -3,15 +3,19 @@
 Fetches current + 3-day forecast from Open-Meteo (free, no API key required).
 Steps:
   1. Resolve location name → (lat, lon) via Open-Meteo Geocoding API.
-  2. Fetch weather variables useful for farming from the Forecast API.
+  2. Fetch weather variables useful for farming from the Forecast API —
+     or, when Open-Meteo refuses (it rate-limits the shared IPs of free
+     hosts like Render), from MET Norway's Locationforecast instead.
   3. Return a structured dict AND a formatted English summary string.
 """
 from __future__ import annotations
 
 import re
-import requests
-from functools import lru_cache
+import time
+from datetime import datetime, timedelta
 from typing import Optional
+
+import requests
 
 from app.config import GEOCODING_API_URL, WEATHER_API_URL
 from app.utils.logging import get_logger
@@ -34,6 +38,11 @@ _WMO_DESCRIPTIONS: dict[int, str] = {
 }
 
 _REQUEST_TIMEOUT = 10  # seconds
+
+# Forecasts barely change within a quarter of an hour, and farmers ask about
+# the same few places again and again: reuse them instead of calling out.
+_FORECAST_TTL = 15 * 60  # seconds
+_forecasts: dict[tuple[float, float], tuple[float, dict]] = {}
 
 
 _COORDS = re.compile(r"^\s*(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)\s*$")
@@ -58,7 +67,13 @@ def _search_place(name: str) -> list[dict]:
     return resp.json().get("results", []) or []
 
 
-@lru_cache(maxsize=256)
+_places: dict[str, Optional[tuple[float, float, str]]] = {}
+
+
+class GeocodingUnavailable(Exception):
+    """The place lookup service could not be reached (not: place unknown)."""
+
+
 def _geocode(location: str) -> Optional[tuple[float, float, str]]:
     """Return (lat, lon, resolved_name) for a location string, or None.
 
@@ -66,7 +81,11 @@ def _geocode(location: str) -> Optional[tuple[float, float, str]]:
     abroad. "Shirur, Pune" is retried as "Shirur" (the geocoder matches place
     names only). Cached: a place's coordinates are stable, so repeat lookups
     (very common — farmers re-ask about the same village) skip the network.
+    A failed request raises GeocodingUnavailable and is not cached — a
+    network hiccup must not leave a real village "not found".
     """
+    if location in _places:
+        return _places[location]
     try:
         candidates = [location] + [p.strip() for p in location.split(",")[:1]
                                    if "," in location and p.strip()]
@@ -75,17 +94,22 @@ def _geocode(location: str) -> Optional[tuple[float, float, str]]:
             results = _search_place(name)
             if results:
                 break
-        if not results:
-            logger.warning("Geocoding found no results for '%s'", location)
-            return None
+    except Exception as exc:
+        logger.error("Geocoding error for '%s': %s", location, exc)
+        raise GeocodingUnavailable(str(exc)) from exc
+    if not results:
+        logger.warning("Geocoding found no results for '%s'", location)
+        found = None
+    else:
         r = next((x for x in results if x.get("country_code") == "IN"), results[0])
         name = r.get("name", location)
         region = r.get("admin1", "") if r.get("country_code") == "IN" else r.get("country", "")
         display = f"{name}, {region}" if region else name
-        return float(r["latitude"]), float(r["longitude"]), display
-    except Exception as exc:
-        logger.error("Geocoding error for '%s': %s", location, exc)
-        return None
+        found = (float(r["latitude"]), float(r["longitude"]), display)
+    if len(_places) > 512:
+        _places.clear()
+    _places[location] = found
+    return found
 
 
 def _fetch_forecast(lat: float, lon: float) -> Optional[dict]:
@@ -115,14 +139,126 @@ def _fetch_forecast(lat: float, lon: float) -> Optional[dict]:
     try:
         resp = requests.get(WEATHER_API_URL, params=params, timeout=_REQUEST_TIMEOUT)
         resp.raise_for_status()
-        return resp.json()
+        return {**resp.json(), "source": "Open-Meteo"}
     except Exception as exc:
-        logger.error("Forecast API error: %s", exc)
+        logger.error("Open-Meteo forecast error: %s", exc)
         return None
 
 
+# ── Fallback: MET Norway Locationforecast (free, no key, global) ─────────────
+_MET_URL = "https://api.met.no/weatherapi/locationforecast/2.0/complete"
+# MET Norway's terms ask every client to identify itself.
+_MET_HEADERS = {"User-Agent": "Multilingual-Agri-AI-Agent/1.0 "
+                              "github.com/sehscape/Multilingual-Agri-AI-Agent"}
+_MET_SKY = {"clearsky": 0, "fair": 1, "partlycloudy": 2, "cloudy": 3, "fog": 45}
+
+
+def _met_code(symbol: Optional[str]) -> int:
+    """MET Norway symbol ('lightrainshowers_day') → nearest WMO weather code,
+    so one formatter and one set of advisories serve both providers."""
+    s = (symbol or "").split("_")[0]
+    if "thunder" in s:
+        return 95
+    if s in _MET_SKY:
+        return _MET_SKY[s]
+    heavy, light = s.startswith("heavy"), s.startswith("light")
+    if "snow" in s:
+        return 75 if heavy else 71 if light else 73
+    if "rain" in s or "sleet" in s:
+        if "showers" in s:
+            return 82 if heavy else 80 if light else 81
+        return 65 if heavy else 61 if light else 63
+    return -1
+
+
+def _utc_offset(lat: float, lon: float) -> timedelta:
+    """Local time for grouping the forecast into days: IST inside India,
+    else the nearest whole hour by longitude (good enough for day buckets)."""
+    if 6 <= lat <= 37 and 68 <= lon <= 98:
+        return timedelta(hours=5, minutes=30)
+    return timedelta(hours=round(lon / 15))
+
+
+def _fetch_met_norway(lat: float, lon: float) -> Optional[dict]:
+    """The same farming variables from MET Norway, reshaped to look like an
+    Open-Meteo response. MET gives no rain probability outside the Nordics,
+    so that field is left empty."""
+    try:
+        resp = requests.get(_MET_URL, params={"lat": round(lat, 4), "lon": round(lon, 4)},
+                            headers=_MET_HEADERS, timeout=_REQUEST_TIMEOUT)
+        resp.raise_for_status()
+        series = resp.json()["properties"]["timeseries"]
+    except Exception as exc:
+        logger.error("MET Norway forecast error: %s", exc)
+        return None
+    if not series:
+        return None
+
+    offset = _utc_offset(lat, lon)
+    times = [datetime.fromisoformat(s["time"].replace("Z", "+00:00")) for s in series]
+    days: dict[str, dict] = {}
+    for i, step in enumerate(series):
+        data = step["data"]
+        inst = data["instant"]["details"]
+        gap = (times[i + 1] - times[i]) if i + 1 < len(times) else timedelta(hours=6)
+        # Hourly steps carry next_1_hours, later 6-hourly steps next_6_hours:
+        # take the period that matches the gap, so no rain is counted twice.
+        period = data.get("next_1_hours") if gap <= timedelta(hours=1) else data.get("next_6_hours")
+        period = period or data.get("next_1_hours") or data.get("next_6_hours") or {}
+        details = period.get("details", {})
+        day = days.setdefault((times[i] + offset).date().isoformat(),
+                              {"temps": [], "rain": 0.0, "wind": [], "codes": []})
+        day["temps"] += [inst.get("air_temperature")]
+        day["temps"] += [details.get(k) for k in ("air_temperature_max", "air_temperature_min")]
+        day["rain"] += details.get("precipitation_amount") or 0.0
+        day["wind"].append((inst.get("wind_speed") or 0.0) * 3.6)  # m/s → km/h
+        day["codes"].append(_met_code(period.get("summary", {}).get("symbol_code")))
+
+    now = series[0]["data"]
+    inst = now["instant"]["details"]
+    first_hour = now.get("next_1_hours") or now.get("next_6_hours") or {}
+    dates = sorted(days)
+    daily = {"time": dates, "weather_code": [], "temperature_2m_max": [],
+             "temperature_2m_min": [], "precipitation_sum": [],
+             "precipitation_probability_max": [], "wind_speed_10m_max": []}
+    for d in dates:
+        temps = [t for t in days[d]["temps"] if t is not None]
+        daily["weather_code"].append(max(days[d]["codes"]))  # the day's most significant weather
+        daily["temperature_2m_max"].append(round(max(temps), 1) if temps else None)
+        daily["temperature_2m_min"].append(round(min(temps), 1) if temps else None)
+        daily["precipitation_sum"].append(round(days[d]["rain"], 1))
+        daily["wind_speed_10m_max"].append(round(max(days[d]["wind"]), 1))
+    temp = inst.get("air_temperature")
+    return {
+        "source": "MET Norway",
+        "current": {
+            "temperature_2m": temp,
+            "relative_humidity_2m": inst.get("relative_humidity"),
+            "apparent_temperature": inst.get("apparent_air_temperature", temp),
+            "precipitation": first_hour.get("details", {}).get("precipitation_amount", 0.0),
+            "weather_code": _met_code(first_hour.get("summary", {}).get("symbol_code")),
+            "wind_speed_10m": round((inst.get("wind_speed") or 0.0) * 3.6, 1),
+        },
+        "daily": daily,
+    }
+
+
+def _forecast(lat: float, lon: float) -> Optional[dict]:
+    """Open-Meteo first, MET Norway if it refuses; reused for a quarter hour."""
+    key = (round(lat, 2), round(lon, 2))
+    hit = _forecasts.get(key)
+    if hit and time.time() - hit[0] < _FORECAST_TTL:
+        return hit[1]
+    data = _fetch_forecast(lat, lon) or _fetch_met_norway(lat, lon)
+    if data is not None:
+        if len(_forecasts) > 512:
+            _forecasts.clear()
+        _forecasts[key] = (time.time(), data)
+    return data
+
+
 def _format_weather(location_display: str, data: dict) -> str:
-    """Convert raw Open-Meteo response into a farming-relevant text summary."""
+    """Convert a forecast (Open-Meteo shape) into a farming-relevant text summary."""
     cur = data.get("current", {})
     daily = data.get("daily", {})
 
@@ -158,15 +294,18 @@ def _format_weather(location_display: str, data: dict) -> str:
     # Skip index 0 (today already shown in current); show next 3 days
     for i in range(1, min(4, len(dates))):
         desc = _WMO_DESCRIPTIONS.get(codes[i] if i < len(codes) else -1, "Unknown")
-        rain_prob = precip_probs[i] if i < len(precip_probs) else "N/A"
+        rain_prob = precip_probs[i] if i < len(precip_probs) else None
         rain_mm = precip_sums[i] if i < len(precip_sums) else "N/A"
+        chance = f" ({rain_prob}% chance)" if rain_prob is not None else ""
         lines.append(
             f"  {dates[i]}: {desc}, "
             f"{min_temps[i] if i < len(min_temps) else '?'}–"
             f"{max_temps[i] if i < len(max_temps) else '?'}°C, "
-            f"Rain: {rain_mm}mm ({rain_prob}% chance), "
+            f"Rain: {rain_mm}mm{chance}, "
             f"Wind: {wind_maxs[i] if i < len(wind_maxs) else '?'} km/h"
         )
+    if data.get("source"):
+        lines.append(f"  Forecast source: {data['source']}")
 
     # Farming advisories
     advisories = _farming_advisories(cur_temp, cur_humidity, cur_precip, cur_code)
@@ -232,14 +371,18 @@ def get_weather_context(location: Optional[str]) -> tuple[Optional[dict], str]:
         lat, lon = coords
         display = f"the farmer's location ({lat:.2f}, {lon:.2f})"
     else:
-        geo = _geocode(location)
+        try:
+            geo = _geocode(location)
+        except GeocodingUnavailable:
+            return None, (f"Weather data is temporarily unavailable for {location}. "
+                          "Please try again later.")
         if geo is None:
             return None, (f"Could not find location '{location}'. "
                           "Please check the spelling or try a nearby city.")
         lat, lon, display = geo
     logger.info("Resolved '%s' → %s (%.4f, %.4f)", location, display, lat, lon)
 
-    raw = _fetch_forecast(lat, lon)
+    raw = _forecast(lat, lon)
     if raw is None:
         return None, f"Weather data is temporarily unavailable for {display}. Please try again later."
 

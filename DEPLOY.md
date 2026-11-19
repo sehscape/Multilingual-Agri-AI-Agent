@@ -7,10 +7,10 @@ Two ways to show this project running:
 | **A. Google Colab** | Free | ❌ Only while the tab is open | **Everything** — mic in 4 languages, LangChain agent on a real LLM, semantic search, voice | Live demo / viva |
 | **B. Render (Lite)** | Free | ✅ Yes (sleeps when idle, wakes on visit) | With a free Groq key: **mic + answers in all 4 languages**, ask-backs for missing details, LangChain agent, weather, crop advice, keyword scheme search, voice reply. Without the key: typed English only | A permanent link for farmers |
 
-**Currently live:** https://farmer-advisory-voice-agent.onrender.com (option B).
-After a push to `main`, redeploy it from the Render dashboard with
-**Manual Deploy → Deploy latest commit** (unless Render's GitHub app is
-connected, pushes don't trigger deploys on their own).
+**Currently live:** https://multilingual-agri-ai-agent.onrender.com (option B),
+created from `render.yaml` as a Blueprint. Every push to `main` redeploys it
+automatically (`autoDeploy: true`); **Manual Deploy → Deploy latest commit**
+forces one by hand.
 
 > **Why not the full app on a free 24/7 host?** As of mid-2026, Hugging Face
 > Spaces requires a paid plan for Gradio apps, and Render's free tier gives only
@@ -77,7 +77,7 @@ Render reads `render.yaml`, asks for `GROQ_API_KEY` (section C), and builds.
 - Render installs the lite dependencies (~2–3 min) and starts the app.
 - First load builds the scheme keyword index in memory (instant).
 - When the log shows `Running on http://0.0.0.0:10000`, your app is live at
-  `https://farmer-advisory-voice-agent.onrender.com` (or whatever name you chose).
+  `https://multilingual-agri-ai-agent.onrender.com` (or whatever name you chose).
 
 ### Using it
 

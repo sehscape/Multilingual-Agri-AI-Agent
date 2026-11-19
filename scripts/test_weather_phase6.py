@@ -43,9 +43,51 @@ def run():
         if not ok:
             all_ok = False
 
+    all_ok &= run_fallbacks()
+
     print(f"\n{'='*60}")
     print(f"Result: {'ALL PASSED' if all_ok else 'SOME TESTS FAILED'}")
     sys.exit(0 if all_ok else 1)
+
+
+def run_fallbacks() -> bool:
+    """Open-Meteo refusing (it rate-limits shared host IPs), both providers
+    down, and the place lookup unreachable."""
+    from app.tools import weather_tool as w
+
+    print(f"\n{'-'*60}\nFallbacks")
+    results = []
+
+    def check(label, ok):
+        print(f"[{PASS if ok else FAIL}] {label}")
+        results.append(ok)
+
+    real_om, real_met, real_search = w._fetch_forecast, w._fetch_met_norway, w._search_place
+    try:
+        w._forecasts.clear()
+        w._fetch_forecast = lambda lat, lon: None
+        raw, summary = get_weather_context("Nashik")
+        check("Open-Meteo refused → MET Norway forecast, 3 days",
+              raw is not None and raw["source"] == "MET Norway"
+              and "Forecast source: MET Norway" in summary and summary.count("°C, Rain:") == 3)
+        check("no rain probability from MET → none invented", "% chance" not in summary)
+
+        w._forecasts.clear()
+        w._fetch_met_norway = lambda lat, lon: None
+        raw, summary = get_weather_context("Pune")
+        check("both providers down → 'temporarily unavailable'",
+              raw is None and "temporarily unavailable" in summary)
+
+        def unreachable(name):
+            raise ConnectionError("network down")
+        w._search_place = unreachable
+        raw, summary = get_weather_context("Satara")
+        check("place lookup unreachable → service down, not 'place not found'",
+              raw is None and "temporarily unavailable" in summary and "Satara" not in w._places)
+    finally:
+        w._fetch_forecast, w._fetch_met_norway, w._search_place = real_om, real_met, real_search
+        w._forecasts.clear()
+    return all(results)
 
 
 if __name__ == "__main__":
