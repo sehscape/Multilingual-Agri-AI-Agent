@@ -1268,7 +1268,7 @@ button.ag-example {
 button.ag-example::before { content: "🌾"; position: absolute; left: 14px; top: 12px; font-size: 20px; line-height: 1.2; }
 button.ag-example:nth-of-type(2)::before { content: "🌦"; }
 button.ag-example:nth-of-type(3)::before { content: "🏛"; }
-button.ag-example:nth-of-type(4)::before { content: "🍅"; }
+button.ag-example:nth-of-type(4)::before { content: "🍂"; }  /* leaves turning yellow */
 button.ag-example:hover { border-color: var(--ag-accent) !important; transform: translateY(-1px); }
 
 /* ═══ How this answer was made ═══ */
