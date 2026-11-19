@@ -51,3 +51,7 @@ gradio_err.txt
 # Gradio cache
 .gradio/
 
+
+# Browser tests
+node_modules/
+scripts/e2e/*.wav

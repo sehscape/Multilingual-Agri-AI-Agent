@@ -836,9 +836,11 @@ async function boot() {
     el.orb.hidden = true;
   }
   renderLanguageSwitch();
+  // A shared link can pick the language: …/?lang=hi opens in Hindi.
+  const fromLink = new URLSearchParams(location.search).get("lang");
   const saved = store.get("ag_lang");
-  applyLanguage(saved || guessLanguage());
-  if (!saved) openLanguageSheet(true);
+  applyLanguage(LOCALES[fromLink] ? fromLink : saved || guessLanguage());
+  if (!saved && !LOCALES[fromLink]) openLanguageSheet(true);
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});

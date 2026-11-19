@@ -1,0 +1,11 @@
+{
+  "name": "agri-assistant-e2e",
+  "private": true,
+  "description": "Browser tests for the web app: every button, pressed in a real Chrome.",
+  "scripts": {
+    "test:e2e": "node scripts/e2e/buttons.test.js"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.48.0"
+  }
+}
