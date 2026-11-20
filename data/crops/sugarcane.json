@@ -1,0 +1,64 @@
+{
+  "name": "sugarcane",
+  "order": 7,
+  "names": {"en": "sugarcane", "hi": "गन्ना", "pa": "ਗੰਨਾ", "mr": "ऊस"},
+  "aliases": {
+    "en": ["sugar cane", "cane", "ganna"],
+    "hi": ["गन्ने", "ईख"],
+    "pa": ["ਗੰਨੇ", "ਕਮਾਦ"],
+    "mr": ["उसाल", "उसाच", "उसात"]
+  },
+  "total_duration_days": 365,
+  "longest_duration_days": 540,
+  "sowing_season": "Spring: February–March (North India) | Suru: January–February | Adsali: July–August (Maharashtra, 15–18 months) | Autumn: October",
+  "harvest_season": "10–12 months after planting (adsali 15–18 months), mostly November–April",
+  "soil": "Deep, well-drained loam to clay loam, pH 6.5–7.5; avoid waterlogged and saline fields",
+  "stages": [
+    {
+      "name": "Germination",
+      "days_range": [0, 35],
+      "description": "Buds on the planted setts sprout and the first shoots come up.",
+      "irrigation": "Irrigate right after planting, then lightly every 7–10 days. Keep the soil moist, not flooded.",
+      "fertilizer": "Basal at planting: 8–10 tonnes FYM or compost + 50 kg DAP + 40 kg MOP per acre in the furrows.",
+      "watch_for": ["Termites eating the setts", "Early shoot borer — the central shoot dries (dead heart)", "Gaps where setts did not sprout"],
+      "tips": ["Use 2–3 bud setts from a healthy 8–10 month old crop", "Dip setts in Carbendazim 1 g/litre for 10 minutes before planting", "Fill gaps with pre-sprouted setts within 30 days"]
+    },
+    {
+      "name": "Tillering",
+      "days_range": [36, 120],
+      "description": "Each sprouted bud sends out side shoots (tillers). The number of canes is decided now.",
+      "irrigation": "Every 7–10 days in summer — this is the most water-sensitive stage. Drip saves 40–50% water.",
+      "fertilizer": "Urea in two splits: 50 kg per acre at 45 days and 50 kg per acre at 90 days, each with light earthing up.",
+      "watch_for": ["Early shoot borer (dead hearts)", "Top borer", "Weeds competing with young shoots"],
+      "tips": ["Keep the field weed-free till 120 days", "Spread dry trash between rows as mulch to save water and check weeds", "Pull out and destroy dead hearts with the larva inside"]
+    },
+    {
+      "name": "Grand Growth",
+      "days_range": [121, 270],
+      "description": "Fastest growth: canes lengthen and add weight, mostly in the monsoon.",
+      "irrigation": "Every 10–15 days when there is no rain. Drain standing rain water quickly.",
+      "fertilizer": "Last urea dose of 35 kg per acre by 120–150 days, with full earthing up. No nitrogen after that.",
+      "watch_for": ["Woolly aphid — white woolly coating under leaves", "Red rot — top leaves dry, the split cane is red with white patches and smells sour", "Lodging in strong wind"],
+      "tips": ["Do full earthing up before the monsoon", "Tie the canes of two rows together (propping) to stop lodging", "Remove dry lower leaves (detrashing) at 5 and 7 months"]
+    },
+    {
+      "name": "Maturity / Ripening",
+      "days_range": [271, 540],
+      "description": "Growth slows and sugar builds up in the canes.",
+      "irrigation": "Reduce irrigation; stop 15–20 days before harvest.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Lodging", "Rats damaging canes", "Flowering (arrowing), which lowers sugar"],
+      "tips": ["Check ripeness with a hand refractometer — harvest when the Brix reading is 18 or more", "Cut canes close to the ground and send them to the mill within 24 hours", "For a good ratoon crop, shave the stubbles and apply fertilizer soon after harvest"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Early shoot borer", "symptoms": "Central shoot of young plants dries and pulls out easily (dead heart) with a bad smell", "control": "Chlorantraniliprole 0.4% GR 7.5 kg per acre in the soil near the plants, then a light irrigation"},
+    {"name": "Termites", "symptoms": "Setts and young plants eaten from inside, shoots dry up", "control": "Chlorpyriphos 20 EC 1–2 litres per acre sprayed on the setts in the furrows at planting"},
+    {"name": "Woolly aphid", "symptoms": "White woolly insects under leaves, black sooty mould", "control": "Release the predators Dipha aphidivora or Micromus (ask your sugar factory or KVK); avoid broad sprays that kill them"}
+  ],
+  "common_diseases": [
+    {"name": "Red rot", "symptoms": "Top leaves dry; the split cane is red with white cross-bands and smells of alcohol", "control": "No cure in the field — uproot and burn affected clumps, plant resistant varieties and healthy setts, and do not keep a ratoon of an affected field"},
+    {"name": "Smut", "symptoms": "A long black whip comes out from the top of the cane", "control": "Cover the whip with a bag, pull out the clump and burn it; use healthy setts"},
+    {"name": "Wilt", "symptoms": "Leaves yellow and dry, canes become hollow and light", "control": "Use healthy setts dipped in Carbendazim 1 g/litre, avoid water stress, rotate crops"}
+  ]
+}

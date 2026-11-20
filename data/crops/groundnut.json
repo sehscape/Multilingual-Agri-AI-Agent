@@ -1,0 +1,73 @@
+{
+  "name": "groundnut",
+  "order": 11,
+  "names": {"en": "groundnut", "hi": "मूंगफली", "pa": "ਮੂੰਗਫਲੀ", "mr": "भुईमूग"},
+  "aliases": {
+    "en": ["ground nut", "peanut", "moongphali"],
+    "hi": ["मूँगफली", "मुंगफली"],
+    "pa": ["ਮੂੰਗਫਲੀਆਂ"],
+    "mr": ["भुईमुग", "शेंगदाणा", "शेंगदाणे"]
+  },
+  "total_duration_days": 110,
+  "longest_duration_days": 140,
+  "sowing_season": "Kharif: June–July with the monsoon | Summer: January–February (irrigated)",
+  "harvest_season": "Kharif: October–November | Summer: May–June",
+  "soil": "Light, well-drained sandy loam with enough calcium, pH 6.0–7.5; loose soil lets the pegs go in easily",
+  "stages": [
+    {
+      "name": "Germination / Emergence",
+      "days_range": [0, 15],
+      "description": "Seeds sprout in 5–7 days.",
+      "irrigation": "Sow in moist soil. Summer crop: irrigate before sowing, then lightly if the soil dries.",
+      "fertilizer": "Basal: 45 kg DAP + 15–20 kg MOP per acre. Treat seed with Trichoderma 4 g per kg (or Thiram 3 g per kg), then Rhizobium 5 g per kg.",
+      "watch_for": ["Collar rot — seedlings rot at the base", "Birds and squirrels digging out seed", "White grub in sandy soil"],
+      "tips": ["Shell pods just before sowing; 40–50 kg kernels per acre for bunch types", "Rows 30 cm apart, plants 10 cm apart"]
+    },
+    {
+      "name": "Vegetative Growth",
+      "days_range": [16, 30],
+      "description": "Leaves and branches spread.",
+      "irrigation": "Kharif: drain extra rain. Summer: every 8–10 days. Mild dryness at this stage is fine.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Leaf miner and thrips", "Weeds"],
+      "tips": ["Weed and hoe at 15 and 30 days — no hoeing once pegging starts", "A short dry spell now brings more flowers later"]
+    },
+    {
+      "name": "Flowering / Pegging",
+      "days_range": [31, 50],
+      "description": "Flowers appear and the pegs (needles) grow down into the soil to form pods.",
+      "irrigation": "Critical stage — keep the soil moist (every 7–10 days in summer).",
+      "fertilizer": "Gypsum 200 kg per acre near the plants at flowering, then light earthing up — it fills the pods and gives better kernels.",
+      "watch_for": ["Tobacco caterpillar eating leaves at night", "Tikka leaf spots"],
+      "tips": ["Do not disturb the soil after the pegs go in", "Light earthing up after gypsum helps more pegs reach the soil"]
+    },
+    {
+      "name": "Pod Formation / Pod Filling",
+      "days_range": [51, 95],
+      "description": "Pods develop under the soil and kernels fill.",
+      "irrigation": "Every 10–12 days; water stress now gives empty pods.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Tikka (early and late leaf spot)", "Rust", "Stem rot — white fungal threads at the stem base"],
+      "tips": ["For tikka and rust spray Hexaconazole 5 EC 2 ml/litre or Mancozeb 2.5 g/litre", "Repeat after 15 days if spots keep spreading"]
+    },
+    {
+      "name": "Maturity / Harvest",
+      "days_range": [96, 140],
+      "description": "Leaves turn yellow and the inside of the shell darkens.",
+      "irrigation": "Stop 10–15 days before harvest; a light irrigation before lifting helps if the soil is hard.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Aflatoxin mould if pods stay wet", "Termites on pods"],
+      "tips": ["Pull a few plants: harvest when 70–80% of pods have a dark inner shell", "Dry pods to 8–9% moisture before storage"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Tobacco caterpillar", "symptoms": "Leaves eaten in groups at night, only veins left", "control": "Emamectin benzoate 5 SG 0.4 g/litre; collect egg masses; pheromone traps 5 per acre"},
+    {"name": "Leaf miner", "symptoms": "Brown blotches on leaves, folded leaves with small caterpillars", "control": "Neem seed kernel extract (5%); light traps"},
+    {"name": "White grub", "symptoms": "Plants wilt and dry in patches; C-shaped grubs in the soil", "control": "Deep summer ploughing; collect and destroy beetles from nearby trees after the first rains"}
+  ],
+  "common_diseases": [
+    {"name": "Tikka leaf spot", "symptoms": "Brown (early) or black (late) round spots on leaves, early leaf fall", "control": "Hexaconazole 5 EC 2 ml/litre or Mancozeb 2.5 g/litre, 2–3 sprays 15 days apart"},
+    {"name": "Collar rot", "symptoms": "Seedlings rot at soil level with black fungal growth", "control": "Seed treatment with Trichoderma 4 g or Thiram 3 g per kg"},
+    {"name": "Stem rot", "symptoms": "White threads and mustard-like seeds at the stem base; the plant wilts", "control": "Trichoderma mixed with FYM in the soil; gypsum; deep ploughing"}
+  ]
+}

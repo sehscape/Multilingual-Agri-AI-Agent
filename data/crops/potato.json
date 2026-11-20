@@ -1,0 +1,73 @@
+{
+  "name": "potato",
+  "order": 13,
+  "names": {"en": "potato", "hi": "आलू", "pa": "ਆਲੂ", "mr": "बटाटा"},
+  "aliases": {
+    "en": ["aloo", "alu"],
+    "hi": ["आलु"],
+    "pa": ["ਆਲੂਆਂ"],
+    "mr": ["बटाट"]
+  },
+  "total_duration_days": 100,
+  "longest_duration_days": 130,
+  "sowing_season": "Plains: October–November (main crop) | Hills: March–April",
+  "harvest_season": "January–March in the plains",
+  "soil": "Loose, well-drained sandy loam rich in organic matter, pH 5.5–7.0",
+  "stages": [
+    {
+      "name": "Planting / Sprouting",
+      "days_range": [0, 20],
+      "description": "Seed tubers are planted on ridges; sprouts come up in 2–3 weeks.",
+      "irrigation": "First light irrigation within 2–3 days of planting (or plant in moist soil). Water should reach only two-thirds up the ridge.",
+      "fertilizer": "Basal at planting: 8–10 tonnes FYM + 75 kg DAP + 70 kg MOP + 55 kg urea per acre.",
+      "watch_for": ["Seed tubers rotting in wet soil", "Cutworms cutting young shoots at night", "Termites"],
+      "tips": ["Use healthy, sprouted seed tubers of 30–50 g — about 10–12 quintals per acre", "Rows 60 cm apart, tubers 20 cm apart"]
+    },
+    {
+      "name": "Vegetative Growth",
+      "days_range": [21, 35],
+      "description": "Stems and leaves grow; stolons start forming underground.",
+      "irrigation": "Every 8–10 days; keep the ridges moist but never flooded.",
+      "fertilizer": "Second dose: 55 kg urea per acre at 25–30 days, then earth up.",
+      "watch_for": ["Aphids (important in a seed crop)", "Weeds", "Early blight spots"],
+      "tips": ["Earth up at 25–30 days to cover the tubers and stop greening", "In cool, foggy weather start a preventive Mancozeb 2.5 g/litre spray"]
+    },
+    {
+      "name": "Tuber Initiation",
+      "days_range": [36, 55],
+      "description": "Stolon tips swell into small tubers. Water stress now means fewer tubers.",
+      "irrigation": "Every 7–8 days — the most critical time for water.",
+      "fertilizer": "No more fertilizer.",
+      "watch_for": ["Late blight — dark water-soaked patches on leaves with white mould underneath, spreading fast in cold, humid weather", "Frost"],
+      "tips": ["At the first sign of late blight spray Cymoxanil + Mancozeb 3 g/litre or Metalaxyl + Mancozeb 2.5 g/litre", "A light irrigation protects the crop on frosty nights"]
+    },
+    {
+      "name": "Tuber Bulking",
+      "days_range": [56, 85],
+      "description": "Tubers grow fast and gain weight.",
+      "irrigation": "Every 7–10 days; even moisture prevents cracked and hollow tubers.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Late blight", "Aphids in a seed crop", "Tubers turning green where exposed"],
+      "tips": ["Keep tubers covered with soil", "Repeat blight sprays every 7–10 days while foggy, humid weather lasts"]
+    },
+    {
+      "name": "Maturity / Harvest",
+      "days_range": [86, 130],
+      "description": "Leaves yellow, vines dry and the tuber skin sets.",
+      "irrigation": "Stop irrigation 10 days before cutting the vines.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Tubers cut or bruised while digging", "Tuber rot in storage"],
+      "tips": ["Cut the vines (haulms) 10–15 days before digging so the skin hardens", "Cure tubers in shade for 10–15 days before storage"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Aphids", "symptoms": "Tiny green insects under leaves; they spread viruses in seed crops", "control": "Thiamethoxam 25 WG 0.2 g/litre; cut the vines early in a seed crop"},
+    {"name": "Cutworm", "symptoms": "Young shoots cut at ground level at night", "control": "Chlorpyriphos 20 EC 2 ml/litre sprayed on the ridges in the evening"},
+    {"name": "Potato tuber moth", "symptoms": "Tunnels in tubers in the field and in storage", "control": "Earth up well so no tuber is exposed; store in a cool place and cover stored tubers with dry neem leaves"}
+  ],
+  "common_diseases": [
+    {"name": "Late blight", "symptoms": "Dark water-soaked patches on leaves with white mould underneath; the whole field can collapse in days", "control": "Mancozeb 2.5 g/litre before it appears; Cymoxanil + Mancozeb 3 g/litre or Metalaxyl + Mancozeb 2.5 g/litre once seen"},
+    {"name": "Early blight", "symptoms": "Brown spots with rings (like a target) on older leaves", "control": "Mancozeb 2.5 g/litre"},
+    {"name": "Black scurf", "symptoms": "Black crusts on the tuber skin, weak sprouting", "control": "Dip seed tubers in 3% boric acid for 20–30 minutes before storage or planting"}
+  ]
+}

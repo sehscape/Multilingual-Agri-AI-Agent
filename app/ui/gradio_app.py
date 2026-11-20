@@ -730,17 +730,9 @@ def _cards(state, lang: str) -> dict:
     if state.scheme_docs:
         names = re.findall(r"Source:\s*(.+?)\s*\(relevance", state.scheme_docs[0].get("context", ""))
         if names:
-            cards["schemes"] = list(dict.fromkeys(_SCHEME_TITLES.get(n.lower(), n) for n in names))
+            from app.knowledge import scheme_title
+            cards["schemes"] = list(dict.fromkeys(scheme_title(n) for n in names))
     return cards
-
-
-# Scheme document names as people write them (the files are named in plain words)
-_SCHEME_TITLES = {
-    "pm kisan": "PM-KISAN",
-    "pm fasal bima yojana": "PM Fasal Bima Yojana",
-    "kisan credit card": "Kisan Credit Card",
-    "soil health card": "Soil Health Card",
-}
 
 
 # ── Theme ─────────────────────────────────────────────────────────────────────

@@ -1,0 +1,73 @@
+{
+  "name": "mustard",
+  "order": 10,
+  "names": {"en": "mustard", "hi": "सरसों", "pa": "ਸਰ੍ਹੋਂ", "mr": "मोहरी"},
+  "aliases": {
+    "en": ["rapeseed", "sarson", "raya", "toria"],
+    "hi": ["सरसो", "राई", "तोरिया"],
+    "pa": ["ਸਰੋਂ", "ਸਰ੍ਹੋ", "ਸਰਸੋਂ", "ਰਾਇਆ", "ਤੋਰੀਆ"],
+    "mr": []
+  },
+  "total_duration_days": 130,
+  "longest_duration_days": 150,
+  "sowing_season": "Rabi: late September–October (toria in September)",
+  "harvest_season": "February–March",
+  "soil": "Sandy loam to loam, pH 6.5–8.0; tolerates slightly saline soil but not waterlogging",
+  "stages": [
+    {
+      "name": "Germination / Emergence",
+      "days_range": [0, 10],
+      "description": "Seeds sprout in 4–6 days.",
+      "irrigation": "Sow in good moisture after a pre-sowing irrigation. The first irrigation is due only at 30–35 days.",
+      "fertilizer": "Basal (irrigated): 35 kg urea + 100 kg single super phosphate (SSP) + 25 kg MOP per acre. SSP also gives the sulphur mustard needs.",
+      "watch_for": ["Painted bug and sawfly on young seedlings", "Poor stand from deep sowing"],
+      "tips": ["Seed rate 1.5–2 kg per acre; rows 30–45 cm apart; sow 2–3 cm deep", "Thin plants to 10–15 cm apart at 15–20 days"]
+    },
+    {
+      "name": "Vegetative / Branching",
+      "days_range": [11, 40],
+      "description": "Leaves form a rosette, then branches grow.",
+      "irrigation": "First irrigation at 30–35 days.",
+      "fertilizer": "Second half of urea: 35 kg per acre with the first irrigation.",
+      "watch_for": ["Sawfly larvae eating leaves", "Weeds", "White rust spots under leaves"],
+      "tips": ["Hand weed once at 20–25 days", "Thinning gives bigger, stronger plants"]
+    },
+    {
+      "name": "Flowering",
+      "days_range": [41, 75],
+      "description": "Yellow flowers open. Aphids build up now in cool, cloudy weather.",
+      "irrigation": "Irrigate lightly if the soil is dry; avoid heavy watering in windy weather (lodging).",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Mustard aphid colonies on flower tips", "Alternaria blight — dark round spots with rings", "Frost on cold nights"],
+      "tips": ["Spray for aphids when about 10% of plants have colonies on the tips", "Spray in the afternoon, when bees are less active"]
+    },
+    {
+      "name": "Pod Formation / Pod Filling",
+      "days_range": [76, 110],
+      "description": "Pods form and seeds fill.",
+      "irrigation": "One irrigation at pod filling if the soil is dry — the irrigation that matters most for yield.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Aphids on pods", "Stem rot — cottony white growth on stems, plants dry"],
+      "tips": ["For aphids spray Dimethoate 30 EC 400 ml per acre in 100–125 litres of water", "A light irrigation protects the crop on frosty nights"]
+    },
+    {
+      "name": "Maturity / Harvest",
+      "days_range": [111, 150],
+      "description": "Pods turn yellow-brown and seeds change colour.",
+      "irrigation": "No irrigation.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Pods shattering if harvest is late"],
+      "tips": ["Harvest when 75% of pods are yellow-brown, in the early morning to reduce shattering", "Dry the crop on a clean floor before threshing"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Mustard aphid", "symptoms": "Pale green insects in dense colonies on tips, flowers and pods; plants stunted", "control": "Dimethoate 30 EC 400 ml per acre in 100–125 litres of water"},
+    {"name": "Painted bug", "symptoms": "Black-and-orange bugs sucking young seedlings, which wilt", "control": "An irrigation at 3–4 weeks reduces it; spray only if many seedlings wilt"},
+    {"name": "Sawfly", "symptoms": "Dark green-black larvae eat leaves full of holes", "control": "Irrigation drowns larvae in the soil; shake plants in the morning and destroy fallen larvae"}
+  ],
+  "common_diseases": [
+    {"name": "White rust", "symptoms": "White raised spots under leaves; swollen, twisted flower heads", "control": "Mancozeb 2.5 g/litre at the first sign; repeat after 15 days"},
+    {"name": "Alternaria blight", "symptoms": "Dark brown round spots with rings on leaves and pods", "control": "Mancozeb 2.5 g/litre"},
+    {"name": "Stem rot (Sclerotinia)", "symptoms": "Water-soaked patches on the stem, cottony white growth, black seed-like bodies inside", "control": "Carbendazim 50 WP 1 g/litre at 45–50 days in problem fields; deep summer ploughing; crop rotation"}
+  ]
+}

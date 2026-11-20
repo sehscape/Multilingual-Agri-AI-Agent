@@ -1,0 +1,82 @@
+{
+  "name": "bajra",
+  "order": 15,
+  "names": {"en": "bajra", "hi": "बाजरा", "pa": "ਬਾਜਰਾ", "mr": "बाजरी"},
+  "aliases": {
+    "en": ["bajri", "pearl millet"],
+    "hi": ["बाजरे", "बाजरी"],
+    "pa": ["ਬਾਜਰੇ", "ਬਾਜਰੀ"],
+    "mr": []
+  },
+  "total_duration_days": 85,
+  "longest_duration_days": 110,
+  "sowing_season": "Kharif: late June–July with the first good monsoon rain | Summer: March (irrigated, Gujarat and Rajasthan)",
+  "harvest_season": "September–October",
+  "soil": "Light sandy loam to loam; grows in poor, dry soil, pH 6.5–8.0; does not like waterlogging",
+  "stages": [
+    {
+      "name": "Germination / Emergence",
+      "days_range": [0, 10],
+      "description": "Seeds sprout in 3–5 days in warm, moist soil.",
+      "irrigation": "Sow after a good monsoon shower, when the soil is moist 10–15 cm deep.",
+      "fertilizer": "Basal: 40 kg DAP per acre (add 20 kg MOP on light soil). Treat seed with Metalaxyl 35 SD 6 g per kg against downy mildew.",
+      "watch_for": ["Shoot fly — the central shoot dries (dead heart)", "Poor stand in crusted soil"],
+      "tips": ["Seed rate 1.5–2 kg per acre; rows 45 cm apart", "Remove ergot from seed: stir it in salt water (2 kg salt in 10 litres) and throw away what floats"]
+    },
+    {
+      "name": "Tillering",
+      "days_range": [11, 30],
+      "description": "Side shoots form and the plant spreads.",
+      "irrigation": "Usually rain-fed; give one irrigation in a long dry spell.",
+      "fertilizer": "Top dress 35 kg urea per acre at 25–30 days when the soil is moist (45 kg for an irrigated crop).",
+      "watch_for": ["Weeds", "Downy mildew — yellow leaves with white growth underneath"],
+      "tips": ["Thin plants to 10–15 cm apart and fill gaps with the pulled seedlings at 15–20 days", "Hand weed or hoe once at 20–25 days"]
+    },
+    {
+      "name": "Panicle Initiation",
+      "days_range": [31, 45],
+      "description": "The ear head starts forming inside the stem.",
+      "irrigation": "Keep the soil moist — a critical stage for water.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Stem borer", "Downy mildew turning ears leafy (green ear)"],
+      "tips": ["Pull out and destroy plants with downy mildew"]
+    },
+    {
+      "name": "Heading / Flowering",
+      "days_range": [46, 60],
+      "description": "Ears come out and flower.",
+      "irrigation": "Irrigate if dry — water stress at flowering means poor grain set.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Ergot — sticky, honey-like drops on the ears", "Smut — green, then black, swollen grains", "Grasshoppers"],
+      "tips": ["Cut out ears with ergot or smut and burn them"]
+    },
+    {
+      "name": "Grain Filling",
+      "days_range": [61, 75],
+      "description": "Grains fill from milky to hard.",
+      "irrigation": "One more irrigation at the milk–dough stage if the soil is dry.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Birds eating grain", "Rust"],
+      "tips": ["Scare birds away in the morning and evening"]
+    },
+    {
+      "name": "Maturity / Harvest",
+      "days_range": [76, 110],
+      "description": "Grains are hard and the plant turns pale.",
+      "irrigation": "No irrigation.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Grain loss and bird damage if harvest is late"],
+      "tips": ["Cut the ears first, dry them and then thresh", "Dry grain to 12% moisture before storage"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Shoot fly", "symptoms": "Central shoot of young plants dries (dead heart)", "control": "Sow early with the first rains; use a slightly higher seed rate and pull out dead hearts"},
+    {"name": "Stem borer", "symptoms": "Dead hearts in older plants, holes in the stem", "control": "Destroy stubbles after harvest; release Trichogramma egg-parasite cards (ask your KVK)"},
+    {"name": "White grub", "symptoms": "Plants wilt and dry in patches", "control": "Deep summer ploughing; collect beetles from trees after the first rains"}
+  ],
+  "common_diseases": [
+    {"name": "Downy mildew (green ear)", "symptoms": "Yellow streaks with white growth under leaves; ears turn into leafy structures", "control": "Seed treatment with Metalaxyl 35 SD 6 g per kg; resistant hybrids; remove affected plants"},
+    {"name": "Ergot", "symptoms": "Pink, honey-like drops on ears; later hard dark bodies replace the grains", "control": "Clean the seed in salt water; remove affected ears"},
+    {"name": "Smut", "symptoms": "Grains turn into green, then black sacs of powder", "control": "Crop rotation; remove and burn affected ears"}
+  ]
+}

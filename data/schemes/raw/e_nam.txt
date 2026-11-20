@@ -1,0 +1,40 @@
+SCHEME: e-NAM (National Agriculture Market) - Online Mandi Trading
+SOURCE: Ministry of Agriculture & Farmers Welfare, Government of India; implemented by Small Farmers' Agribusiness Consortium (SFAC)
+CATEGORY: Market Access and Better Prices
+
+OVERVIEW
+e-NAM is a pan-India electronic trading portal that links APMC mandis into one national online market for farm produce. Started in April 2016, it connects more than 1,400 mandis across most states and union territories. Farmers can sell their produce through transparent online bidding, where traders from the same mandi and other mandis can bid, and get the payment directly into their bank account.
+
+BENEFIT
+- Transparent online bidding — more buyers compete for the farmer's produce, which helps get a better price.
+- Quality of the produce is tested (assaying) at the mandi and shown to buyers.
+- Payment goes directly into the farmer's bank account.
+- Farmers can see live mandi prices (arrivals and rates) for many commodities on the e-NAM app before deciding where to sell.
+- Farmer Producer Organisations (FPOs) can trade from their collection centres.
+- No registration fee for farmers.
+
+ELIGIBILITY
+- Any farmer selling produce in an e-NAM-linked mandi can register.
+- Farmer Producer Organisations, traders and commission agents register separately.
+- More than 200 commodities are traded, including cereals, pulses, oilseeds, vegetables, fruits and spices.
+
+HOW TO APPLY / REGISTER
+1. Register on the e-NAM website enam.gov.in or the e-NAM mobile app with your name, mobile number and bank account details. You can also register at the e-NAM help desk in the mandi.
+2. Complete KYC with Aadhaar and bank details; you get a login ID.
+3. Bring your produce to the e-NAM mandi; it is weighed and its quality is tested.
+4. Traders bid online; you can accept the highest bid.
+5. After sale, the payment is transferred to your bank account.
+
+DOCUMENTS REQUIRED
+- Aadhaar card
+- Bank account passbook or cancelled cheque
+- Mobile number
+
+IMPORTANT NOTES
+- Check whether your nearest mandi is linked to e-NAM on the e-NAM website or app.
+- Clean, graded and dry produce gets a better quality score and better bids.
+- Live mandi prices on the app help in choosing when and where to sell.
+
+HELPLINE
+e-NAM toll-free helpline: 1800-270-0224
+Kisan Call Centre: 1800-180-1551

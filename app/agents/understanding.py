@@ -19,49 +19,21 @@ import re
 from dataclasses import asdict, dataclass
 from typing import Optional
 
+from app import knowledge
 from app.models.llm import StubLLM
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
-SUPPORTED_CROPS = ("wheat", "rice", "onion", "tomato", "cotton", "maize")
-_CROP_SYNONYMS = {"paddy": "rice", "corn": "maize"}
-SCHEMES = ("pm_kisan", "pmfby", "kcc", "soil_health_card")
+SUPPORTED_CROPS = tuple(knowledge.crops())
+SCHEMES = knowledge.scheme_ids()
 _TOPICS = ("farming", "greeting", "off_topic", "unclear")
 _ADVICE_TOPICS = ("fertilizer", "irrigation", "pest_disease", "sowing", "harvest", "general")
 
 # Search words that steer the scheme search to the right official document.
-SCHEME_SEARCH_TERMS = {
-    "pm_kisan": "PM-KISAN Pradhan Mantri Kisan Samman Nidhi",
-    "pmfby": "Pradhan Mantri Fasal Bima Yojana PMFBY crop insurance",
-    "kcc": "Kisan Credit Card KCC loan",
-    "soil_health_card": "Soil Health Card soil testing",
-}
+SCHEME_SEARCH_TERMS = knowledge.search_terms()
 
 # ── Rule-engine vocabulary ────────────────────────────────────────────────────
-# Crops the knowledge base does not cover, recognised so the farmer is told so
-# plainly instead of being asked "which crop?" again. Matched at word starts
-# only: "ऊस" (sugarcane) must not fire inside "पाऊस" (rain).
-_OTHER_CROPS = {
-    "sugarcane": ("sugarcane", "गन्ना", "गन्ने", "ऊस", "ਗੰਨਾ", "ਗੰਨੇ"),
-    "soybean": ("soybean", "soyabean", "सोयाबीन", "ਸੋਇਆਬੀਨ"),
-    "potato": ("potato", "आलू", "बटाटा", "ਆਲੂ"),
-    "chickpea": ("chickpea", "चना", "हरभरा", "ਛੋਲੇ"),
-    "mustard": ("mustard", "सरसों", "मोहरी", "ਸਰ੍ਹੋਂ"),
-    "groundnut": ("groundnut", "peanut", "मूंगफली", "भुईमूग", "ਮੂੰਗਫਲੀ"),
-    "banana": ("banana", "केला", "केळी", "ਕੇਲਾ"),
-    "grapes": ("grape", "अंगूर", "द्राक्ष", "ਅੰਗੂਰ"),
-    "chilli": ("chilli", "chili", "मिर्च", "मिरची", "ਮਿਰਚ"),
-    "millet": ("bajra", "jowar", "millet", "बाजरा", "बाजरी", "ज्वार", "ਬਾਜਰਾ"),
-}
-_SCHEME_WORDS = (  # order matters: "kisan credit" before "pm kisan"
-    ("kcc", ("kisan credit", "credit card", "kcc", "क्रेडिट कार्ड", "ਕ੍ਰੈਡਿਟ ਕਾਰਡ")),
-    ("pmfby", ("fasal bima", "insurance", "pmfby", "बीमा", "विमा", "ਬੀਮਾ")),
-    ("soil_health_card", ("soil health", "soil card", "soil test", "मृदा", "मिट्टी",
-                          "माती", "ਮਿੱਟੀ")),
-    ("pm_kisan", ("pm-kisan", "pm kisan", "pmkisan", "samman nidhi", "पीएम किसान",
-                  "पीएम-किसान", "सम्मान निधि", "ਪੀਐਮ ਕਿਸਾਨ", "6000", "6,000")),
-)
 _SOW_KW = ("sow", "sowing", "seed rate", "बुवाई", "बुआई", "बोवाई", "पेरणी", "ਬਿਜਾਈ")
 _HARVEST_KW = ("harvest", "कटाई", "काढणी", "ਵਾਢੀ")
 _GREETINGS = ("hello", "hi", "hey", "namaste", "namaskar", "thank", "thanks", "bye",
@@ -72,7 +44,9 @@ _NOT_PLACES = {"january", "february", "march", "april", "may", "june", "july", "
                "september", "october", "november", "december", "english", "hindi",
                "marathi", "punjabi", "summer", "winter", "rabi", "kharif", "my", "the",
                "kisan", "pradhan", "fasal", "soil", "credit", "crop", "government", "scheme",
-               "wheat", "rice", "paddy", "onion", "tomato", "cotton", "maize", "this", "next"}
+               "this", "next", "solar", "namo", "drip"} | {
+    word.split()[0] for name in knowledge.crops() for word in knowledge.crop_words(name, ("en",))
+} | {word.split()[0] for words in knowledge.OTHER_CROPS.values() for word in words if word.isascii()}
 _COORDS = re.compile(r"^\s*-?\d{1,2}(?:\.\d+)?\s*,\s*-?\d{1,3}(?:\.\d+)?\s*$")
 
 
@@ -141,16 +115,6 @@ def _word_starts(text: str, words) -> bool:
     return any(re.search(rf"(?<![\wऀ-੿]){re.escape(w)}", text) for w in words)
 
 
-def _find_other_crop(text: str) -> Optional[str]:
-    low = text.lower()
-    return next((name for name, words in _OTHER_CROPS.items() if _word_starts(low, words)), None)
-
-
-def _find_scheme(text: str) -> Optional[str]:
-    low = text.lower()
-    return next((key for key, words in _SCHEME_WORDS if any(w in low for w in words)), "other")
-
-
 def _advice_topic(text: str) -> str:
     q = StubLLM._normalize(text)
     has = lambda kws: any(k in q for k in kws)  # noqa: E731
@@ -187,15 +151,18 @@ def _english_city(name: Optional[str]) -> Optional[str]:
 
 
 def understand_with_rules(text: str, english: Optional[str] = None,
-                          saved_location: Optional[str] = None) -> Understanding:
+                          saved_location: Optional[str] = None,
+                          lang: Optional[str] = None) -> Understanding:
     text = (text or "").strip()
     english = (english or text).strip()
     routing = english if english == text else f"{english} (original: {text})"
-    c = StubLLM()._classify(routing)
+    c = StubLLM()._classify(routing, lang)
+    mention = knowledge.find_crop(routing, lang)
 
     u = Understanding(
         english=english,
-        crop=_CROP_SYNONYMS.get(c["crop"], c["crop"]),
+        crop=c["crop"],
+        crop_words=mention.words if mention else None,
         crop_age_days=c["days"],
         location=c["location"] or _english_place(english),
         saved_location=_english_city(saved_location),
@@ -204,14 +171,14 @@ def understand_with_rules(text: str, english: Optional[str] = None,
         wants_crop_advice=c["needs_crop_info"],
         engine="rules",
     )
-    if not u.crop and (other := _find_other_crop(routing)):
-        u.crop, u.wants_crop_advice = f"other:{other}", True
+    if not u.crop and mention and not mention.known:
+        u.crop, u.wants_crop_advice = mention.label, True
     if u.location and not (u.wants_weather or u.wants_scheme or u.wants_crop_advice):
         u.wants_weather = True
     if u.wants_crop_advice:
         u.advice_topic = _advice_topic(routing)
     if u.wants_scheme:
-        u.scheme = _find_scheme(routing)
+        u.scheme = knowledge.find_scheme(routing) or "other"
     words = re.findall(r"[\wऀ-੿]+", text.lower())
     if u.wants_anything:
         u.topic = "farming"
@@ -261,17 +228,30 @@ _LANG_NAMES = {"en": "English", "hi": "Hindi", "mr": "Marathi", "pa": "Punjabi"}
 _ASKED_FOR = {"age": "the crop's age in days", "location": "their village or town",
               "crop": "the crop's name"}
 
+def _crop_list() -> str:
+    """'wheat (gehun, gehu), rice (paddy), …' — each crop with its other English names."""
+    parts = []
+    for name in knowledge.crops():
+        others = [w for w in knowledge.crop_words(name, ("en",)) if w != name][:3]
+        parts.append(f"{name} ({', '.join(others)})" if others else name)
+    return ", ".join(parts)
+
+
+def _scheme_list() -> str:
+    return ", ".join(f"{sid} ({s['about']})" for sid, s in knowledge.schemes().items())
+
+
 _SYSTEM_PROMPT = """You turn an Indian farmer's question into JSON for a farm advice assistant.
 
 The words may come from speech recognition, so expect spelling mistakes, missing punctuation and a mix of Hindi, Marathi, Punjabi and English words. Work out what the farmer most likely meant. Never add details the farmer did not say.
 
-The assistant knows these crops: wheat, rice (paddy), onion, tomato, cotton, maize (corn).
-It knows these government schemes: pm_kisan (PM-KISAN income support), pmfby (PM Fasal Bima Yojana crop insurance), kcc (Kisan Credit Card), soil_health_card (Soil Health Card).
+The assistant knows these crops: {crops}.
+It knows these government schemes: {schemes}.
 
 Return ONLY a JSON object with these keys:
 "english": the question in clear, simple English, keeping every detail. Numbers as digits. Crop age in days (6 weeks = 42 days, 2 months = 60 days). Places in their usual English spelling.
 "topic": "farming" (crops, farm work, weather, rain, farm schemes or loans), "greeting" (only hello, thanks or goodbye), "off_topic" (not about farming), or "unclear" (the words make no sense).
-"crop": "wheat", "rice", "onion", "tomato", "cotton" or "maize"; "other:<english name>" for any other crop; null if no crop is named.
+"crop": one of {crop_ids}; "other:<english name>" for any other crop; null if no crop is named.
 "crop_words": the crop exactly as the farmer said it, or null.
 "crop_age_days": whole number of days since sowing or transplanting, or null if not said.
 "location": the village, town or district named in the question, in English spelling, or null.
@@ -279,9 +259,12 @@ Return ONLY a JSON object with these keys:
 "saved_location": the saved location given below, in English spelling, or null.
 "wants_weather": true if they ask about rain, weather, temperature, wind or storms, or whether to irrigate or spray given the weather.
 "wants_scheme": true if they ask about a government scheme, subsidy, loan, insurance or money support.
-"scheme": "pm_kisan", "pmfby", "kcc", "soil_health_card", "other" or null.
+"scheme": one of {scheme_ids}, "other" or null.
 "wants_crop_advice": true if they ask how to grow or look after a crop: fertilizer, water, pests, disease, weeds, yellow leaves, sowing or harvest.
-"advice_topic": "fertilizer", "irrigation", "pest_disease", "sowing", "harvest", "general" or null."""
+"advice_topic": "fertilizer", "irrigation", "pest_disease", "sowing", "harvest", "general" or null.""".format(
+    crops=_crop_list(), schemes=_scheme_list(),
+    crop_ids=", ".join(f'"{name}"' for name in knowledge.crops()),
+    scheme_ids=", ".join(f'"{sid}"' for sid in knowledge.scheme_ids()))
 
 
 def _as_bool(value) -> bool:
@@ -312,12 +295,9 @@ def _parse_llm_json(raw: str, fallback_english: str) -> Understanding:
     data = json.loads(match.group())
 
     crop = (_as_text(data.get("crop")) or "").lower()
-    crop = _CROP_SYNONYMS.get(crop, crop)
-    if crop and crop not in SUPPORTED_CROPS and not crop.startswith("other:"):
-        crop = f"other:{crop}"
-    if crop.startswith("other:") and _CROP_SYNONYMS.get(crop[6:].strip(), crop[6:].strip()) \
-            in SUPPORTED_CROPS:
-        crop = _CROP_SYNONYMS.get(crop[6:].strip(), crop[6:].strip())
+    name = crop[6:].strip() if crop.startswith("other:") else crop
+    if name:   # "paddy", "tur", "other:sugarcane" → the guide's own name
+        crop = knowledge.resolve_crop(name) or f"other:{name}"
 
     topic = _as_text(data.get("topic")) or ""
     scheme = _as_text(data.get("scheme"))
@@ -381,7 +361,7 @@ def understand(text: str, lang: str, saved_location: Optional[str] = None,
     """Understand the farmer's words. `client` is a GroqClient (LLM engine) or
     None (rules). `pending` is the earlier question when the assistant asked
     for a missing detail; `english` is an English translation, if one exists."""
-    rules = understand_with_rules(text, english, saved_location)
+    rules = understand_with_rules(text, english, saved_location, lang)
     missing = list((pending or {}).get("missing") or [])
 
     if client is not None:
@@ -393,6 +373,8 @@ def understand(text: str, lang: str, saved_location: Optional[str] = None,
                 if u.crop_age_days is None:
                     u.crop_age_days = rules.crop_age_days
                 u.location = u.location or rules.location
+                if u.wants_scheme and u.scheme in (None, "other") and rules.scheme not in (None, "other"):
+                    u.scheme = rules.scheme        # "सोलर पंप" → pm_kusum, even if the model said "other"
             u.saved_location = u.saved_location or _english_city(saved_location)
             if pending and u.topic != "farming":
                 # The model didn't connect the reply to the earlier question.

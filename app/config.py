@@ -84,7 +84,10 @@ CHUNK_OVERLAP: int = int(os.getenv("CHUNK_OVERLAP", "150"))
 # Minimum cosine relevance (0–1) a retrieved chunk must reach to be trusted.
 # Chunks below this are dropped; if none qualify the tool reports "insufficient
 # information" instead of presenting weak matches as fact (see spec §12).
-RAG_MIN_SCORE: float = float(os.getenv("RAG_MIN_SCORE", "0.30"))
+# 0.35 since the knowledge base grew to 10 schemes: off-topic questions
+# ("repair a tractor gearbox") reach ~0.31 against the machinery document,
+# while real scheme questions score 0.43 and up.
+RAG_MIN_SCORE: float = float(os.getenv("RAG_MIN_SCORE", "0.35"))
 # Retrieval backend for the scheme tool:
 #   "faiss" → semantic search with sentence-transformers embeddings (default)
 #   "bm25"  → pure-Python keyword search, no heavy deps (used in LITE_MODE)

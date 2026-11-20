@@ -1,6 +1,13 @@
 {
   "name": "tomato",
-  "local_names": ["टमाटर", "ਟਮਾਟਰ", "टोमॅटो"],
+  "order": 5,
+  "names": {"en": "tomato", "hi": "टमाटर", "pa": "ਟਮਾਟਰ", "mr": "टोमॅटो"},
+  "aliases": {
+    "en": [],
+    "hi": [],
+    "pa": [],
+    "mr": ["टोमाटो"]
+  },
   "total_duration_days": 120,
   "sowing_season": "Kharif: June–July | Rabi: Oct–Nov | Summer: Jan–Feb",
   "harvest_season": "Continuous picking from 60–120 days after transplanting",

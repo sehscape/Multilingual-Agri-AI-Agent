@@ -21,19 +21,18 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
+from app import knowledge
 from app.agents.understanding import SCHEME_SEARCH_TERMS, Understanding, is_coordinates
 from app.ui.i18n import SPOKEN_EXAMPLES, crop_label, normalize_lang, t
 
 # Advice that depends on the growth stage, so the crop's age is needed.
 _AGE_NEEDED = {"fertilizer", "irrigation", "general", None}
-# Days past a crop's usual duration before the stated age is queried.
+# Days past a crop's longest usual life before the stated age is queried.
 _AGE_SLACK = 30
 
 
 def crop_duration(crop: str) -> Optional[int]:
-    from app.tools.crop_tool import _load_crop
-    data = _load_crop(crop) or {}
-    return data.get("total_duration_days")
+    return knowledge.crop_duration(crop)
 
 
 @dataclass
@@ -100,7 +99,8 @@ def plan_request(u: Understanding, lang: str) -> RequestPlan:
             p.issues.append(Issue("ask_crop", missing="crop"))
         else:
             name, days, total = crop_label(crop, lang), u.crop_age_days, crop_duration(crop)
-            if days is not None and (days <= 0 or (total and days > total + _AGE_SLACK)):
+            limit = knowledge.crop_age_limit(crop)
+            if days is not None and (days <= 0 or (limit and days > limit + _AGE_SLACK)):
                 p.issues.append(Issue("ask_age_check",
                                       {"crop": name, "days": days, "total": total},
                                       missing="age"))

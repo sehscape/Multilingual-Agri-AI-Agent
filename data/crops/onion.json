@@ -1,6 +1,13 @@
 {
   "name": "onion",
-  "local_names": ["प्याज", "कांदा", "ਪਿਆਜ਼", "कांडा"],
+  "order": 4,
+  "names": {"en": "onion", "hi": "प्याज", "pa": "ਪਿਆਜ਼", "mr": "कांदा"},
+  "aliases": {
+    "en": ["pyaz", "kanda"],
+    "hi": ["प्याज़", "कांदा"],
+    "pa": ["ਪਿਆਜ"],
+    "mr": ["कांद", "कांडा"]
+  },
   "total_duration_days": 130,
   "sowing_season": "Kharif: June–July | Rabi: October–November | Summer: January–February",
   "harvest_season": "Kharif: Oct–Nov | Rabi: March–April | Summer: April–May",

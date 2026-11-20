@@ -203,15 +203,18 @@ class WhisperSTT(BaseSTT):
 
 # A sentence in each language that primes Whisper with the script and the
 # farm words farmers use, so crop and scheme names come out spelled right.
+# Whisper reads at most 224 prompt tokens, and Gurmukhi costs about two tokens
+# a letter: the Punjabi line is already ~216 tokens, so it cannot grow.
 _GROQ_STT_PROMPTS: dict[str, str] = {
-    "hi": "किसान गेहूं, धान, कपास, प्याज, टमाटर, मक्का, खाद, यूरिया, सिंचाई, "
-          "बारिश, मौसम, कीड़े और सरकारी योजनाओं के बारे में पूछ रहा है।",
-    "mr": "शेतकरी गहू, भात, कापूस, कांदा, टोमॅटो, मका, खत, युरिया, पाणी, "
-          "पाऊस, हवामान, कीड आणि सरकारी योजनांबद्दल विचारत आहे.",
+    "hi": "किसान गेहूं, धान, कपास, गन्ना, सोयाबीन, चना, प्याज, टमाटर, मक्का, खाद, "
+          "यूरिया, सिंचाई, बारिश, मौसम, कीड़े और सरकारी योजनाओं के बारे में पूछ रहा है।",
+    "mr": "शेतकरी गहू, भात, कापूस, ऊस, सोयाबीन, तूर, हरभरा, कांदा, टोमॅटो, मका, खत, "
+          "युरिया, पाणी, पाऊस, हवामान, कीड आणि सरकारी योजनांबद्दल विचारत आहे.",
     "pa": "ਕਿਸਾਨ ਕਣਕ, ਝੋਨਾ, ਕਪਾਹ, ਪਿਆਜ਼, ਟਮਾਟਰ, ਮੱਕੀ, ਖਾਦ, ਯੂਰੀਆ, ਪਾਣੀ, "
           "ਮੀਂਹ, ਮੌਸਮ, ਕੀੜੇ ਅਤੇ ਸਰਕਾਰੀ ਸਕੀਮਾਂ ਬਾਰੇ ਪੁੱਛ ਰਿਹਾ ਹੈ।",
-    "en": "A farmer asks about wheat, paddy, cotton, onion, tomato, maize, "
-          "fertilizer, urea, irrigation, rain, weather, pests and government schemes.",
+    "en": "A farmer asks about wheat, paddy, cotton, sugarcane, soybean, chickpea, "
+          "mustard, potato, onion, tomato, maize, fertilizer, urea, irrigation, rain, "
+          "weather, pests and government schemes like PM-KISAN and PM-KUSUM.",
 }
 
 # What Whisper tends to "hear" in silence or noise.

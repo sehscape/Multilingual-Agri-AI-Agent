@@ -1,6 +1,13 @@
 {
   "name": "rice",
-  "local_names": ["धान", "चावल", "ਝੋਨਾ", "भात", "ਧਾਨ"],
+  "order": 2,
+  "names": {"en": "rice", "hi": "धान", "pa": "ਝੋਨਾ", "mr": "भात"},
+  "aliases": {
+    "en": ["paddy"],
+    "hi": ["चावल", "भात"],
+    "pa": ["ਝੋਨ", "ਧਾਨ", "ਚੌਲ", "झोन"],
+    "mr": ["तांदूळ", "भाता"]
+  },
   "total_duration_days": 135,
   "sowing_season": "Kharif: May–June (nursery), June–July (transplanting)",
   "harvest_season": "October–November",

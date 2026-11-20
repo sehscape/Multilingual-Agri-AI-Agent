@@ -59,6 +59,14 @@ INTENT_SET = [
      {"weather": True, "scheme": True, "crop": True}),
     ("How do I begin organic farming as a beginner?", "general_farming",
      {"weather": False, "scheme": False, "crop": False}),
+    ("My sugarcane is 50 days old, how much urea should I give?", "fertilizer",
+     {"weather": False, "scheme": False, "crop": True}),
+    ("There are caterpillars on my soybean leaves", "pest_or_disease",
+     {"weather": False, "scheme": False, "crop": True}),
+    ("How do I get a solar pump under PM-KUSUM?", "government_scheme",
+     {"weather": False, "scheme": True, "crop": False}),
+    ("How do I sell my chickpea on e-NAM?", "multiple",
+     {"weather": False, "scheme": True, "crop": True}),
 ]
 
 # (query, expected_scheme_source_stem)
@@ -67,6 +75,12 @@ RAG_SET = [
     ("crop insurance premium rate and claim process", "pm_fasal_bima_yojana"),
     ("Kisan Credit Card interest rate and loan limit", "kisan_credit_card"),
     ("soil health card nutrient testing parameters", "soil_health_card"),
+    ("subsidy on a solar water pump for irrigation", "pm_kusum"),
+    ("drip and sprinkler irrigation subsidy for small farmers", "pmksy_micro_irrigation"),
+    ("monthly pension for small farmers after the age of 60", "pm_kisan_maandhan"),
+    ("selling produce through online bidding in the mandi", "e_nam"),
+    ("extra Rs 6,000 for Maharashtra farmers from the state government", "namo_shetkari_mahasanman_nidhi"),
+    ("subsidy on Happy Seeder and machines to manage paddy straw", "crop_residue_management"),
 ]
 
 OFF_TOPIC = [

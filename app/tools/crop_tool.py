@@ -1,84 +1,26 @@
 """Crop knowledge tool — Phase 5.
 
-Loads crop JSON files from data/crops/ and returns stage-specific
-advisory context for the LLM given a crop name and growth stage in days.
+Reads the crop guides in data/crops/ (through app.knowledge) and returns
+stage-specific advisory context for the LLM, given a crop name and the
+crop's age in days.
 """
 from __future__ import annotations
 
-import json
-from pathlib import Path
 from typing import Optional
 
-from app.config import CROPS_DIR
+from app import knowledge
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
-# Canonical name → JSON filename (no extension)
-_CROP_FILES: dict[str, str] = {
-    "wheat": "wheat",
-    "rice": "rice",
-    "paddy": "rice",
-    "onion": "onion",
-    "tomato": "tomato",
-    "cotton": "cotton",
-    "maize": "maize",
-    "corn": "maize",
-}
 
-# Local-language name → canonical English name
-_LOCAL_NAME_MAP: dict[str, str] = {
-    # Hindi
-    "गेहूं": "wheat", "गेहू": "wheat",
-    "धान": "rice", "चावल": "rice",
-    "प्याज": "onion", "कांदा": "onion",
-    "टमाटर": "tomato",
-    "कपास": "cotton",
-    "मक्का": "maize", "मकई": "maize",
-    # Marathi
-    "गव्हू": "wheat",
-    "भात": "rice",
-    "टोमॅटो": "tomato",
-    "कापूस": "cotton",
-    "मका": "maize",
-    # Punjabi
-    "ਕਣਕ": "wheat",
-    "ਝੋਨਾ": "rice", "ਧਾਨ": "rice",
-    "ਪਿਆਜ਼": "onion",
-    "ਟਮਾਟਰ": "tomato",
-    "ਕਪਾਹ": "cotton",
-    "ਮੱਕੀ": "maize",
-}
-
-_cache: dict[str, dict] = {}
+def _load_crop(canonical: Optional[str]) -> Optional[dict]:
+    return knowledge.crop(canonical)
 
 
-def _load_crop(canonical: str) -> Optional[dict]:
-    if canonical in _cache:
-        return _cache[canonical]
-    filename = _CROP_FILES.get(canonical)
-    if not filename:
-        return None
-    path = Path(CROPS_DIR) / f"{filename}.json"
-    if not path.exists():
-        logger.warning("Crop JSON not found: %s", path)
-        return None
-    with path.open(encoding="utf-8") as f:
-        data = json.load(f)
-    _cache[canonical] = data
-    return data
-
-
-def _resolve_crop_name(raw_name: str) -> Optional[str]:
-    """Resolve raw crop name (English or local language) to canonical name."""
-    if not raw_name:
-        return None
-    lower = raw_name.lower().strip()
-    # Direct English match
-    if lower in _CROP_FILES:
-        return lower
-    # Local language match
-    return _LOCAL_NAME_MAP.get(raw_name.strip())
+def _resolve_crop_name(raw_name: Optional[str]) -> Optional[str]:
+    """A crop name in English or a local language ("paddy", "ਝੋਨਾ") → its guide's name."""
+    return knowledge.resolve_crop(raw_name)
 
 
 def _find_stage(crop_data: dict, days: Optional[int]) -> Optional[dict]:
@@ -125,7 +67,7 @@ def get_crop_context(crop_name: Optional[str], crop_stage_days: Optional[int]) -
     if not canonical:
         return (
             f"Crop '{crop_name}' is not in the knowledge base. "
-            "Available crops: wheat, rice, onion, tomato, cotton, maize."
+            f"Available crops: {', '.join(knowledge.crops())}."
         )
 
     data = _load_crop(canonical)

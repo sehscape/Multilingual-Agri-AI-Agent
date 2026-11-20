@@ -1,0 +1,43 @@
+SCHEME: PMKSY Per Drop More Crop (Drip and Sprinkler Irrigation Subsidy)
+SOURCE: Department of Agriculture & Farmers Welfare, Government of India (Pradhan Mantri Krishi Sinchayee Yojana)
+CATEGORY: Micro Irrigation Subsidy
+
+OVERVIEW
+The Per Drop More Crop component of the Pradhan Mantri Krishi Sinchayee Yojana (PMKSY) gives farmers a subsidy to install drip irrigation and sprinkler irrigation systems. Drip and sprinkler systems save 30–50% water, reduce fertilizer use when fertilizer is given through drip (fertigation), save labour and increase yield. The scheme is run through the State agriculture and horticulture departments.
+
+BENEFIT
+- Small and marginal farmers (up to 2 hectares): 55% of the cost of the drip or sprinkler system is given as subsidy.
+- Other farmers: 45% of the cost is given as subsidy.
+- The subsidy is calculated on the indicative unit cost fixed for each type and spacing of system. Many states give an extra top-up, so the total subsidy in some states is higher.
+- The subsidy is available for up to 5 hectares per farmer.
+- Covers drip irrigation, sprinkler irrigation, mini-sprinklers and rain guns as notified by the state.
+
+ELIGIBILITY
+- All farmers with agricultural land and a dependable water source.
+- Farmers who are members of cooperatives, self-help groups, FPOs and contract farmers on land leased for at least 7 years are also eligible.
+- A farmer who has already taken the subsidy on the same land can usually apply again only after 7 years.
+
+HOW TO APPLY
+1. Apply online on your state's agriculture/horticulture portal (for example MahaDBT in Maharashtra, the Agriculture Department portal in Haryana and Punjab, the UP Agriculture Department portal) or at the office of the Taluka/Block Agriculture Officer.
+2. Choose a drip or sprinkler company registered with the state, and get a quotation and layout design for your field.
+3. After pre-sanction, install the system through the registered company.
+4. The agriculture officer inspects the installed system, and the subsidy is paid into the farmer's bank account (Direct Benefit Transfer).
+
+DOCUMENTS REQUIRED
+- Aadhaar card
+- Land records (7/12 extract, khasra-khatauni or jamabandi)
+- Bank account passbook
+- Proof of water source and electricity connection
+- Quotation and field layout from a registered company
+- Caste certificate (for SC/ST farmers, where extra benefit applies)
+- Soil and water test report where required
+
+IMPORTANT NOTES
+- Buy only BIS-marked drip and sprinkler components from a company registered with the state; otherwise the subsidy is not paid.
+- Do not install the system before the pre-sanction letter; installations done earlier may not be eligible.
+- Since 2022 the Per Drop More Crop component is implemented as part of the Rashtriya Krishi Vikas Yojana (RKVY). The subsidy rates above are the central pattern; check your state's current rates.
+- Drip is especially useful for sugarcane, banana, cotton, vegetables, chilli and orchards.
+
+HELPLINE
+Kisan Call Centre: 1800-180-1551
+Contact your Taluka/Block Agriculture Officer or District Horticulture Officer.

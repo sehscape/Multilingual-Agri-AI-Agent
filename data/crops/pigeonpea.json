@@ -1,0 +1,82 @@
+{
+  "name": "pigeonpea",
+  "order": 12,
+  "names": {"en": "pigeon pea", "hi": "अरहर", "pa": "ਅਰਹਰ", "mr": "तूर"},
+  "aliases": {
+    "en": ["tur", "toor", "tuar", "arhar", "red gram"],
+    "hi": ["तुअर", "तूर", "अरहड़"],
+    "pa": ["ਤੂਰ"],
+    "mr": ["तुरी", "तूरी"]
+  },
+  "total_duration_days": 170,
+  "longest_duration_days": 270,
+  "sowing_season": "Kharif: June–July with the monsoon, often intercropped with soybean, cotton, moong or jowar",
+  "harvest_season": "November–January (medium duration); March–April (long duration)",
+  "soil": "Well-drained loam to black soil, pH 6.5–7.5; very sensitive to waterlogging",
+  "stages": [
+    {
+      "name": "Germination / Emergence",
+      "days_range": [0, 15],
+      "description": "Seeds sprout and seedlings come up.",
+      "irrigation": "Sow after 75–100 mm of monsoon rain. Drain water quickly — standing water kills seedlings.",
+      "fertilizer": "Basal: 50 kg DAP per acre (add 8 kg sulphur if needed). Treat seed with Trichoderma 4 g + Carbendazim 1 g per kg, then Rhizobium + PSB 5 g per kg.",
+      "watch_for": ["Seedling rot and blight in waterlogged patches"],
+      "tips": ["Seed rate 5–6 kg per acre as a sole crop; rows 60–90 cm apart", "Sow on ridges or broad beds in heavy soil"]
+    },
+    {
+      "name": "Early Vegetative",
+      "days_range": [16, 45],
+      "description": "Slow early growth; weeds can take over.",
+      "irrigation": "Usually rain-fed; drain extra water.",
+      "fertilizer": "No urea needed.",
+      "watch_for": ["Weeds", "Leaf webber"],
+      "tips": ["Weed or hoe at 20–25 and 40–45 days", "Intercrop rows of soybean, moong or jowar use the empty space in the early months"]
+    },
+    {
+      "name": "Vegetative Growth",
+      "days_range": [46, 100],
+      "description": "Plants grow tall and branch out.",
+      "irrigation": "Rain-fed; give one protective irrigation in a long dry spell.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Sterility mosaic — light green, bushy plants without flowers (spread by mites)", "Wilt in patches"],
+      "tips": ["Nip the top bud at 45–50 days for more branches", "Uproot and destroy sterility mosaic plants early"]
+    },
+    {
+      "name": "Flowering",
+      "days_range": [101, 125],
+      "description": "Yellow flowers open; most pod borer damage starts now.",
+      "irrigation": "Give one irrigation at flowering if the soil is dry.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Pod borer (Helicoverpa)", "Maruca — flowers and pods webbed together", "Blister beetle eating flowers"],
+      "tips": ["Put up 5 pheromone traps and 20 bird perches per acre", "Shake plants over a sheet to collect and destroy caterpillars"]
+    },
+    {
+      "name": "Pod Formation / Pod Filling",
+      "days_range": [126, 155],
+      "description": "Pods form and seeds fill.",
+      "irrigation": "A second protective irrigation at pod filling if it is dry.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Pod borer", "Pod fly — pods look healthy but the seeds inside are eaten"],
+      "tips": ["Spray Emamectin benzoate 5 SG 0.4 g/litre at 50% flowering and again after 15 days if pod borer is seen", "Neem seed kernel extract (5%) on young caterpillars"]
+    },
+    {
+      "name": "Maturity / Harvest",
+      "days_range": [156, 270],
+      "description": "Pods turn brown and dry.",
+      "irrigation": "No irrigation.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Pods shattering", "Pulse beetle in storage"],
+      "tips": ["Harvest when 75–80% of pods are brown", "Dry the grain well before storage"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Pod borer", "symptoms": "Round holes in pods; caterpillars feeding on flowers and seeds", "control": "Emamectin benzoate 5 SG 0.4 g/litre or Chlorantraniliprole 18.5 SC 0.3 ml/litre"},
+    {"name": "Maruca pod borer", "symptoms": "Flowers and pods webbed together with caterpillars inside", "control": "Chlorantraniliprole 18.5 SC 0.3 ml/litre"},
+    {"name": "Pod fly", "symptoms": "Pods look healthy but the seeds inside are eaten; small exit holes", "control": "Spray at pod formation; grow tolerant varieties"}
+  ],
+  "common_diseases": [
+    {"name": "Fusarium wilt", "symptoms": "Plants wilt and dry in patches at flowering; brown-black band inside the stem", "control": "Resistant varieties, Trichoderma seed treatment, 3-year rotation, intercropping with jowar"},
+    {"name": "Sterility mosaic", "symptoms": "Light green, bushy plants with small leaves and no flowers or pods", "control": "Uproot affected plants early; control the mites with wettable sulphur 80 WP 3 g/litre; resistant varieties"},
+    {"name": "Phytophthora blight", "symptoms": "Water-soaked brown patches on the stem near the soil; plants break and dry", "control": "Good drainage and ridge sowing; seed treatment with Metalaxyl 35 SD 3 g per kg in problem fields"}
+  ]
+}

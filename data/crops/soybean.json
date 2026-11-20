@@ -1,0 +1,74 @@
+{
+  "name": "soybean",
+  "order": 8,
+  "names": {"en": "soybean", "hi": "सोयाबीन", "pa": "ਸੋਇਆਬੀਨ", "mr": "सोयाबीन"},
+  "aliases": {
+    "en": ["soyabean", "soya bean", "soy bean", "soya", "soy"],
+    "hi": ["सोया"],
+    "pa": ["ਸੋਯਾਬੀਨ"],
+    "mr": ["सोयाबिन"]
+  },
+  "total_duration_days": 100,
+  "longest_duration_days": 120,
+  "sowing_season": "Kharif: mid-June to mid-July, after about 100 mm of monsoon rain",
+  "harvest_season": "September–October (95–110 days)",
+  "soil": "Well-drained loam to clay loam (black soil is ideal), pH 6.0–7.5; no waterlogging",
+  "stages": [
+    {
+      "name": "Germination / Emergence",
+      "days_range": [0, 10],
+      "description": "Seeds swell and seedlings come up in 4–7 days.",
+      "irrigation": "Sow only after good monsoon rain (about 100 mm). If the soil dries after sowing, give a light irrigation.",
+      "fertilizer": "Basal: 50 kg DAP + 25 kg MOP + 8 kg sulphur (or 100 kg gypsum) per acre. Treat seed with Thiram + Carbendazim (2:1) 3 g per kg, then Rhizobium + PSB culture 5 g per kg.",
+      "watch_for": ["Poor germination from old or damaged seed", "Seed rot in waterlogged soil"],
+      "tips": ["Do a germination test — sow seed with 70% or more germination", "Seed rate 25–30 kg per acre, rows 45 cm apart", "Sow on broad beds and furrows (BBF) or ridges to drain extra rain"]
+    },
+    {
+      "name": "Vegetative Growth",
+      "days_range": [11, 35],
+      "description": "Leaves and branches grow; root nodules start fixing nitrogen.",
+      "irrigation": "Usually rain-fed. Drain standing water within 24 hours.",
+      "fertilizer": "No urea needed — the root nodules supply nitrogen. If leaves are pale, spray 2% urea (20 g per litre).",
+      "watch_for": ["Girdle beetle — two rings cut around the stem, the top wilts", "Stem fly", "Weeds in the first 30–45 days"],
+      "tips": ["Keep the field weed-free up to 45 days (weed or hoe at 20 and 40 days)", "Cut and destroy plant parts with girdle beetle rings"]
+    },
+    {
+      "name": "Flowering",
+      "days_range": [36, 50],
+      "description": "Purple or white flowers appear. The crop is sensitive to drought now.",
+      "irrigation": "If there is no rain for 10–12 days, give one protective irrigation.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Semilooper and tobacco caterpillar eating leaves", "Whitefly spreading yellow mosaic"],
+      "tips": ["Put up 10 bird perches and 5 pheromone traps per acre", "Pull out plants with yellow mosaic early"]
+    },
+    {
+      "name": "Pod Formation / Pod Filling",
+      "days_range": [51, 85],
+      "description": "Pods form and seeds fill. Water stress now cuts yield the most.",
+      "irrigation": "Give a protective irrigation if a dry spell comes at pod filling.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Pod borer and leaf-eating caterpillars", "Rust — small brown pustules under leaves", "Charcoal rot in hot, dry spells"],
+      "tips": ["For caterpillars spray Chlorantraniliprole 18.5 SC 0.3 ml/litre", "For rust spray Hexaconazole 5 EC 1.5 ml/litre"]
+    },
+    {
+      "name": "Maturity / Harvest",
+      "days_range": [86, 120],
+      "description": "Leaves turn yellow and drop; pods turn brown.",
+      "irrigation": "No irrigation.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Pods shattering if harvest is late", "Rain damage to the cut crop"],
+      "tips": ["Harvest when 95% of pods are brown", "Dry the seed to 10% moisture before storing and handle seed meant for sowing gently"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Girdle beetle", "symptoms": "Two parallel rings cut around the stem or branch; the part above wilts", "control": "Chlorantraniliprole 18.5 SC 0.3 ml/litre; remove affected plant parts"},
+    {"name": "Stem fly", "symptoms": "Zig-zag tunnels inside the stem, young plants dry", "control": "Seed treatment with Thiamethoxam 30 FS 10 ml per kg seed"},
+    {"name": "Leaf-eating caterpillars (semilooper, tobacco caterpillar)", "symptoms": "Leaves eaten, only veins left", "control": "Chlorantraniliprole 18.5 SC 0.3 ml/litre; pheromone traps 5 per acre"},
+    {"name": "Whitefly", "symptoms": "Tiny white flies under leaves; spreads yellow mosaic", "control": "Yellow sticky traps 10 per acre; Thiamethoxam 25 WG 0.2 g/litre"}
+  ],
+  "common_diseases": [
+    {"name": "Yellow mosaic", "symptoms": "Bright yellow and green patches on leaves, few pods", "control": "No cure — pull out infected plants early, control whitefly, sow resistant varieties"},
+    {"name": "Rust", "symptoms": "Small brown-red pustules under leaves, early leaf fall", "control": "Hexaconazole 5 EC 1.5 ml/litre"},
+    {"name": "Charcoal rot", "symptoms": "Plants wilt and dry suddenly in hot, dry weather; grey-black inside the stem base", "control": "Seed treatment with Trichoderma 5 g per kg; protective irrigation in long dry spells"}
+  ]
+}

@@ -1,0 +1,39 @@
+SCHEME: Namo Shetkari Mahasanman Nidhi Yojana (Maharashtra)
+SOURCE: Department of Agriculture, Government of Maharashtra
+CATEGORY: Income Support (State Scheme)
+
+OVERVIEW
+Namo Shetkari Mahasanman Nidhi Yojana is a Maharashtra Government scheme started in 2023. It gives an extra Rs 6,000 per year to farmers in Maharashtra who receive PM-KISAN. Together with the Rs 6,000 from PM-KISAN, an eligible farmer family in Maharashtra gets Rs 12,000 per year as direct income support.
+
+ELIGIBILITY
+- Farmer families in Maharashtra who are eligible beneficiaries of PM-KISAN.
+- Land records must be updated (land seeding) in the PM-KISAN database.
+- e-KYC must be complete and the bank account must be linked to Aadhaar (Aadhaar-seeded, DBT enabled).
+- The same exclusions as PM-KISAN apply: income tax payers, government employees, constitutional post holders, and registered professionals are not eligible.
+
+BENEFIT
+- Rs 6,000 per year from the Maharashtra Government, in 3 installments of Rs 2,000 each.
+- Paid directly into the farmer's Aadhaar-linked bank account (Direct Benefit Transfer).
+- This is in addition to the Rs 6,000 per year of PM-KISAN.
+
+HOW TO APPLY
+1. There is no separate application. Farmers who are eligible PM-KISAN beneficiaries in Maharashtra are covered automatically.
+2. Make sure PM-KISAN e-KYC is done (on pmkisan.gov.in, the PM-KISAN app with face authentication, or at a CSC).
+3. Make sure the bank account is Aadhaar-seeded and DBT is enabled.
+4. If the land seeding status shows "No", contact the Talathi or the Taluka Agriculture Officer to update land records.
+5. Check payment status on the Namo Shetkari portal (nsmny.mahait.org) using your PM-KISAN registration number or mobile number.
+
+DOCUMENTS REQUIRED
+- Aadhaar card
+- Aadhaar-seeded bank account
+- 7/12 land record
+- PM-KISAN registration number
+
+IMPORTANT NOTES
+- If PM-KISAN installments stop because of pending e-KYC or land seeding, Namo Shetkari installments also stop. Fix PM-KISAN issues first.
+- Only for farmers in Maharashtra.
+- The amount and installment dates are decided by the Government of Maharashtra; check the latest announcement with your Taluka Agriculture Office.
+
+HELPLINE
+Contact your Taluka Agriculture Officer or Talathi.
+Kisan Call Centre: 1800-180-1551

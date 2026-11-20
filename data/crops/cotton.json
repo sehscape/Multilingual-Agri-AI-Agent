@@ -1,6 +1,13 @@
 {
   "name": "cotton",
-  "local_names": ["कपास", "ਕਪਾਹ", "कापूस"],
+  "order": 3,
+  "names": {"en": "cotton", "hi": "कपास", "pa": "ਕਪਾਹ", "mr": "कापूस"},
+  "aliases": {
+    "en": ["kapas", "narma"],
+    "hi": [],
+    "pa": ["ਨਰਮਾ", "ਨਰਮੇ"],
+    "mr": ["कापस"]
+  },
   "total_duration_days": 180,
   "sowing_season": "May–June (after monsoon onset)",
   "harvest_season": "October–January (multiple pickings)",

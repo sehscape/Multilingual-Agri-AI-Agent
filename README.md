@@ -3,7 +3,7 @@
 <p align="center">
   <a href="https://multilingual-agri-ai-agent.onrender.com"><img alt="Live demo" src="https://img.shields.io/badge/%E2%96%B6%20Live%20demo-Render-D9A441?style=for-the-badge&labelColor=08090A"></a>
   <a href="https://colab.research.google.com/github/sehscape/Multilingual-Agri-AI-Agent/blob/main/notebooks/run_full_app_colab.ipynb"><img alt="Open in Colab" src="https://img.shields.io/badge/Full%20app-Colab-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=white&labelColor=08090A"></a>
-  <a href="#-quality--results"><img alt="Tests" src="https://img.shields.io/badge/checks-249%20passing-2EA44F?style=for-the-badge&labelColor=08090A"></a>
+  <a href="#-quality--results"><img alt="Tests" src="https://img.shields.io/badge/checks-351%20passing-2EA44F?style=for-the-badge&labelColor=08090A"></a>
 </p>
 
 <p align="center">
@@ -13,6 +13,7 @@
   <img alt="Groq" src="https://img.shields.io/badge/Groq-Whisper%20%2B%20gpt--oss--120b-F55036?style=flat-square">
   <img alt="FAISS" src="https://img.shields.io/badge/RAG-FAISS%20%7C%20BM25-0467DF?style=flat-square">
   <img alt="Languages" src="https://img.shields.io/badge/Languages-EN%20%C2%B7%20HI%20%C2%B7%20PA%20%C2%B7%20MR-D9A441?style=flat-square">
+  <img alt="Knowledge" src="https://img.shields.io/badge/Knows-18%20crops%20%C2%B7%2010%20schemes-2EA44F?style=flat-square">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square">
 </p>
 
@@ -103,7 +104,7 @@ field, may not read comfortably, and has never used an AI app.
 | **One big microphone** — labelled बोलने के लिए दबाएँ, ਬੋਲਣ ਲਈ ਦਬਾਓ, बोलण्यासाठी दाबा… | Speaking is the main way in. A full-screen recorder shows a live waveform and a red *Tap to stop* |
 | **Plain-language mic errors** | "Microphone permission is blocked — allow it, or type" instead of a silent, broken button |
 | **Answers that talk back** | Every reply is read aloud by itself; *Listen* plays, pauses and resumes |
-| **One-tap replies to ask-backs** | "How many days old?" → **20 · 40 · 60 · 90 days**; "Which village?" → **📍 Use my location**; "Which crop?" → the six crops |
+| **One-tap replies to ask-backs** | "How many days old?" → **20 · 40 · 60 · 90 days**; "Which village?" → **📍 Use my location**; "Which crop?" → all 18 crops, in the farmer's language |
 | **Weather and crop-stage cards** | The facts behind the words: today's temperature and the next three days; *Tillering · day 40 of 120* |
 | **Sources on every answer** | Crop guide, live weather or the scheme documents (named) — the assistant shows where advice came from |
 | **WhatsApp and Copy on every answer** | Advice is shared the way farmers already share things |
@@ -119,7 +120,7 @@ field, may not read comfortably, and has never used an AI app.
 | 💬 **A real conversation** | Chat thread with a typing indicator; follow-ups like *"40 days"* or *"Nashik"* complete the question that was asked back |
 | 🌐 **A web app and a JSON API** | A hand-built, framework-free web app (installable, offline shell) on a FastAPI backend — `/api/ask`, `/api/voice`, `/api/speak` — so a WhatsApp bot or an Android app can use the same brain |
 | 🧭 **Agentic tool use** | A LangChain ReAct `AgentExecutor` picks only the tools a question needs — crop knowledge, live weather, scheme search — with a deterministic fallback |
-| 📚 **Grounded RAG with refusal** | Scheme answers come from retrieved passages; below a 0.30 relevance score it answers *"the documents don't cover this"* instead of guessing |
+| 📚 **Grounded RAG with refusal** | Scheme answers come from retrieved passages; below a 0.35 relevance score it answers *"the documents don't cover this"* instead of guessing |
 | ❓ **Asks back, never guesses** | Missing crop, missing age, impossible age (*wheat, 300 days*), unknown place, unsupported crop — each gets a clear spoken question |
 | ⚡ **Words first, voice next** | The answer appears in a median **2.5 s**; the recording follows as a separate step, so the farmer can already ask again |
 | 📱 **Made for phones** | Mic first on a small screen, language and village remembered on the device, 📍 GPS for weather, auto-send when you tap stop, dark mode |
@@ -180,9 +181,9 @@ flowchart TD
 
     subgraph AGENT["🧭 LangChain ReAct agent"]
         direction LR
-        T1["🌱 crop_knowledge<br/>6 crops · 37 stages"]
+        T1["🌱 crop_knowledge<br/>18 crops · 100 stages"]
         T2["🌦 weather_forecast<br/>Open-Meteo · MET Norway fallback"]
-        T3["🏛 government_schemes<br/>FAISS or BM25 RAG"]
+        T3["🏛 government_schemes<br/>10 schemes · FAISS or BM25 RAG"]
     end
 
     W["✍ Reply writer<br/>chosen language · facts only"]
@@ -234,12 +235,12 @@ adds the missing-detail question at the end.
 
 ```mermaid
 flowchart LR
-    D["📄 4 official scheme documents"] --> CH["✂ Chunk<br/>1000 chars · 150 overlap"]
+    D["📄 10 scheme documents"] --> CH["✂ Chunk<br/>1000 chars · 150 overlap"]
     CH --> E["🔢 Embed<br/>multilingual MiniLM-L12"]
-    E --> IX[("FAISS index<br/>15 vectors")]
+    E --> IX[("FAISS index<br/>38 vectors")]
     Q["❓ Question"] --> QE["🔢 Embed"] --> S["Top-5 by cosine"]
     IX --> S
-    S --> G{"best score<br/>≥ 0.30?"}
+    S --> G{"best score<br/>≥ 0.35?"}
     G -- "yes" --> ANS["Answer from the passages<br/>+ source file"]
     G -- "no" --> REF["'The documents do not contain<br/>enough information'"]
 ```
@@ -285,7 +286,7 @@ CPU + float32 otherwise — no code change.
 |---|---|---|
 | Facts only from tools | the whole design | The LLM inventing doses, prices or rules |
 | "Use only these facts" answer prompt, temperature 0 for understanding | `agents/reply_writer.py`, `agents/understanding.py` | Creative additions, inconsistent parsing |
-| Relevance threshold 0.30 → refusal | `tools/scheme_tool.py` | Answering scheme questions from weak matches |
+| Relevance threshold 0.35 → refusal | `tools/scheme_tool.py` | Answering scheme questions from weak matches |
 | BM25 two-word rule | `rag/keyword_retriever.py` | Trusting one accidental keyword hit |
 | Ask-backs + impossible-age check | `agents/clarify.py` | Guessing a crop's stage, or advising on "wheat, 300 days" |
 | Hand-written farm glossary | `models/agri_glossary.py` | "Tillering" being machine-translated as "harvest" |
@@ -305,9 +306,9 @@ CPU + float32 otherwise — no code change.
 
 | Metric | Score |
 |---|---|
-| Intent classification | **100%** (10/10) |
-| Tool selection | **100%** (10/10), no unnecessary tools |
-| Scheme retrieval, top-1 source | **100%** (4/4), mean relevance 0.60 |
+| Intent classification | **100%** (14/14) |
+| Tool selection | **100%** (14/14), no unnecessary tools |
+| Scheme retrieval, top-1 source | **100%** (10/10 — one question per scheme), mean relevance 0.65 |
 | Off-topic refusal | **100%** (2/2) |
 | Answers grounded · actionable · cite a source | **100%** |
 
@@ -319,8 +320,9 @@ a browser test that presses every button of the web app in a real Chrome:
 
 ```mermaid
 pie showData
-    title 249 automated checks, all passing
-    "Voice journeys in 4 languages" : 70
+    title 351 automated checks, all passing
+    "Crop & scheme knowledge base" : 92
+    "Voice journeys in 4 languages" : 80
     "Every button, in a real browser" : 34
     "LangChain agent + fallback" : 34
     "4-language interface" : 34
@@ -337,6 +339,7 @@ pie showData
 | `test_web_api.py` | The JSON API: ask-backs and `pending`, crop / weather / scheme cards, bad input refused politely, MP3 voice, rate limiting |
 | `test_voice_languages.py` | The Render build with a faked Groq: voice in 4 languages, every ask-back, failure paths, the chat thread |
 | `test_langchain_agent.py` | The agent picks exactly the right tools for 9 intents; the fallback takes over when the agent misbehaves |
+| `test_knowledge.py` | Every crop guide and scheme document is complete (stages without gaps, every stage name in the glossary, names in 4 scripts); crop words in 4 languages find the right guide — including *पाऊस* (rain) ≠ *ऊस* (sugarcane), *मूंगफली* ≠ *मूंग*, Marathi *केला* ("did") ≠ banana; the keyword search ranks each scheme's own document first |
 | `test_i18n.py` | Every string exists in all 4 languages; switching language re-renders the page |
 | `test_language_consistency.py` | The chosen language wins; glossary terms survive; "3–5 cm" never becomes "35" |
 | `test_e2e_phase9.py` | Every intent is routed to the right tools; odd and empty inputs don't crash |
@@ -360,10 +363,45 @@ pie showData
 | **Text-to-speech** | [gTTS](https://github.com/pndurette/gTTS), chunks fetched in parallel · [indic-parler-tts](https://huggingface.co/ai4bharat/indic-parler-tts) optional on GPU |
 | **Hosting** | [Render](https://render.com) free tier (Lite build) · Google Colab (full build) |
 
-**Knowledge base:** wheat, rice, onion, tomato, cotton and maize (37 growth
-stages with irrigation, fertilizer, pest and tip notes, crop names recognised in
-all four scripts) and four schemes — PM-KISAN, PM Fasal Bima Yojana, Kisan
-Credit Card and Soil Health Card.
+## 📚 What it knows
+
+**18 crops, 100 growth stages.** Every stage has irrigation, a per-acre fertilizer
+dose, what to watch for and tips; every crop has its common pests and diseases
+with the control measure.
+
+| | Crops |
+|---|---|
+| 🌾 Cereals & millets | wheat · rice · maize · bajra · jowar |
+| 🫘 Pulses | chickpea (chana) · pigeon pea (tur, arhar) · moong |
+| 🌻 Oilseeds | soybean · mustard · groundnut |
+| 💰 Cash crops | cotton · sugarcane |
+| 🥔 Vegetables & fruit | onion · tomato · potato · chilli · banana |
+
+Crops are recognised in all four scripts, by the words farmers actually say —
+*ਨਰਮਾ* for cotton in Punjab, *उसाला* (an inflected *ऊस*) for sugarcane in
+Marathi, *तुरीला* for tur. A crop the guide doesn't cover (coconut, grapes…) is
+named back to the farmer with the list of crops it does know.
+
+**10 government schemes**, each from its official description:
+
+| Scheme | What the farmer gets |
+|---|---|
+| PM-KISAN | Rs 6,000 a year, in three installments |
+| PM Fasal Bima Yojana | Crop insurance at a low premium |
+| Kisan Credit Card | Low-interest crop loans |
+| Soil Health Card | A free soil test with fertilizer advice |
+| PM-KUSUM | Solar pumps — 30% central + at least 30% state subsidy |
+| PMKSY Per Drop More Crop | Drip and sprinkler — 55% subsidy for small farmers, 45% for others |
+| PM Kisan Maandhan | A pension of Rs 3,000 a month after 60 |
+| e-NAM | Online bidding in the mandi, payment straight to the bank |
+| Crop Residue Management | 50% subsidy on stubble machines (80% for custom hiring centres) |
+| Namo Shetkari Mahasanman Nidhi | Maharashtra's extra Rs 6,000 a year on top of PM-KISAN |
+
+Everything above comes from one registry (`app/knowledge.py`): **adding a crop
+is one JSON file** in `data/crops/`, and **adding a scheme is one text file**
+plus an entry in `data/schemes/schemes.json`. The rule router, the LLM prompt,
+the quick-reply chips and every "I can help with…" message pick it up from
+there, and `scripts/test_knowledge.py` checks the new file is complete.
 
 ## 🔌 API
 
@@ -429,7 +467,7 @@ npm run test:e2e -- http://127.0.0.1:7860/
 | `LITE_MODE` | `false` | `true` on the 512 MB host: no PyTorch, BM25 search |
 | `AGENT_BACKEND` | `langchain` | `langchain` (ReAct) or `sequential` |
 | `RAG_BACKEND` | `faiss` | `faiss` (semantic) or `bm25` (keyword) |
-| `RAG_MIN_SCORE` · `TOP_K` | `0.30` · `5` | Retrieval threshold and depth |
+| `RAG_MIN_SCORE` · `TOP_K` | `0.35` · `5` | Retrieval threshold and depth |
 | `STT_BACKEND` | `auto` | `auto`, `groq` or `local` |
 | `TRANSLATION_ENGINE` | `nllb` | Offline translator when Groq can't write the answer |
 | `TTS_ENGINE` | `gtts` | `gtts`, `parler` (GPU) or `stub` |
@@ -491,11 +529,12 @@ The problems that took the most thought, and what I did about them:
 │   ├── web/          FastAPI server (server.py) and the web app (static/:
 │   │                 index.html, styles.css, app.js, service worker, manifest)
 │   ├── utils/        logging, audio conversion, device detection
+│   ├── knowledge.py  the crops and schemes it knows — one registry for the whole app
 │   ├── config.py     every setting, read from .env
 │   └── main.py       starts the app
 ├── data/
-│   ├── crops/        one JSON file per crop — stages and advice
-│   └── schemes/raw/  government scheme documents
+│   ├── crops/        one JSON file per crop — names, stages and advice
+│   └── schemes/      schemes.json (names, search words) + raw/ scheme documents
 ├── notebooks/        Colab notebook for the full app
 ├── scripts/          test scripts, evaluation, latency benchmark, index builder;
 │                     e2e/ — the browser test (npm run test:e2e)
@@ -513,11 +552,12 @@ The problems that took the most thought, and what I did about them:
 - Groq's free plan allows roughly 50–60 full answers a day on gpt-oss-120b before it falls back to smaller models; everyone on the live link shares one key.
 - Voice clips and question text go to Groq (GPS coordinates only go to the weather service). A production version should self-host.
 - The LLM occasionally adds a harmless-sounding step that isn't in the crop data.
-- The knowledge base is small: 6 crops and 4 schemes. gTTS needs internet and has one voice per language.
+- The crop guides (18 crops) and scheme documents (10 schemes) are hand-written from standard package-of-practice guides and official scheme descriptions. Doses are general — every answer points to the local KVK — and scheme amounts change, so the documents need a yearly review. gTTS needs internet and has one voice per language.
 
 **Next**
 - [ ] Check every number in an answer against the source facts before speaking it
-- [ ] More crops and schemes, ingested from the official PDFs with page-level citations
+- [x] 18 crops and 10 schemes from one registry — a new crop is one JSON file
+- [ ] Ingest scheme updates from the official PDFs with page-level citations
 - [ ] Pest and disease names in the translation glossary
 - [ ] Self-hosted Whisper + an open LLM on a GPU, and a more natural Indic voice
 - [ ] A WhatsApp bot on the same `/api/voice` endpoint

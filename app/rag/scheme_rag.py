@@ -170,11 +170,13 @@ def format_scheme_results(results: list[dict]) -> str:
     """Format RAG results into a context string for the LLM."""
     if not results:
         return "No relevant government scheme information found."
+    from app.knowledge import scheme_title
+
     lines = ["Relevant government scheme information:"]
     for i, r in enumerate(results, 1):
         lines += [
             f"",
-            f"[{i}] Source: {r['source'].replace('_', ' ').title()} (relevance: {r['score']:.2f})",
+            f"[{i}] Source: {scheme_title(r['source'])} (relevance: {r['score']:.2f})",
             r["text"],
         ]
     return "\n".join(lines)

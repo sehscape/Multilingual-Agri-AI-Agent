@@ -1,0 +1,47 @@
+SCHEME: PM-KUSUM (Pradhan Mantri Kisan Urja Suraksha evam Utthaan Mahabhiyan)
+SOURCE: Ministry of New and Renewable Energy (MNRE), Government of India
+CATEGORY: Solar Pumps and Solar Power for Farmers
+
+OVERVIEW
+PM-KUSUM helps farmers use solar energy for irrigation and earn from solar power. Under it, farmers can get a subsidised stand-alone solar water pump, convert an existing grid-connected electric pump to solar, or set up a small solar power plant on barren land and sell the power to the electricity company (DISCOM). Solar pumps cut the cost of diesel and the dependence on irregular farm power supply.
+
+COMPONENTS
+- Component A: Small solar power plants of 500 kW to 2 MW on barren or fallow land by individual farmers, groups of farmers, cooperatives, panchayats or Farmer Producer Organisations (FPOs). The DISCOM buys the power at a tariff fixed by the State Electricity Regulatory Commission.
+- Component B: Stand-alone off-grid solar water pumps (up to 7.5 HP) for farmers, especially in areas without a grid connection, replacing diesel pumps.
+- Component C: Solarisation of existing grid-connected agriculture pumps, either pump by pump or for a whole agriculture feeder. The farmer can sell surplus solar power to the DISCOM.
+
+BENEFIT
+- For stand-alone solar pumps (Component B) and solarisation of grid pumps (Component C): the Central Government gives 30% of the benchmark cost and the State Government gives at least 30%. The farmer pays the remaining 40% or less, and bank loans are available for part of the farmer's share.
+- In North-Eastern states, hill states (such as Himachal Pradesh, Uttarakhand, Jammu and Kashmir, Ladakh) and islands, the central share is 50%.
+- Central assistance is given for pumps up to 7.5 HP. A farmer may install a larger pump, but the subsidy is limited to the 7.5 HP cost.
+- Many states add a larger state share, so the farmer's share is often 10% or less. Check your state's offer.
+- Daytime power for irrigation, no diesel cost, and extra income from selling surplus solar power under Component C.
+
+ELIGIBILITY
+- Individual farmers with agricultural land and a water source (well, borewell, pond or canal access).
+- Groups of farmers, Water User Associations, cooperatives, FPOs and panchayats for community pumps and solar plants.
+- The pump size is decided by the land area and the depth of the water source.
+
+HOW TO APPLY
+1. Apply on the portal of your State Nodal Agency for PM-KUSUM (for example MEDA in Maharashtra, PEDA in Punjab, HAREDA in Haryana, UPNEDA in Uttar Pradesh) or through your state agriculture or energy department.
+2. Fill in the application with land and water source details, and choose the pump capacity.
+3. After approval, pay only the farmer's share as asked by the state agency, and choose an empanelled vendor.
+4. The vendor installs the pump; the state agency inspects it, and the pump carries a 5-year maintenance warranty.
+5. Details of the scheme are on the MNRE portal pmkusum.mnre.gov.in.
+
+DOCUMENTS REQUIRED
+- Aadhaar card
+- Land records (7/12 extract, khasra-khatauni or jamabandi)
+- Bank account passbook
+- Passport-size photograph and mobile number
+- Proof of water source / declaration
+- Electricity connection details (for solarising an existing grid pump)
+
+IMPORTANT NOTES
+- Beware of fake websites and calls asking for a "registration fee" for PM-KUSUM. MNRE has warned the public about fake portals. Apply only through your state nodal agency's official website or office.
+- The subsidy share, the state top-up and the number of pumps given each year differ from state to state. Ask your district agriculture office or the state nodal agency for the current scheme.
+- A solar pump needs a shadow-free place for the panels; keep the panels clean for full output.
+
+HELPLINE
+MNRE toll-free helpline: 1800-180-3333
+Kisan Call Centre: 1800-180-1551

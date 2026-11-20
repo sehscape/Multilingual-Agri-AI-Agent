@@ -1,6 +1,13 @@
 {
   "name": "maize",
-  "local_names": ["मक्का", "मकई", "ਮੱਕੀ", "मका"],
+  "order": 6,
+  "names": {"en": "maize", "hi": "मक्का", "pa": "ਮੱਕੀ", "mr": "मका"},
+  "aliases": {
+    "en": ["corn", "makka", "makki"],
+    "hi": ["मकई", "मक्के"],
+    "pa": ["मक्की"],
+    "mr": ["मक्या"]
+  },
   "total_duration_days": 100,
   "sowing_season": "Kharif: June–July | Rabi: Oct–Nov | Spring: Feb–March",
   "harvest_season": "Kharif: Sep–Oct | Rabi: Feb–March",

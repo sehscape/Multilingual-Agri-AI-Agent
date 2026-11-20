@@ -62,10 +62,16 @@ def run():
     # ── Scheme retrieval quality ─────────────────────────────────────────────
     from app.tools.scheme_tool import get_scheme_context
     cases = [
-        ("How do I apply for PM-KISAN?", "Pm Kisan"),
-        ("crop insurance premium under PMFBY", "Pm Fasal Bima Yojana"),
+        ("How do I apply for PM-KISAN?", "PM-KISAN"),
+        ("crop insurance premium under PMFBY", "PM Fasal Bima Yojana"),
         ("Kisan Credit Card loan interest rate", "Kisan Credit Card"),
         ("soil health card testing", "Soil Health Card"),
+        ("subsidy for a solar pump under PM-KUSUM", "PM-KUSUM"),
+        ("drip irrigation subsidy for small farmers", "PMKSY Per Drop More Crop"),
+        ("PM Kisan Maandhan pension at 60", "PM Kisan Maandhan"),
+        ("how to sell my crop on e-NAM online mandi", "e-NAM"),
+        ("Namo Shetkari Mahasanman Nidhi installment Maharashtra", "Namo Shetkari Mahasanman Nidhi"),
+        ("Happy Seeder subsidy for paddy stubble", "Crop Residue Management"),
     ]
     for q, want in cases:
         out = get_scheme_context(q)

@@ -1,0 +1,74 @@
+{
+  "name": "chilli",
+  "order": 14,
+  "names": {"en": "chilli", "hi": "मिर्च", "pa": "ਮਿਰਚ", "mr": "मिरची"},
+  "aliases": {
+    "en": ["chili", "chilly", "mirchi", "green chilli", "red chilli"],
+    "hi": ["मिर्ची", "मिरच"],
+    "pa": ["ਮਿਰਚਾਂ"],
+    "mr": ["मिरच"]
+  },
+  "total_duration_days": 180,
+  "longest_duration_days": 240,
+  "sowing_season": "Kharif: nursery May–June, transplant June–July | Rabi: nursery September–October | Summer: nursery January–February",
+  "harvest_season": "Green chilli from about 60 days after transplanting; red chilli 90–120 days after transplanting, picked every 7–10 days",
+  "soil": "Well-drained loam or black soil rich in organic matter, pH 6.0–7.0; cannot stand waterlogging",
+  "stages": [
+    {
+      "name": "Nursery / Seedling",
+      "days_range": [0, 35],
+      "description": "Seedlings are raised in raised nursery beds for 35–40 days.",
+      "irrigation": "Light watering daily with a rose can; do not keep the beds soggy.",
+      "fertilizer": "Mix 2 kg FYM per square metre into the beds. Treat seed with Trichoderma 4 g per kg.",
+      "watch_for": ["Damping off — seedlings collapse at the base", "Thrips and whitefly carrying leaf curl virus"],
+      "tips": ["Seed: 400–500 g per acre for varieties, 80–100 g for hybrids", "Cover the nursery with a 40–50 mesh insect-proof net"]
+    },
+    {
+      "name": "Transplanting / Establishment",
+      "days_range": [36, 55],
+      "description": "35–40 day old seedlings are planted in the main field.",
+      "irrigation": "Irrigate right after transplanting, then every 4–5 days (or a short daily drip).",
+      "fertilizer": "Basal: 8–10 tonnes FYM + 50 kg DAP + 40 kg MOP + 25 kg urea per acre.",
+      "watch_for": ["Wilt and root rot", "Thrips (leaves curl upward)", "Mites (leaves curl downward)"],
+      "tips": ["Transplant in the evening; spacing 60 × 45 cm", "Two rows of maize around the field act as a barrier against whitefly and thrips"]
+    },
+    {
+      "name": "Vegetative Growth",
+      "days_range": [56, 75],
+      "description": "Plants branch and grow leaves.",
+      "irrigation": "Every 5–7 days in furrows, or daily by drip.",
+      "fertilizer": "Top dress 35 kg urea per acre at 30 days after transplanting.",
+      "watch_for": ["Thrips and mites causing leaf curl", "Whitefly spreading leaf curl virus"],
+      "tips": ["For thrips spray Fipronil 5 SC 1.5 ml/litre or Spinosad 45 SC 0.3 ml/litre", "For mites spray wettable sulphur 80 WP 3 g/litre"]
+    },
+    {
+      "name": "Flowering / Fruit Set",
+      "days_range": [76, 105],
+      "description": "Flowers open and the first fruits set.",
+      "irrigation": "Keep the moisture even — water stress now makes flowers drop.",
+      "fertilizer": "Second top dress: 35 kg urea per acre at 60 days after transplanting.",
+      "watch_for": ["Flower drop in heat or water stress", "Fruit borer", "Powdery mildew"],
+      "tips": ["Too much urea gives leaves, not fruit", "For fruit borer spray Emamectin benzoate 5 SG 0.4 g/litre"]
+    },
+    {
+      "name": "Picking",
+      "days_range": [106, 240],
+      "description": "Green fruits are picked every 7–10 days; red chilli is left to ripen on the plant.",
+      "irrigation": "Every 7–10 days; stop a week before the last picking of red chilli.",
+      "fertilizer": "After 2–3 pickings, 20 kg urea + 10 kg MOP per acre keeps the plants bearing.",
+      "watch_for": ["Fruit rot and die-back — sunken dark spots on ripe fruits, branches drying from the tip", "Fruit borer"],
+      "tips": ["For fruit rot and die-back spray Mancozeb 2.5 g/litre or Copper oxychloride 3 g/litre", "Dry red chilli on a clean tarpaulin, not on the bare ground"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Thrips", "symptoms": "Leaves curl upward; silvery scars on fruits", "control": "Fipronil 5 SC 1.5 ml/litre or Spinosad 45 SC 0.3 ml/litre"},
+    {"name": "Mites", "symptoms": "Leaves curl downward and become narrow; plants look bushy", "control": "Wettable sulphur 80 WP 3 g/litre"},
+    {"name": "Whitefly", "symptoms": "Tiny white flies under leaves; leaf curl virus spreads", "control": "Yellow sticky traps 10 per acre; Thiamethoxam 25 WG 0.2 g/litre"},
+    {"name": "Fruit borer", "symptoms": "Holes in fruits with a caterpillar inside", "control": "Emamectin benzoate 5 SG 0.4 g/litre; pheromone traps 5 per acre"}
+  ],
+  "common_diseases": [
+    {"name": "Leaf curl virus", "symptoms": "Small, crinkled, curled leaves; stunted plants with few fruits", "control": "No cure — remove affected plants early, control whitefly and thrips, raise seedlings under net"},
+    {"name": "Fruit rot and die-back (anthracnose)", "symptoms": "Sunken dark spots on ripe fruits; twigs dry from the tip downward", "control": "Mancozeb 2.5 g/litre or Copper oxychloride 3 g/litre"},
+    {"name": "Powdery mildew", "symptoms": "White powder under the leaves, leaf fall", "control": "Wettable sulphur 80 WP 3 g/litre or Hexaconazole 5 EC 1 ml/litre"}
+  ]
+}

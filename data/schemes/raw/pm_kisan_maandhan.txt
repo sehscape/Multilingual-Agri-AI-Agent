@@ -1,0 +1,45 @@
+SCHEME: PM-KMY (Pradhan Mantri Kisan Maandhan Yojana) - Pension for Farmers
+SOURCE: Ministry of Agriculture & Farmers Welfare, Government of India
+CATEGORY: Old Age Pension
+
+OVERVIEW
+Pradhan Mantri Kisan Maandhan Yojana (PM-KMY) is a voluntary, contributory pension scheme for small and marginal farmers. The farmer pays a small monthly amount until the age of 60, the Central Government pays an equal amount into the farmer's pension account, and after 60 the farmer gets a fixed pension of Rs 3,000 per month for life. The pension fund is managed by the Life Insurance Corporation of India (LIC).
+
+ELIGIBILITY
+- Small and marginal farmers owning up to 2 hectares of cultivable land.
+- Age between 18 and 40 years at the time of joining.
+- Not eligible: farmers covered under the National Pension Scheme (NPS), ESIC or EPFO schemes; farmers who have joined PM Shram Yogi Maandhan or PM Laghu Vyapari Maandhan; income tax payers; and people holding constitutional posts, serving or retired government officers, ministers and registered professionals (doctors, engineers, lawyers, chartered accountants).
+
+BENEFIT
+- Assured pension of Rs 3,000 per month after the age of 60.
+- If the farmer dies after 60, the spouse gets a family pension of 50% (Rs 1,500 per month).
+- If the farmer dies before 60, the spouse can continue paying and get the pension, or take out the money with interest.
+- The Central Government matches the farmer's contribution rupee for rupee.
+
+MONTHLY CONTRIBUTION
+- The farmer's monthly contribution is between Rs 55 and Rs 200, depending on the age at joining.
+- Joining at 18 years: Rs 55 per month. Joining at 29 years: Rs 100 per month. Joining at 40 years: Rs 200 per month.
+- The contribution is auto-debited from the bank account. A farmer who gets PM-KISAN can choose to pay the contribution from the PM-KISAN money.
+
+HOW TO APPLY
+1. Visit the nearest Common Service Centre (CSC) with your Aadhaar card and bank passbook. Enrolment is free of charge.
+2. The CSC operator fills the form online, links Aadhaar and the bank account, and calculates your monthly contribution.
+3. Sign the auto-debit mandate; the first contribution is paid in cash at the CSC.
+4. You get a unique Kisan Pension Account Number and a pension card.
+5. Farmers can also self-enrol on maandhan.in.
+
+DOCUMENTS REQUIRED
+- Aadhaar card
+- Savings bank account passbook or PM-KISAN account details
+- Land records
+- Mobile number
+
+IMPORTANT NOTES
+- Exit before 10 years: the farmer gets back only their own contribution with savings bank interest.
+- Exit after 10 years but before 60: the farmer's own contribution is returned with the interest earned by the fund.
+- Missed payments can be regularised by paying the dues with a penalty.
+- Joining is voluntary and can be done at any time between 18 and 40 years of age.
+
+HELPLINE
+PM Maandhan toll-free: 1800-267-6888
+Kisan Call Centre: 1800-180-1551

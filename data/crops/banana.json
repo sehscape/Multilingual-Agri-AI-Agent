@@ -1,0 +1,82 @@
+{
+  "name": "banana",
+  "order": 18,
+  "names": {"en": "banana", "hi": "केला", "pa": "ਕੇਲਾ", "mr": "केळी"},
+  "aliases": {
+    "en": ["kela", "plantain"],
+    "hi": ["केले", "केलों"],
+    "pa": ["ਕੇਲੇ"],
+    "mr": ["केळ"]
+  },
+  "total_duration_days": 365,
+  "longest_duration_days": 450,
+  "sowing_season": "Tissue culture plants: June–July (Maharashtra, Gujarat) or October–November; avoid planting in peak summer or winter",
+  "harvest_season": "11–13 months after planting (Grand Naine); the ratoon crop 8–10 months after the main harvest",
+  "soil": "Deep, well-drained loam rich in organic matter, pH 6.5–7.5; banana cannot stand waterlogging",
+  "stages": [
+    {
+      "name": "Planting / Establishment",
+      "days_range": [0, 60],
+      "description": "Tissue culture plants or suckers settle in and grow new roots.",
+      "irrigation": "Irrigate right after planting, then keep the soil moist — by drip about 4–6 litres per plant a day.",
+      "fertilizer": "In each pit at planting: 10 kg well-rotted FYM + 250 g neem cake + 100 g DAP.",
+      "watch_for": ["Rhizome weevil", "Bunchy top virus in suckers — narrow, bunched leaves with dark green streaks", "Nematodes"],
+      "tips": ["Plant virus-tested tissue culture plants or healthy sword suckers", "Spacing 1.5 × 1.5 m (about 1,800 plants per acre)"]
+    },
+    {
+      "name": "Early Vegetative",
+      "days_range": [61, 120],
+      "description": "New leaves come every week and the stem thickens.",
+      "irrigation": "Drip 8–10 litres per plant a day in summer, less in winter.",
+      "fertilizer": "Every month: 50 g urea + 50 g MOP per plant around the plant, then irrigate (or give it through drip).",
+      "watch_for": ["Weeds", "Leaf spot (Sigatoka) starting on the lower leaves"],
+      "tips": ["Remove side suckers every month", "Keep the basin weed-free"]
+    },
+    {
+      "name": "Vegetative Growth",
+      "days_range": [121, 210],
+      "description": "Fast growth of leaves and stem; the bunch starts forming inside.",
+      "irrigation": "Drip 10–15 litres per plant a day in summer; never let the plant wilt.",
+      "fertilizer": "Every month: 60 g urea + 80 g MOP per plant.",
+      "watch_for": ["Sigatoka leaf spot — yellow streaks becoming brown spots", "Pseudostem weevil — jelly-like ooze and holes in the stem", "Panama wilt — older leaves yellow and hang, the stem splits"],
+      "tips": ["Cut off dry and spotted leaves and burn them", "Earth up around the plant"]
+    },
+    {
+      "name": "Shooting / Flowering",
+      "days_range": [211, 270],
+      "description": "The flower bud comes out and the hands of fruit open.",
+      "irrigation": "The most critical time for water — drip 15–20 litres per plant a day in summer.",
+      "fertilizer": "Last urea dose: 50 g urea + 80 g MOP per plant at shooting.",
+      "watch_for": ["Thrips scarring the fruit skin", "Plants falling over under the bunch weight"],
+      "tips": ["Remove the male bud 1–2 weeks after the last hand opens", "Prop the plant with bamboo poles", "Cover the bunch with a polythene sleeve after the last hand opens"]
+    },
+    {
+      "name": "Bunch Development",
+      "days_range": [271, 330],
+      "description": "Fingers fill and round out.",
+      "irrigation": "Keep it regular — water stress gives small fingers.",
+      "fertilizer": "50 g MOP per plant once; no urea.",
+      "watch_for": ["Fruit scarring by thrips", "Bunch rot"],
+      "tips": ["Remove the last one or two small hands for bigger fingers on the rest"]
+    },
+    {
+      "name": "Harvest",
+      "days_range": [331, 450],
+      "description": "Fingers are round and full.",
+      "irrigation": "Reduce irrigation a week before harvest.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Bruising during harvest and transport"],
+      "tips": ["For far markets, harvest when the finger ridges are just rounded (75–80% mature)", "Keep one healthy follower sucker for the ratoon crop"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Rhizome weevil", "symptoms": "Tunnels in the corm; plants weaken and topple", "control": "Plant clean suckers; set split-stem traps and destroy the weevils collected"},
+    {"name": "Pseudostem weevil", "symptoms": "Jelly-like ooze and holes on the stem; the plant breaks", "control": "Remove and destroy affected plants; cut harvested stems into pieces"},
+    {"name": "Banana aphid", "symptoms": "Dark aphids at the leaf bases; spreads bunchy top", "control": "Destroy bunchy top plants together with the aphids; plant virus-free tissue culture plants"}
+  ],
+  "common_diseases": [
+    {"name": "Sigatoka leaf spot", "symptoms": "Yellow streaks turning into brown spots with grey centres; leaves dry early", "control": "Remove spotted leaves; spray Propiconazole 25 EC 1 ml/litre with 10 ml mineral oil per litre"},
+    {"name": "Panama wilt", "symptoms": "Older leaves yellow from the edges and hang down; the stem splits at the base, brown inside", "control": "No cure — uproot and destroy; do not replant banana there for some years; use resistant varieties"},
+    {"name": "Bunchy top virus", "symptoms": "Narrow, upright leaves bunched at the top with dark green streaks", "control": "No cure — kill the aphids and uproot the plant; plant virus-free tissue culture plants"}
+  ]
+}

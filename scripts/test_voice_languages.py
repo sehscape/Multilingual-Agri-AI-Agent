@@ -94,9 +94,13 @@ W = {  # scripted understanding for the farmer's exact words
         english="When should I apply fertilizer to wheat?", crop="wheat", crop_words="गेहूं",
         wants_crop_advice=True, advice_topic="fertilizer"),
     "कल बारिश होगी क्या?": dict(english="Will it rain tomorrow?", wants_weather=True),
-    "ਮੇਰੇ ਗੰਨੇ ਨੂੰ ਕਿਹੜੀ ਖਾਦ ਪਾਵਾਂ?": dict(
-        english="Which fertilizer should I give my sugarcane?", crop="other:sugarcane",
-        crop_words="ਗੰਨੇ", wants_crop_advice=True, advice_topic="fertilizer"),
+    "ਮੇਰੇ ਨਾਰੀਅਲ ਨੂੰ ਕਿਹੜੀ ਖਾਦ ਪਾਵਾਂ?": dict(
+        english="Which fertilizer should I give my coconut?", crop="other:coconut",
+        crop_words="ਨਾਰੀਅਲ", wants_crop_advice=True, advice_topic="fertilizer"),
+    "ਮੇਰੇ ਗੰਨੇ ਨੂੰ 50 ਦਿਨ ਹੋ ਗਏ, ਕਿਹੜੀ ਖਾਦ ਪਾਵਾਂ?": dict(
+        english="My sugarcane is 50 days old, which fertilizer should I give?",
+        crop="other:sugarcane", crop_words="ਗੰਨੇ", crop_age_days=50, wants_crop_advice=True,
+        advice_topic="fertilizer"),
     "माझ्या गव्हाला 300 दिवस झाले, पाणी कधी द्यावे?": dict(
         english="My wheat is 300 days old, when should I water it?", crop="wheat",
         crop_words="गव्हाला", crop_age_days=300, wants_crop_advice=True,
@@ -113,6 +117,8 @@ W = {  # scripted understanding for the farmer's exact words
         english="When should I apply fertilizer to wheat, and will it rain in Pune?",
         crop="wheat", location="Pune", wants_crop_advice=True, advice_topic="fertilizer",
         wants_weather=True),
+    "मधुमक्खी पालन योजना क्या है?": dict(
+        english="What is the beekeeping scheme?", wants_scheme=True, scheme="other"),
     "सोलर पंप योजना क्या है?": dict(
         english="What is the solar pump scheme?", wants_scheme=True, scheme="other"),
 }
@@ -333,9 +339,15 @@ def test_understanding():
     check("LLM JSON: fences, string numbers/booleans, 'paddy' → rice",
           u.crop == "rice" and u.crop_age_days == 35 and u.wants_crop_advice
           and u.advice_topic == "general")
-    u = _parse_llm_json('{"english": "x", "topic": "farming", "crop": "sugarcane", '
+    u = _parse_llm_json('{"english": "x", "topic": "farming", "crop": "coconut", '
                         '"wants_crop_advice": true}', "x")
-    check("LLM JSON: crop outside the knowledge base → other:sugarcane", u.other_crop == "sugarcane")
+    check("LLM JSON: crop outside the knowledge base → other:coconut", u.other_crop == "coconut")
+    u = _parse_llm_json('{"english": "x", "topic": "farming", "crop": "other:sugarcane", '
+                        '"wants_crop_advice": true}', "x")
+    check("LLM JSON: 'other:sugarcane' → sugarcane (now in the guide)", u.crop == "sugarcane")
+    u = _parse_llm_json('{"english": "x", "topic": "farming", "crop": "Tur", '
+                        '"wants_crop_advice": true}', "x")
+    check("LLM JSON: 'Tur' → pigeonpea", u.crop == "pigeonpea")
     u = _parse_llm_json('{"english": "x", "topic": "weird", "wants_weather": true}', "x")
     check("LLM JSON: a request for weather is 'farming' whatever the topic says",
           u.topic == "farming" and u.wants_weather)
@@ -345,8 +357,23 @@ def test_understanding():
           r.crop is None and r.wants_weather and r.location == "Nashik", r.summary())
     r = understand_with_rules("Will it rain in Shirur tomorrow?")
     check("rules: any English place after 'in' is found", r.location == "Shirur", r.summary())
-    r = understand_with_rules("ਮੇਰੇ ਗੰਨੇ ਨੂੰ ਕਿਹੜੀ ਖਾਦ ਪਾਵਾਂ?")
-    check("rules: Punjabi sugarcane recognised as unsupported", r.other_crop == "sugarcane",
+    r = understand_with_rules("ਮੇਰੇ ਗੰਨੇ ਨੂੰ ਕਿਹੜੀ ਖਾਦ ਪਾਵਾਂ?", lang="pa")
+    check("rules: Punjabi 'ਗੰਨੇ' → sugarcane", r.crop == "sugarcane" and r.crop_words == "ਗੰਨੇ",
+          r.summary())
+    r = understand_with_rules("माझ्या उसाला कोणते खत द्यावे?", lang="mr")
+    check("rules: Marathi 'उसाला' → sugarcane", r.crop == "sugarcane", r.summary())
+    r = understand_with_rules("मूंगफली के पत्ते पीले हो रहे हैं", lang="hi")
+    check("rules: 'मूंगफली' is groundnut, not 'मूंग'", r.crop == "groundnut", r.summary())
+    r = understand_with_rules("माझ्या तुरीला शेंगा लागल्या, फवारणी केली पाहिजे का?", lang="mr")
+    check("rules: Marathi 'तुरीला' → pigeon pea; 'केली' (did) is not banana",
+          r.crop == "pigeonpea", r.summary())
+    r = understand_with_rules("ਮੇਰੇ ਨਾਰੀਅਲ ਨੂੰ ਕਿਹੜੀ ਖਾਦ ਪਾਵਾਂ?", lang="pa")
+    check("rules: Punjabi coconut recognised as unsupported, in the farmer's word",
+          r.other_crop == "coconut" and r.crop_words == "ਨਾਰੀਅਲ", r.summary())
+    r = understand_with_rules("सोलर पंप योजना क्या है?", lang="hi")
+    check("rules: 'सोलर पंप' → PM-KUSUM", r.wants_scheme and r.scheme == "pm_kusum", r.summary())
+    r = understand_with_rules("PM Kisan Maandhan pension kaise milegi?", lang="hi")
+    check("rules: 'PM Kisan Maandhan' is the pension, not PM-KISAN", r.scheme == "pm_kmy",
           r.summary())
     r = understand_with_rules("Hello")
     check("rules: greeting", r.topic == "greeting")
@@ -439,7 +466,7 @@ def run_journeys():
 
     r = typed("mr", "पीएम किसान योजनेसाठी कोणती कागदपत्रे लागतात?")
     check("Marathi typed: PM-KISAN documents found, answer + voice in Marathi",
-          "Pm Kisan" in fake.facts and "Aadhaar" in fake.facts
+          "PM-KISAN" in fake.facts and "Aadhaar" in fake.facts
           and r["answer"].startswith(REPLIES["Marathi"][:10]) and spoken()[1] == "mr")
 
     r = typed("en", "My wheat is 40 days old, will it rain in Pune, any scheme for irrigation?")
@@ -470,10 +497,14 @@ def run_journeys():
     check("saved location is used when the question names no place",
           "LIVE WEATHER" in fake.facts and "Pune" in fake.facts and r["pending"] is None)
 
-    r = voice("pa", "ਮੇਰੇ ਗੰਨੇ ਨੂੰ ਕਿਹੜੀ ਖਾਦ ਪਾਵਾਂ?")
+    r = voice("pa", "ਮੇਰੇ ਨਾਰੀਅਲ ਨੂੰ ਕਿਹੜੀ ਖਾਦ ਪਾਵਾਂ?")
     check("unsupported crop → told in Punjabi, with the crops it knows",
-          r["answer"] == t("ask_unsupported_crop", "pa", crop="ਗੰਨੇ") and spoken()[1] == "pa",
-          r["answer"])
+          r["answer"] == t("ask_unsupported_crop", "pa", crop="ਨਾਰੀਅਲ") and spoken()[1] == "pa"
+          and "ਗੰਨਾ" in r["answer"], r["answer"])
+    r = voice("pa", "ਮੇਰੇ ਗੰਨੇ ਨੂੰ 50 ਦਿਨ ਹੋ ਗਏ, ਕਿਹੜੀ ਖਾਦ ਪਾਵਾਂ?")
+    check("sugarcane (new crop) at 50 days → Tillering advice in Punjabi",
+          "Tillering" in fake.facts and "Sugarcane" in fake.facts
+          and script_of(r["answer"]) == "Gurmukhi" and r["pending"] is None, r["trace"][-300:])
     r = typed("mr", "माझ्या गव्हाला 300 दिवस झाले, पाणी कधी द्यावे?")
     check("impossible age (wheat, 300 days) → asked to check, in Marathi",
           r["answer"] == t("ask_age_check", "mr", crop="गहू", days=300, total=120), r["answer"])
@@ -490,9 +521,13 @@ def run_journeys():
     check("place the map can't find → asked for a nearby town",
           r["answer"] == t("ask_place_not_found", "en", place="Xyzabcville")
           and r["pending"]["missing"] == ["location"], r["answer"])
+    r = typed("hi", "मधुमक्खी पालन योजना क्या है?")
+    check("scheme not in the documents → the schemes it knows",
+          r["answer"] == t("ask_scheme_unknown", "hi") and "कुसुम" in r["answer"],
+          r["answer"][:120])
     r = typed("hi", "सोलर पंप योजना क्या है?")
-    check("scheme not in the documents → the 4 schemes it knows",
-          r["answer"] == t("ask_scheme_unknown", "hi"), r["answer"][:120])
+    check("solar pump scheme (new) → PM-KUSUM document, answered in Hindi",
+          "PM-KUSUM" in fake.facts and script_of(r["answer"]) == "Devanagari", r["answer"][:120])
     r = voice("hi", "गेहूं में खाद कब डालें और पुणे में बारिश होगी क्या?")
     check("part answerable: weather answered, age asked for in a note",
           "LIVE WEATHER" in fake.facts

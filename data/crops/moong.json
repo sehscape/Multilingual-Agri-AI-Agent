@@ -1,0 +1,73 @@
+{
+  "name": "moong",
+  "order": 17,
+  "names": {"en": "moong", "hi": "मूंग", "pa": "ਮੂੰਗੀ", "mr": "मूग"},
+  "aliases": {
+    "en": ["mung", "green gram", "mung bean", "moong bean"],
+    "hi": ["मूँग", "मुंग"],
+    "pa": ["ਮੂੰਗ"],
+    "mr": []
+  },
+  "total_duration_days": 65,
+  "longest_duration_days": 90,
+  "sowing_season": "Kharif: June–July | Summer: March–April after wheat, potato or mustard (irrigated)",
+  "harvest_season": "Kharif: September | Summer: May–June",
+  "soil": "Well-drained loam or sandy loam, pH 6.5–7.5; avoid saline and waterlogged soil",
+  "stages": [
+    {
+      "name": "Germination / Emergence",
+      "days_range": [0, 8],
+      "description": "Seeds sprout in 3–5 days.",
+      "irrigation": "Summer crop: sow after a pre-sowing irrigation. Kharif: sow after good rain.",
+      "fertilizer": "Basal: 40 kg DAP per acre. Treat seed with Trichoderma 4 g per kg, then Rhizobium + PSB 5 g per kg.",
+      "watch_for": ["Seed rot in wet soil", "Ants carrying away seed"],
+      "tips": ["Seed rate 8–10 kg per acre (10–12 kg for the summer crop)", "Rows 30 cm apart"]
+    },
+    {
+      "name": "Vegetative Growth",
+      "days_range": [9, 30],
+      "description": "Leaves and branches grow; root nodules fix nitrogen.",
+      "irrigation": "Summer crop: every 10–12 days. Kharif: drain standing water.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Whitefly spreading yellow mosaic", "Thrips and jassids", "Weeds in the first 25 days"],
+      "tips": ["One hand weeding at 20–25 days", "Pull out yellow mosaic plants as soon as you see them"]
+    },
+    {
+      "name": "Flowering",
+      "days_range": [31, 42],
+      "description": "Yellow flowers open.",
+      "irrigation": "A light irrigation if dry — flowers and pods need moisture.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Thrips making flowers drop", "Maruca — flowers webbed together"],
+      "tips": ["Put up 10 yellow sticky traps per acre for whitefly"]
+    },
+    {
+      "name": "Pod Formation / Pod Filling",
+      "days_range": [43, 58],
+      "description": "Pods form and fill.",
+      "irrigation": "Last irrigation at pod filling (summer crop).",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Pod borer", "Cercospora leaf spot", "Powdery mildew"],
+      "tips": ["For pod borer spray Chlorantraniliprole 18.5 SC 0.3 ml/litre"]
+    },
+    {
+      "name": "Maturity / Harvest",
+      "days_range": [59, 90],
+      "description": "Pods turn black or brown.",
+      "irrigation": "No irrigation.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Pods shattering in the sun"],
+      "tips": ["Pick ripe pods in 2–3 rounds to avoid shattering", "After picking, plough the plants into the soil as green manure"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Whitefly", "symptoms": "Tiny white flies under leaves; spreads yellow mosaic", "control": "Yellow sticky traps 10 per acre; Thiamethoxam 25 WG 0.2 g/litre"},
+    {"name": "Thrips", "symptoms": "Flowers drop; leaves curl", "control": "Spinosad 45 SC 0.3 ml/litre"},
+    {"name": "Pod borer (Maruca)", "symptoms": "Flowers and pods webbed together with caterpillars inside", "control": "Chlorantraniliprole 18.5 SC 0.3 ml/litre"}
+  ],
+  "common_diseases": [
+    {"name": "Yellow mosaic", "symptoms": "Bright yellow patches on leaves, few pods", "control": "Resistant varieties; pull out infected plants; control whitefly"},
+    {"name": "Cercospora leaf spot", "symptoms": "Brown spots with grey centres on leaves", "control": "Carbendazim 1 g/litre or Mancozeb 2.5 g/litre"},
+    {"name": "Powdery mildew", "symptoms": "White powder on leaves", "control": "Wettable sulphur 80 WP 2.5 g/litre"}
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "name": "jowar",
+  "order": 16,
+  "names": {"en": "jowar", "hi": "ज्वार", "pa": "ਜਵਾਰ", "mr": "ज्वारी"},
+  "aliases": {
+    "en": ["jwar", "juar", "jowari", "sorghum"],
+    "hi": ["जुवार", "जवार", "जुआर"],
+    "pa": ["ਜੁਆਰ"],
+    "mr": ["ज्वार"]
+  },
+  "total_duration_days": 110,
+  "longest_duration_days": 130,
+  "sowing_season": "Kharif: June–July with the monsoon | Rabi: mid-September to mid-October on stored moisture (Maharashtra, Karnataka)",
+  "harvest_season": "Kharif: September–October | Rabi: January–February",
+  "soil": "Medium to deep black soil or loam, pH 6.0–8.0; rabi jowar needs deep soil that holds moisture",
+  "stages": [
+    {
+      "name": "Germination / Emergence",
+      "days_range": [0, 10],
+      "description": "Seeds sprout and seedlings come up in 4–6 days.",
+      "irrigation": "Kharif: sow after good monsoon rain. Rabi: sow in stored soil moisture.",
+      "fertilizer": "Basal: 50 kg DAP + 20 kg MOP per acre (half of this on light, rain-fed soil).",
+      "watch_for": ["Shoot fly — dead hearts in seedlings, worst in a late-sown crop"],
+      "tips": ["Seed rate 3–4 kg per acre; rows 45 cm apart", "Sow early in the season — late sowing invites shoot fly"]
+    },
+    {
+      "name": "Seedling / Early Vegetative",
+      "days_range": [11, 35],
+      "description": "Leaves unfold and the stem thickens.",
+      "irrigation": "Kharif: rain-fed, drain extra water. Rabi irrigated: first irrigation at 30–35 days.",
+      "fertilizer": "Top dress 35 kg urea per acre at 30 days (irrigated crop or after good rain).",
+      "watch_for": ["Shoot fly", "Stem borer", "Fall armyworm in the leaf whorl"],
+      "tips": ["Thin plants to 12–15 cm apart at 15–20 days", "Weed and hoe at 20–25 days"]
+    },
+    {
+      "name": "Panicle Initiation / Booting",
+      "days_range": [36, 60],
+      "description": "The ear head forms inside the stem.",
+      "irrigation": "Critical stage — irrigate if dry (second irrigation for rabi).",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Stem borer — holes in the stem", "Aphids with sticky honeydew (rabi jowar)"],
+      "tips": ["For fall armyworm or stem borer, spray Emamectin benzoate 5 SG 0.4 g/litre into the whorl"]
+    },
+    {
+      "name": "Heading / Flowering",
+      "days_range": [61, 75],
+      "description": "Heads come out and flower.",
+      "irrigation": "Irrigate if dry — water stress at flowering gives chaffy heads.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Midge — tiny flies on flowering heads, empty grains", "Head bugs"],
+      "tips": ["When the whole area flowers at the same time, midge damage is lower"]
+    },
+    {
+      "name": "Grain Filling",
+      "days_range": [76, 100],
+      "description": "Grains fill and harden.",
+      "irrigation": "A last irrigation at the milk–dough stage if needed.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Grain mould if it rains near maturity (kharif)", "Charcoal rot and lodging (rabi)", "Birds"],
+      "tips": ["Harvest kharif jowar on time to avoid grain mould"]
+    },
+    {
+      "name": "Maturity / Harvest",
+      "days_range": [101, 130],
+      "description": "Grains are hard with a black spot at the base.",
+      "irrigation": "No irrigation.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Bird damage", "Grain mould if it rains at harvest"],
+      "tips": ["Harvest when a black layer forms at the base of the grain", "Dry the heads before threshing; store grain at 10–12% moisture"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Shoot fly", "symptoms": "Central shoot of seedlings dries (dead heart)", "control": "Timely early sowing; slightly higher seed rate; pull out dead hearts"},
+    {"name": "Stem borer", "symptoms": "Holes in leaves and stem, dead hearts in older plants", "control": "Emamectin benzoate 5 SG 0.4 g/litre into the whorl; destroy stubbles after harvest"},
+    {"name": "Fall armyworm", "symptoms": "Ragged holes in leaves and sawdust-like droppings in the whorl", "control": "Emamectin benzoate 5 SG 0.4 g/litre directed into the whorl"}
+  ],
+  "common_diseases": [
+    {"name": "Grain mould", "symptoms": "Pink, black or white mould on grains when it rains at maturity", "control": "Harvest on time; mould-tolerant varieties; dry the heads quickly"},
+    {"name": "Charcoal rot", "symptoms": "Stalks become soft and hollow and fall over; grey-black inside", "control": "Avoid water stress at grain filling; do not crowd plants; apply potash"},
+    {"name": "Anthracnose", "symptoms": "Small red spots on leaves joining into big patches", "control": "Mancozeb 2.5 g/litre; crop rotation"}
+  ]
+}

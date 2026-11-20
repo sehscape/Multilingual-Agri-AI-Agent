@@ -1,6 +1,13 @@
 {
   "name": "wheat",
-  "local_names": ["गेहूं", "गेहू", "ਕਣਕ", "गव्हू"],
+  "order": 1,
+  "names": {"en": "wheat", "hi": "गेहूं", "pa": "ਕਣਕ", "mr": "गहू"},
+  "aliases": {
+    "en": ["gehun", "gehu"],
+    "hi": ["गेहूँ", "गेहू", "गेंहू", "कणक", "कनक"],
+    "pa": ["ਗੇਹੂੰ"],
+    "mr": ["गव्हा", "गव्हू"]
+  },
   "total_duration_days": 120,
   "sowing_season": "October–November (Rabi crop)",
   "harvest_season": "March–April",

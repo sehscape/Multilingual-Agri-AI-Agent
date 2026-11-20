@@ -144,9 +144,9 @@ class Runner:
 
         # B2: crop mentioned but not in the knowledge base (stub can't resolve it)
         try:
-            state = self._run("My banana crop is 30 days old, what fertilizer should I use?")
+            state = self._run("My coconut crop is 30 days old, what fertilizer should I use?")
             self._report("B2 unrecognised crop → no crash, honest answer", [
-                ("crop stays None (banana unknown)", state.crop is None),
+                ("crop stays None (coconut unknown)", state.crop is None),
                 ("no exception / answer non-empty", len(state.english_answer) > 20),
             ])
         except Exception:
@@ -170,7 +170,7 @@ class Runner:
         print("\n" + "=" * 64 + "\nPART C — Tool safety (no fabrication)\n" + "=" * 64)
 
         try:
-            out = get_crop_context("banana", 30)
+            out = get_crop_context("coconut", 30)
             self._report("C1 out-of-KB crop → 'not in the knowledge base'", [
                 ("honest not-found message", "not in the knowledge base" in out),
             ])

@@ -9,6 +9,8 @@ Keep every key present in all four languages — scripts/test_i18n.py checks it.
 """
 from __future__ import annotations
 
+from app import knowledge
+
 # Picker labels — exactly as shown on the page — and their language codes.
 # Each language is written in its own script first, so a farmer finds theirs
 # at a glance. (Flag emoji were dropped: Windows shows them as "GB" / "IN".)
@@ -282,15 +284,15 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "What I can help with", "hi": "मैं किसमें मदद कर सकता हूँ",
         "pa": "ਮੈਂ ਕਿਸ ਵਿੱਚ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ", "mr": "मी कशात मदत करू शकतो",
     },
-    "help_crop": {
-        "en": "🌾 Crop care — fertilizer, water, pests and disease — for wheat, rice, "
-              "cotton, onion, tomato and maize",
-        "hi": "🌾 फसल की देखभाल — खाद, पानी, कीड़े और रोग — गेहूं, धान, कपास, प्याज, "
-              "टमाटर और मक्का के लिए",
-        "pa": "🌾 ਫ਼ਸਲ ਦੀ ਸੰਭਾਲ — ਖਾਦ, ਪਾਣੀ, ਕੀੜੇ ਅਤੇ ਰੋਗ — ਕਣਕ, ਝੋਨਾ, ਕਪਾਹ, ਪਿਆਜ਼, "
-              "ਟਮਾਟਰ ਅਤੇ ਮੱਕੀ ਲਈ",
-        "mr": "🌾 पिकाची काळजी — खत, पाणी, कीड आणि रोग — गहू, भात, कापूस, कांदा, "
-              "टोमॅटो आणि मका यांसाठी",
+    "help_crop": {  # {count} = how many crops the guide covers
+        "en": "🌾 Crop care — fertilizer, water, pests and disease for {count} crops: wheat, "
+              "rice, cotton, sugarcane, soybean, chickpea, potato, banana and more",
+        "hi": "🌾 फसल की देखभाल — {count} फसलों के लिए खाद, पानी, कीड़े और रोग: गेहूं, धान, "
+              "कपास, गन्ना, सोयाबीन, चना, आलू, केला और भी",
+        "pa": "🌾 ਫ਼ਸਲ ਦੀ ਸੰਭਾਲ — {count} ਫ਼ਸਲਾਂ ਲਈ ਖਾਦ, ਪਾਣੀ, ਕੀੜੇ ਅਤੇ ਰੋਗ: ਕਣਕ, ਝੋਨਾ, "
+              "ਕਪਾਹ, ਗੰਨਾ, ਸਰ੍ਹੋਂ, ਆਲੂ, ਮੱਕੀ, ਮੂੰਗੀ ਅਤੇ ਹੋਰ",
+        "mr": "🌾 पिकाची काळजी — {count} पिकांसाठी खत, पाणी, कीड आणि रोग: ऊस, कापूस, "
+              "सोयाबीन, कांदा, तूर, हरभरा, ज्वारी, केळी आणि इतर",
     },
     "help_weather": {
         "en": "🌦 Weather — rain, heat and wind for your village, for the next 3 days",
@@ -299,14 +301,14 @@ STRINGS: dict[str, dict[str, str]] = {
         "mr": "🌦 हवामान — तुमच्या गावातील पाऊस, उष्णता आणि वारा, पुढील 3 दिवस",
     },
     "help_scheme": {
-        "en": "🏛 Government schemes — PM-KISAN, crop insurance (PMFBY), Kisan Credit "
-              "Card, Soil Health Card",
-        "hi": "🏛 सरकारी योजनाएँ — पीएम किसान, फसल बीमा (PMFBY), किसान क्रेडिट कार्ड, "
-              "मृदा स्वास्थ्य कार्ड",
-        "pa": "🏛 ਸਰਕਾਰੀ ਸਕੀਮਾਂ — ਪੀਐਮ ਕਿਸਾਨ, ਫ਼ਸਲ ਬੀਮਾ (PMFBY), ਕਿਸਾਨ ਕ੍ਰੈਡਿਟ ਕਾਰਡ, "
-              "ਸੋਇਲ ਹੈਲਥ ਕਾਰਡ",
-        "mr": "🏛 सरकारी योजना — पीएम किसान, पीक विमा (PMFBY), किसान क्रेडिट कार्ड, "
-              "मृदा आरोग्य पत्रिका",
+        "en": "🏛 Government schemes — PM-KISAN, crop insurance, Kisan Credit Card, solar "
+              "pumps (PM-KUSUM), drip subsidy, farmer pension and more",
+        "hi": "🏛 सरकारी योजनाएँ — पीएम किसान, फसल बीमा, किसान क्रेडिट कार्ड, सोलर पंप "
+              "(कुसुम), ड्रिप सब्सिडी, किसान पेंशन और भी",
+        "pa": "🏛 ਸਰਕਾਰੀ ਸਕੀਮਾਂ — ਪੀਐਮ ਕਿਸਾਨ, ਫ਼ਸਲ ਬੀਮਾ, ਕਿਸਾਨ ਕ੍ਰੈਡਿਟ ਕਾਰਡ, ਸੋਲਰ ਪੰਪ "
+              "(ਕੁਸੁਮ), ਪਰਾਲੀ ਮਸ਼ੀਨ ਸਬਸਿਡੀ ਅਤੇ ਹੋਰ",
+        "mr": "🏛 सरकारी योजना — पीएम किसान, नमो शेतकरी, पीक विमा, किसान क्रेडिट कार्ड, "
+              "सौर पंप (कुसुम), ठिबक अनुदान आणि इतर",
     },
     "voice_question": {
         "en": "Voice question…", "hi": "आवाज़ में सवाल…",
@@ -338,14 +340,14 @@ STRINGS: dict[str, dict[str, str]] = {
 
     # ── Questions back to the farmer (shown and spoken) ──────────────────────
     "ask_crop": {
-        "en": "Which crop is this about? I can advise on wheat, rice, cotton, onion, "
-              "tomato and maize.",
-        "hi": "यह किस फसल के बारे में है? मैं गेहूं, धान, कपास, प्याज, टमाटर और मक्का के "
-              "बारे में सलाह दे सकता हूँ।",
-        "pa": "ਇਹ ਕਿਹੜੀ ਫ਼ਸਲ ਬਾਰੇ ਹੈ? ਮੈਂ ਕਣਕ, ਝੋਨਾ, ਕਪਾਹ, ਪਿਆਜ਼, ਟਮਾਟਰ ਅਤੇ ਮੱਕੀ ਬਾਰੇ "
-              "ਸਲਾਹ ਦੇ ਸਕਦਾ ਹਾਂ।",
-        "mr": "हे कोणत्या पिकाबद्दल आहे? मी गहू, भात, कापूस, कांदा, टोमॅटो आणि मका "
-              "यांबद्दल सल्ला देऊ शकतो.",
+        "en": "Which crop is this about? Please tell me its name — for example wheat, "
+              "cotton, sugarcane or soybean.",
+        "hi": "यह किस फसल के बारे में है? कृपया उसका नाम बताइए — जैसे गेहूं, धान, गन्ना "
+              "या चना।",
+        "pa": "ਇਹ ਕਿਹੜੀ ਫ਼ਸਲ ਬਾਰੇ ਹੈ? ਕਿਰਪਾ ਕਰਕੇ ਉਸਦਾ ਨਾਮ ਦੱਸੋ — ਜਿਵੇਂ ਕਣਕ, ਝੋਨਾ, "
+              "ਕਪਾਹ ਜਾਂ ਗੰਨਾ।",
+        "mr": "हे कोणत्या पिकाबद्दल आहे? कृपया त्याचे नाव सांगा — उदा. ऊस, कापूस, "
+              "सोयाबीन किंवा कांदा.",
     },
     "ask_age": {  # {crop} = crop name in the chosen language
         "en": "How many days old is your {crop} crop? Please tell me, for example: “40 days”.",
@@ -379,27 +381,21 @@ STRINGS: dict[str, dict[str, str]] = {
               "जिल्ह्याचे नाव सांगा.",
     },
     "ask_unsupported_crop": {  # {crop} = the crop as the farmer said it
-        "en": "I don't have advice for {crop} yet. I can help with wheat, rice, cotton, "
-              "onion, tomato and maize.",
-        "hi": "अभी मेरे पास {crop} के बारे में जानकारी नहीं है। मैं गेहूं, धान, कपास, "
-              "प्याज, टमाटर और मक्का में मदद कर सकता हूँ।",
-        "pa": "ਅਜੇ ਮੇਰੇ ਕੋਲ {crop} ਬਾਰੇ ਜਾਣਕਾਰੀ ਨਹੀਂ ਹੈ। ਮੈਂ ਕਣਕ, ਝੋਨਾ, ਕਪਾਹ, ਪਿਆਜ਼, "
-              "ਟਮਾਟਰ ਅਤੇ ਮੱਕੀ ਵਿੱਚ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ।",
-        "mr": "सध्या माझ्याकडे {crop} बद्दल माहिती नाही. मी गहू, भात, कापूस, कांदा, "
-              "टोमॅटो आणि मका यांबाबत मदत करू शकतो.",
+        "en": "I don't have advice for {crop} yet. I can help with these crops: {crops}.",
+        "hi": "अभी मेरे पास {crop} के बारे में जानकारी नहीं है। मैं इन फसलों में मदद कर "
+              "सकता हूँ: {crops}।",
+        "pa": "ਅਜੇ ਮੇਰੇ ਕੋਲ {crop} ਬਾਰੇ ਜਾਣਕਾਰੀ ਨਹੀਂ ਹੈ। ਮੈਂ ਇਨ੍ਹਾਂ ਫ਼ਸਲਾਂ ਵਿੱਚ ਮਦਦ ਕਰ "
+              "ਸਕਦਾ ਹਾਂ: {crops}।",
+        "mr": "सध्या माझ्याकडे {crop} बद्दल माहिती नाही. मी या पिकांबाबत मदत करू "
+              "शकतो: {crops}.",
     },
     "ask_scheme_unknown": {
-        "en": "I don't have details of that scheme. I can tell you about PM-KISAN, crop "
-              "insurance (PM Fasal Bima Yojana), Kisan Credit Card and Soil Health Card.",
-        "hi": "उस योजना की जानकारी मेरे पास नहीं है। मैं पीएम किसान, फसल बीमा (प्रधानमंत्री "
-              "फसल बीमा योजना), किसान क्रेडिट कार्ड और मृदा स्वास्थ्य कार्ड के बारे में "
-              "बता सकता हूँ।",
-        "pa": "ਉਸ ਸਕੀਮ ਦੀ ਜਾਣਕਾਰੀ ਮੇਰੇ ਕੋਲ ਨਹੀਂ ਹੈ। ਮੈਂ ਪੀਐਮ ਕਿਸਾਨ, ਫ਼ਸਲ ਬੀਮਾ (ਪ੍ਰਧਾਨ "
-              "ਮੰਤਰੀ ਫ਼ਸਲ ਬੀਮਾ ਯੋਜਨਾ), ਕਿਸਾਨ ਕ੍ਰੈਡਿਟ ਕਾਰਡ ਅਤੇ ਸੋਇਲ ਹੈਲਥ ਕਾਰਡ ਬਾਰੇ "
-              "ਦੱਸ ਸਕਦਾ ਹਾਂ।",
-        "mr": "त्या योजनेची माहिती माझ्याकडे नाही. मी पीएम किसान, पीक विमा (प्रधानमंत्री "
-              "पीक विमा योजना), किसान क्रेडिट कार्ड आणि मृदा आरोग्य पत्रिका यांबद्दल "
-              "सांगू शकतो.",
+        "en": "I don't have details of that scheme. I can tell you about {schemes}.",
+        "hi": "उस योजना की जानकारी मेरे पास नहीं है। मैं इनके बारे में बता सकता हूँ: "
+              "{schemes}।",
+        "pa": "ਉਸ ਸਕੀਮ ਦੀ ਜਾਣਕਾਰੀ ਮੇਰੇ ਕੋਲ ਨਹੀਂ ਹੈ। ਮੈਂ ਇਨ੍ਹਾਂ ਬਾਰੇ ਦੱਸ ਸਕਦਾ ਹਾਂ: "
+              "{schemes}।",
+        "mr": "त्या योजनेची माहिती माझ्याकडे नाही. मी यांबद्दल सांगू शकतो: {schemes}.",
     },
     "ask_offtopic": {  # {example} = a sample question in the chosen language
         "en": "I can help only with farming: crop care, the weather for your field, and "
@@ -591,15 +587,30 @@ STRINGS: dict[str, dict[str, str]] = {
     },
 }
 
-# Crop names as a farmer says them, per language.
-CROP_NAMES = {
-    "wheat": {"en": "wheat", "hi": "गेहूं", "pa": "ਕਣਕ", "mr": "गहू"},
-    "rice": {"en": "rice", "hi": "धान", "pa": "ਝੋਨਾ", "mr": "भात"},
-    "onion": {"en": "onion", "hi": "प्याज", "pa": "ਪਿਆਜ਼", "mr": "कांदा"},
-    "tomato": {"en": "tomato", "hi": "टमाटर", "pa": "ਟਮਾਟਰ", "mr": "टोमॅटो"},
-    "cotton": {"en": "cotton", "hi": "कपास", "pa": "ਕਪਾਹ", "mr": "कापूस"},
-    "maize": {"en": "maize", "hi": "मक्का", "pa": "ਮੱਕੀ", "mr": "मका"},
-}
+# Crop names as a farmer says them, per language (from the crop guides).
+CROP_NAMES = knowledge.crop_names()
+
+_AND = {"en": "and", "hi": "और", "pa": "ਅਤੇ", "mr": "आणि"}
+
+
+def spoken_list(items: list[str], lang: str) -> str:
+    """'a, b and c' in the given language."""
+    if len(items) < 2:
+        return "".join(items)
+    return f"{', '.join(items[:-1])} {_AND[lang]} {items[-1]}"
+
+
+# The lists inside the messages come from the knowledge base, so a new crop
+# guide or scheme document shows up in them without touching this file.
+for _lang in ("en", "hi", "pa", "mr"):
+    _fill = {
+        "{count}": str(len(CROP_NAMES)),
+        "{crops}": spoken_list([names[_lang] for names in CROP_NAMES.values()], _lang),
+        "{schemes}": spoken_list(knowledge.scheme_names(_lang), _lang),
+    }
+    for _key in ("help_crop", "ask_unsupported_crop", "ask_scheme_unknown"):
+        for _token, _value in _fill.items():
+            STRINGS[_key][_lang] = STRINGS[_key][_lang].replace(_token, _value)
 
 # Spoken-question prompts shown under "Or say it aloud", per chosen language.
 SPOKEN_EXAMPLES = {

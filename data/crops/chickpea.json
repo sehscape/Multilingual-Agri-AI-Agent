@@ -1,0 +1,72 @@
+{
+  "name": "chickpea",
+  "order": 9,
+  "names": {"en": "chickpea", "hi": "चना", "pa": "ਛੋਲੇ", "mr": "हरभरा"},
+  "aliases": {
+    "en": ["chick pea", "bengal gram", "chana", "channa", "chole"],
+    "hi": ["चने"],
+    "pa": ["ਛੋਲਿਆਂ", "ਛੋਲਿਆ", "ਚਨਾ"],
+    "mr": ["हरभर", "हरभऱ", "हरबरा"]
+  },
+  "total_duration_days": 120,
+  "longest_duration_days": 160,
+  "sowing_season": "Rabi: October–November (central India mid-October, north India late October to early November)",
+  "harvest_season": "February–April",
+  "soil": "Well-drained sandy loam to clay loam; black soil with stored moisture suits a rain-fed crop; pH 6.0–8.0",
+  "stages": [
+    {
+      "name": "Germination / Emergence",
+      "days_range": [0, 15],
+      "description": "Seeds sprout and seedlings come up in 7–10 days.",
+      "irrigation": "Sow in stored soil moisture. If the soil is dry, irrigate before sowing (palewa) rather than after.",
+      "fertilizer": "Basal: 50 kg DAP per acre (add 8 kg sulphur if the soil lacks it). Treat seed with Trichoderma 4 g + Carbendazim 1 g per kg, then Rhizobium + PSB 5 g per kg.",
+      "watch_for": ["Wilt and root rot in seedlings", "Cutworms cutting seedlings at ground level"],
+      "tips": ["Seed rate 30–40 kg per acre (more for bold kabuli seed)", "Rows 30 cm apart; sow 8–10 cm deep in dry soil"]
+    },
+    {
+      "name": "Vegetative / Branching",
+      "days_range": [16, 45],
+      "description": "Branches form — they decide how many pods the crop will carry.",
+      "irrigation": "If irrigated, give the first light irrigation at 40–45 days.",
+      "fertilizer": "No urea needed.",
+      "watch_for": ["Wilt — plants droop and dry in patches", "Weeds", "Pod borer eggs and young caterpillars on leaves"],
+      "tips": ["Nip the growing tips at 30–40 days (15–20 cm tall) for more branches", "One hand weeding at 25–30 days"]
+    },
+    {
+      "name": "Flowering",
+      "days_range": [46, 75],
+      "description": "Flowers open and the first pods set.",
+      "irrigation": "Do not irrigate at full flowering — it causes flower drop and too much leafy growth.",
+      "fertilizer": "In a rain-fed crop, a 2% urea spray (20 g per litre) at flowering helps.",
+      "watch_for": ["Gram pod borer (Helicoverpa)", "Grey mould in cloudy, humid weather"],
+      "tips": ["Put up 5 pheromone traps and 20 bird perches per acre", "Spray when 1–2 caterpillars are seen per metre of row"]
+    },
+    {
+      "name": "Pod Formation / Pod Filling",
+      "days_range": [76, 105],
+      "description": "Pods fill with seed.",
+      "irrigation": "If irrigated, one light irrigation at 70–75 days when the soil is dry.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Pod borer making holes in pods", "Frost on cold nights in north India"],
+      "tips": ["For pod borer spray Emamectin benzoate 5 SG 0.4 g/litre", "Neem seed kernel extract (5%) works on young caterpillars"]
+    },
+    {
+      "name": "Maturity / Harvest",
+      "days_range": [106, 160],
+      "description": "Leaves and pods turn yellow-brown and seeds rattle in the pods.",
+      "irrigation": "No irrigation.",
+      "fertilizer": "No fertilizer.",
+      "watch_for": ["Pods shattering if harvest is late", "Pulse beetle in storage"],
+      "tips": ["Harvest when most pods are brown", "Dry the grain well and store it in airtight bags or with neem leaves"]
+    }
+  ],
+  "common_pests": [
+    {"name": "Gram pod borer", "symptoms": "Round holes in pods with a green-brown caterpillar half inside", "control": "Emamectin benzoate 5 SG 0.4 g/litre; HaNPV 100 LE per acre in the evening"},
+    {"name": "Cutworm", "symptoms": "Seedlings cut at ground level at night", "control": "Chlorpyriphos 20 EC 2 ml/litre sprayed at the plant base in the evening"}
+  ],
+  "common_diseases": [
+    {"name": "Fusarium wilt", "symptoms": "Plants droop, leaves yellow and dry; dark brown streak inside the stem", "control": "Resistant varieties, seed treatment with Trichoderma 4 g + Carbendazim 1 g per kg, 3-year crop rotation"},
+    {"name": "Dry root rot", "symptoms": "Plants dry suddenly at flowering or podding; roots black and brittle", "control": "Seed treatment as above; avoid moisture stress at flowering"},
+    {"name": "Ascochyta blight", "symptoms": "Brown spots with rings on leaves, stems and pods", "control": "Mancozeb 2.5 g/litre; sow healthy seed"}
+  ]
+}

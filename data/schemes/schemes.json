@@ -1,0 +1,132 @@
+[
+  {
+    "id": "kcc",
+    "order": 3,
+    "file": "kisan_credit_card",
+    "title": "Kisan Credit Card",
+    "about": "Kisan Credit Card crop loans",
+    "search": "Kisan Credit Card KCC loan",
+    "names": {"en": "Kisan Credit Card", "hi": "किसान क्रेडिट कार्ड", "pa": "ਕਿਸਾਨ ਕ੍ਰੈਡਿਟ ਕਾਰਡ", "mr": "किसान क्रेडिट कार्ड"},
+    "match": {
+      "names": ["kisan credit", "kcc", "किसान क्रेडिट", "ਕਿਸਾਨ ਕ੍ਰੈਡਿਟ"],
+      "words": ["credit card", "क्रेडिट कार्ड", "ਕ੍ਰੈਡਿਟ ਕਾਰਡ"]
+    }
+  },
+  {
+    "id": "pmfby",
+    "order": 2,
+    "file": "pm_fasal_bima_yojana",
+    "title": "PM Fasal Bima Yojana",
+    "about": "PM Fasal Bima Yojana crop insurance",
+    "search": "Pradhan Mantri Fasal Bima Yojana PMFBY crop insurance",
+    "names": {"en": "crop insurance (PM Fasal Bima Yojana)", "hi": "फसल बीमा (प्रधानमंत्री फसल बीमा योजना)", "pa": "ਫ਼ਸਲ ਬੀਮਾ (ਪ੍ਰਧਾਨ ਮੰਤਰੀ ਫ਼ਸਲ ਬੀਮਾ ਯੋਜਨਾ)", "mr": "पीक विमा (प्रधानमंत्री पीक विमा योजना)"},
+    "match": {
+      "names": ["pmfby", "fasal bima", "crop insurance", "फसल बीमा", "पीक विमा", "ਫ਼ਸਲ ਬੀਮਾ", "ਫਸਲ ਬੀਮਾ"],
+      "words": ["insurance", "बीमा", "विमा", "ਬੀਮਾ"]
+    }
+  },
+  {
+    "id": "soil_health_card",
+    "order": 4,
+    "file": "soil_health_card",
+    "title": "Soil Health Card",
+    "about": "Soil Health Card soil testing",
+    "search": "Soil Health Card soil testing",
+    "names": {"en": "Soil Health Card", "hi": "मृदा स्वास्थ्य कार्ड", "pa": "ਸੋਇਲ ਹੈਲਥ ਕਾਰਡ", "mr": "मृदा आरोग्य पत्रिका"},
+    "match": {
+      "names": ["soil health card", "मृदा स्वास्थ्य", "मृदा आरोग्य", "ਸੋਇਲ ਹੈਲਥ"],
+      "words": ["soil health", "soil card", "soil test", "मृदा", "मिट्टी", "माती", "ਮਿੱਟੀ"]
+    }
+  },
+  {
+    "id": "pm_kmy",
+    "order": 7,
+    "file": "pm_kisan_maandhan",
+    "title": "PM Kisan Maandhan",
+    "about": "PM Kisan Maandhan pension for small farmers",
+    "search": "PM Kisan Maandhan Yojana pension",
+    "names": {"en": "farmer pension (PM Kisan Maandhan)", "hi": "किसान पेंशन (पीएम किसान मानधन)", "pa": "ਕਿਸਾਨ ਪੈਨਸ਼ਨ (ਪੀਐਮ ਕਿਸਾਨ ਮਾਨਧਨ)", "mr": "शेतकरी पेन्शन (पीएम किसान मानधन)"},
+    "match": {
+      "names": ["maandhan", "mandhan", "kisan pension", "farmer pension", "मानधन", "किसान पेंशन", "शेतकरी पेन्शन", "ਮਾਨਧਨ", "ਕਿਸਾਨ ਪੈਨਸ਼ਨ"],
+      "words": ["pension", "पेंशन", "पेन्शन", "ਪੈਨਸ਼ਨ"]
+    }
+  },
+  {
+    "id": "namo_shetkari",
+    "order": 10,
+    "file": "namo_shetkari_mahasanman_nidhi",
+    "title": "Namo Shetkari Mahasanman Nidhi",
+    "about": "Namo Shetkari Mahasanman Nidhi, Maharashtra's extra Rs 6,000 a year",
+    "search": "Namo Shetkari Mahasanman Nidhi Maharashtra",
+    "names": {"en": "Namo Shetkari Mahasanman Nidhi (Maharashtra)", "hi": "नमो शेतकरी महासम्मान निधि (महाराष्ट्र)", "pa": "ਨਮੋ ਸ਼ੇਤਕਰੀ ਮਹਾਸਨਮਾਨ ਨਿਧੀ (ਮਹਾਰਾਸ਼ਟਰ)", "mr": "नमो शेतकरी महासन्मान निधी (महाराष्ट्र)"},
+    "match": {
+      "names": ["namo shetkari", "mahasanman", "नमो शेतकरी", "महासन्मान", "महासम्मान", "ਨਮੋ ਸ਼ੇਤਕਰੀ"],
+      "words": ["namo", "नमो", "ਨਮੋ"]
+    }
+  },
+  {
+    "id": "pm_kusum",
+    "order": 5,
+    "file": "pm_kusum",
+    "title": "PM-KUSUM",
+    "about": "PM-KUSUM solar pump subsidy",
+    "search": "PM-KUSUM solar pump Kisan Urja Suraksha",
+    "names": {"en": "solar pumps (PM-KUSUM)", "hi": "सोलर पंप (पीएम कुसुम)", "pa": "ਸੋਲਰ ਪੰਪ (ਪੀਐਮ ਕੁਸੁਮ)", "mr": "सौर पंप (पीएम कुसुम)"},
+    "match": {
+      "names": ["kusum", "solar pump", "कुसुम", "सोलर पंप", "सौर पंप", "सौर कृषी पंप", "ਕੁਸੁਮ", "ਸੋਲਰ ਪੰਪ"],
+      "words": ["solar", "सोलर", "सौर", "ਸੋਲਰ"]
+    }
+  },
+  {
+    "id": "pmksy",
+    "order": 6,
+    "file": "pmksy_micro_irrigation",
+    "title": "PMKSY Per Drop More Crop",
+    "about": "PMKSY drip and sprinkler irrigation subsidy",
+    "search": "PMKSY Per Drop More Crop drip sprinkler micro irrigation subsidy",
+    "names": {"en": "drip and sprinkler subsidy (PMKSY)", "hi": "ड्रिप और स्प्रिंकलर सब्सिडी (PMKSY)", "pa": "ਡ੍ਰਿਪ ਅਤੇ ਫੁਹਾਰਾ ਸਿੰਚਾਈ ਸਬਸਿਡੀ (PMKSY)", "mr": "ठिबक व तुषार सिंचन अनुदान (PMKSY)"},
+    "match": {
+      "names": ["pmksy", "per drop", "drip subsidy", "sprinkler subsidy", "ड्रिप सब्सिडी", "ठिबक अनुदान", "ਡ੍ਰਿਪ ਸਬਸਿਡੀ"],
+      "words": ["drip", "sprinkler", "micro irrigation", "ड्रिप", "स्प्रिंकलर", "फव्वारा", "ठिबक", "तुषार", "ਡ੍ਰਿਪ", "ਤੁਪਕਾ", "ਫੁਹਾਰਾ"]
+    }
+  },
+  {
+    "id": "e_nam",
+    "order": 8,
+    "file": "e_nam",
+    "title": "e-NAM",
+    "about": "e-NAM online mandi trading",
+    "search": "e-NAM National Agriculture Market online mandi trading",
+    "names": {"en": "e-NAM online mandi", "hi": "ई-नाम ऑनलाइन मंडी", "pa": "ਈ-ਨਾਮ ਆਨਲਾਈਨ ਮੰਡੀ", "mr": "ई-नाम ऑनलाइन बाजार"},
+    "match": {
+      "names": ["e-nam", "enam", "e nam", "ई-नाम", "ई नाम", "ਈ-ਨਾਮ", "ਈ ਨਾਮ"],
+      "words": ["online mandi", "ऑनलाइन मंडी", "ऑनलाइन बाजार", "ਆਨਲਾਈਨ ਮੰਡੀ"]
+    }
+  },
+  {
+    "id": "crop_residue",
+    "order": 9,
+    "file": "crop_residue_management",
+    "title": "Crop Residue Management",
+    "about": "Crop Residue Management subsidy on stubble (parali) machines",
+    "search": "Crop Residue Management stubble parali Happy Seeder machine subsidy",
+    "names": {"en": "stubble machine subsidy (Crop Residue Management)", "hi": "पराली मशीन सब्सिडी (फसल अवशेष प्रबंधन)", "pa": "ਪਰਾਲੀ ਮਸ਼ੀਨ ਸਬਸਿਡੀ (ਫ਼ਸਲ ਰਹਿੰਦ-ਖੂੰਹਦ ਪ੍ਰਬੰਧਨ)", "mr": "पीक अवशेष यंत्र अनुदान"},
+    "match": {
+      "names": ["crop residue", "stubble", "parali", "happy seeder", "super seeder", "पराली", "ਪਰਾਲੀ", "ਹੈਪੀ ਸੀਡਰ", "ਸੁਪਰ ਸੀਡਰ"],
+      "words": ["residue", "अवशेष", "ਰਹਿੰਦ-ਖੂੰਹਦ", "ਨਾੜ"]
+    }
+  },
+  {
+    "id": "pm_kisan",
+    "order": 1,
+    "file": "pm_kisan",
+    "title": "PM-KISAN",
+    "about": "PM-KISAN income support of Rs 6,000 a year",
+    "search": "PM-KISAN Pradhan Mantri Kisan Samman Nidhi",
+    "names": {"en": "PM-KISAN", "hi": "पीएम किसान", "pa": "ਪੀਐਮ ਕਿਸਾਨ", "mr": "पीएम किसान"},
+    "match": {
+      "names": ["pm-kisan", "pm kisan", "pmkisan", "samman nidhi", "पीएम किसान", "पीएम-किसान", "सम्मान निधि", "सन्मान निधी", "ਪੀਐਮ ਕਿਸਾਨ"],
+      "words": ["6000", "6,000", "kisan samman"]
+    }
+  }
+]

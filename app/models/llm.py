@@ -135,8 +135,7 @@ class StubLLM(BaseLLM):
     it never invents crops, weather readings, or scheme facts.
     """
 
-    # Crops the knowledge base recognises (keep in sync with crop_tool._CROP_FILES).
-    _KNOWN_CROPS = ("wheat", "rice", "paddy", "onion", "tomato", "cotton", "maize", "corn")
+    # Crops are recognised from the crop guides themselves (app/knowledge.py).
 
     # Cities used to resolve a location in dev/stub mode (real LLM handles this properly).
     _KNOWN_CITIES = (
@@ -153,7 +152,9 @@ class StubLLM(BaseLLM):
                   "pm-kisan", "pm kisan", "kisan", "kcc", "yojana", "pmfby", "benefit")
     _FERT_KW = ("fertilizer", "fertiliser", "urea", "dap", "npk", "nutrient", "manure", "compost")
     _PEST_KW = ("pest", "insect", "disease", "fungus", "fungal", "mildew", "aphid",
-                "borer", "blight", "rust", "yellow", "spot", "rot", "wilt")
+                "borer", "blight", "rust", "yellow", "spot", "rot", "wilt",
+                "caterpillar", "larva", "armyworm", "army worm", "grub", "beetle", "thrips",
+                "whitefly", "white fly", "weevil", "termite", "mites", "hopper", "jassid")
     _IRRIG_KW = ("irrigat", "watering", "water requirement", "how much water")
     # Any of these (or a known crop name) means crop knowledge is needed.
     # NB: the bare word "crop" is intentionally excluded — it also appears in
@@ -178,16 +179,10 @@ class StubLLM(BaseLLM):
                       "ਯੋਜਨਾ", "ਸਕੀਮ", "ਕਰਜ਼ਾ", "ਬੀਮਾ", "ਕ੍ਰੈਡਿਟ")
     _REG_FERT_KW = ("खाद", "उर्वरक", "यूरिया", "डीएपी", "खत", "युरिया", "ਖਾਦ", "ਯੂਰੀਆ")
     _REG_PEST_KW = ("कीड़े", "कीट", "रोग", "बीमारी", "पीली", "पीले", "धब्बे",
-                    "कीड", "पिवळी", "डाग", "ਕੀੜੇ", "ਰੋਗ", "ਬਿਮਾਰੀ", "ਪੀਲੇ")
+                    "कीड", "पिवळी", "डाग", "ਕੀੜੇ", "ਰੋਗ", "ਬਿਮਾਰੀ", "ਪੀਲੇ",
+                    # caterpillar / aphid words: इल्ली, सुंडी (hi), अळी, मावा (mr), ਸੁੰਡੀ, ਤੇਲਾ (pa)
+                    "इल्ली", "सुंडी", "माहू", "अळी", "मावा", "ਸੁੰਡੀ", "ਤੇਲਾ")
     _REG_IRRIG_KW = ("सिंचाई", "सिंचन", "पानी", "पाणी", "ਸਿੰਚਾਈ", "ਪਾਣੀ")
-    _REG_CROPS = {
-        "wheat": ("गेहूं", "गेहू", "गहू", "गव्हा", "कणक", "कनक", "ਕਣਕ"),
-        "rice": ("धान", "चावल", "भात", "झोन", "ਝੋਨ", "ਧਾਨ"),  # ਝੋਨ: ਝੋਨਾ / ਝੋਨੇ
-        "onion": ("प्याज", "कांदा", "कांद्", "ਪਿਆਜ਼"),
-        "tomato": ("टमाटर", "टोमॅटो", "ਟਮਾਟਰ"),
-        "cotton": ("कपास", "कापूस", "कापसा", "ਕਪਾਹ"),
-        "maize": ("मक्का", "मकई", "मका", "ਮੱਕੀ"),
-    }
     _REG_CITIES = {
         "Pune": ("पुणे", "पूने", "पुने"), "Mumbai": ("मुंबई",), "Nashik": ("नाशिक",),
         "Nagpur": ("नागपुर", "नागपूर"), "Nanded": ("नांदेड",), "Aurangabad": ("औरंगाबाद",),
@@ -296,17 +291,17 @@ class StubLLM(BaseLLM):
                 "Final Answer: Advice prepared from the tool results.")
 
     # ── Rule-based classifier (shared by intent extraction + ReAct policy) ────
-    def _classify(self, text: str) -> dict:
+    def _classify(self, text: str, lang: Optional[str] = None) -> dict:
         import re
+
+        from app import knowledge
 
         query = self._normalize(text)
         has = lambda kws: any(k in query for k in kws)  # noqa: E731
 
-        # "प्रधान" (as in प्रधानमंत्री, "Prime Minister") contains "धान" (paddy).
-        crop_text = query.replace("प्रधान", "")
-        crop = next((c for c in self._KNOWN_CROPS if c in crop_text), None) or next(
-            (canon for canon, words in self._REG_CROPS.items()
-             if any(w in crop_text for w in words)), None)
+        # Whole words only: "धान" (paddy) must not fire inside "प्रधान", nor "rice" in "price".
+        mention = knowledge.find_crop(query, lang)
+        crop = mention.crop if mention and mention.known else None
 
         days_match = re.search(r"(\d+)\s*day", query)
         days = int(days_match.group(1)) if days_match else None
@@ -316,7 +311,8 @@ class StubLLM(BaseLLM):
              if any(n in query for n in names)), None)
 
         needs_weather = has(self._WEATHER_KW) or has(self._REG_WEATHER_KW)
-        needs_scheme = has(self._SCHEME_KW) or has(self._REG_SCHEME_KW)
+        needs_scheme = (has(self._SCHEME_KW) or has(self._REG_SCHEME_KW)
+                        or knowledge.names_a_scheme(query))
         needs_crop_info = crop is not None or has(self._CROP_TOPIC_KW) or has(
             self._REG_FERT_KW + self._REG_PEST_KW + self._REG_IRRIG_KW)
         # A place is only ever used for the weather lookup, so a question that
